@@ -60,6 +60,8 @@ jobs:
         shell: cmd
         run: |
           msbuild /m /p:Configuration=Release /p:Platform=x64 /restore event_writer.sln
+          dir
+          dir /x64/Release
         working-directory: ${{ env.EVENT_WRITER_PATH }}
 
       - name: Determine Docker tag
