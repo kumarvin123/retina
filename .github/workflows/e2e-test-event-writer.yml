@@ -60,9 +60,6 @@ jobs:
         shell: cmd
         run: |
           msbuild /m /p:Configuration=Release /p:Platform=x64 /restore event_writer.sln
-          dir
-          cd ./x64/Release
-          dir
         working-directory: ${{ env.EVENT_WRITER_PATH }}
 
       - name: Determine Docker tag
@@ -77,5 +74,9 @@ jobs:
       - name: Build Images
         shell: cmd
         run: |
-          az acr login -n ${{ vars.ACR_NAME }} && docker build --file .\Dockerfile --tag ${{ vars.ACR_NAME }}/${{ github.repository }}/e2e-test-event-writer:${{ env.TAG }} . && docker push ${{ vars.ACR_NAME }}/${{ github.repository }}/e2e-test-event-writer:${{ env.TAG }} && docker push ${{ vars.ACR_NAME }}/${{ github.repository }}/e2e-test-event-writer:latest
+          az acr login -n ${{ vars.ACR_NAME }}
+          docker build --file .\Dockerfile --tag ${{ vars.ACR_NAME }}/${{ github.repository }}/e2e-test-event-writer:${{ env.TAG }} .
+          docker build --file .\Dockerfile --tag ${{ vars.ACR_NAME }}/${{ github.repository }}/e2e-test-event-writer:latest .
+          docker push ${{ vars.ACR_NAME }}/${{ github.repository }}/e2e-test-event-writer:${{ env.TAG }}
+          docker push ${{ vars.ACR_NAME }}/${{ github.repository }}/e2e-test-event-writer:latest
         working-directory: ${{ env.EVENT_WRITER_PATH }}
