@@ -1,6 +1,5 @@
- FROM mcr.microsoft.com/windows/servercore:ltsc2022 As base
+FROM mcr.microsoft.com/windows/servercore:ltsc2022 As base
 
-# build stages
-WORKDIR /test/e2e/tools/event-writer
+COPY ../../scripts/install-ebpf-xdp.ps1 ./install-ebpf-xdp.ps1
 COPY ./x64/Release/bpf_event_writer.sys ./bpf_event_writer.sys
 COPY ./x64/Release/event_writer.exe ./event_writer.exe
