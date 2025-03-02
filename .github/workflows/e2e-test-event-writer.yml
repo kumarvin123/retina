@@ -22,7 +22,7 @@ jobs:
     strategy:
       matrix:
         platform: ["windows"]
-        arch: ["x64"]
+        arch: ["amd64"]
 
     steps:
       - name: Checkout code
