@@ -113,7 +113,7 @@ pin_maps_load_programs(void) {
     // Load the BPF object file
     obj = bpf_object__open("bpf_event_writer.sys");
     if (obj == NULL) {
-        fprintf(stderr, "%s - failed to open BPF object: %s\n", __FUNCTION__, bpf_sys_path);
+        fprintf(stderr, "%s - failed to open BPF object\n", __FUNCTION__);
         return 1;
     }
 
@@ -226,7 +226,6 @@ uint32_t ipStrToUint(const char* ipStr) {
 
 int main(int argc, char* argv[]) {
     struct filter flt;
-    const char* bpf_sys_path = NULL;
     memset(&flt, 0, sizeof(flt));
     // Parse the command-line arguments (flags)
     for (int i = 1; i < argc; i++) {
