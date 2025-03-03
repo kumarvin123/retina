@@ -90,6 +90,10 @@
   <ImportGroup Label="ExtensionTargets">
     <Import Project="packages\Microsoft.Windows.SDK.CPP.10.0.26100.2454\build\native\Microsoft.Windows.SDK.cpp.targets" Condition="Exists('packages\Microsoft.Windows.SDK.CPP.10.0.26100.2454\build\native\Microsoft.Windows.SDK.cpp.targets')" />
   </ImportGroup>
+  <Target Name="CustomClean" AfterTargets="Clean">
+    <!-- Remove custom generated output directory, adjust the path as needed -->
+    <RemoveDir Directories="$(SolutionDir)$(Platform)" />
+</Target>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
