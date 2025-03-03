@@ -117,6 +117,10 @@ int extract_five_tuple_info(void* data, int bytes_to_copy, struct five_tuple* tu
     struct ethhdr *eth;
     uint8_t present = 1;
 
+    if (data == NULL || tup == NULL) {
+        return 1;
+    }
+
     if (bytes_to_copy < sizeof(struct ethhdr)) {
         return 1;
     }
@@ -164,6 +168,9 @@ int extract_five_tuple_info(void* data, int bytes_to_copy, struct five_tuple* tu
 
 int
 check_filter(struct filter* flt, struct five_tuple* tup) {
+    if (flt == NULL || tup == NULL) {
+        return 1;
+    }
 
     if (flt->srcIP != 0 && flt->srcIP != tup->srcIP) {
         return 1;
@@ -194,6 +201,9 @@ event_writer(xdp_md_t* ctx) {
     uint32_t size_to_copy = 128;
     uint8_t flt_evttype, present = 1;
 
+    if (ctx->data == NULL || ctx->data_end == NULL) {
+        return XDP_PASS;
+    }
 
     if ((uintptr_t)ctx->data + size_to_copy > (uintptr_t)ctx->data_end) {
 		size_to_copy = (uintptr_t)ctx->data_end - (uintptr_t)ctx->data;
@@ -233,6 +243,7 @@ event_writer(xdp_md_t* ctx) {
         memcpy(trc_elm->data, ctx->data, size_to_copy);
         bpf_ringbuf_output(&cilium_events, trc_elm, sizeof(struct trace_notify), 0);
     }
+
     if (flt_evttype == CILIUM_NOTIFY_DROP) {
         struct drop_notify* drp_elm;
 
@@ -245,6 +256,7 @@ event_writer(xdp_md_t* ctx) {
         memset(drp_elm->data, 0, sizeof(drp_elm->data));
         memcpy(drp_elm->data, ctx->data, size_to_copy);
         bpf_ringbuf_output(&cilium_events, drp_elm, sizeof(struct drop_notify), 0);
+        //update_metrics(10, METRIC_EGRESS, 0, 0, 0);
     }
 
     return XDP_PASS;
