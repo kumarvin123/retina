@@ -42,13 +42,13 @@ int pin_map(const char* pin_path, bpf_map* map) {
         }
 
         if (bpf_obj_pin(map_fd, pin_path) < 0) {
-            fprintf(stderr, "%s - failed to pin map to %s\n", pin_path, __FUNCTION__);
+            fprintf(stderr, "%s - failed to pin map to %s\n", __FUNCTION__, pin_path);
             return 1;
         }
 
-        printf("%s - map successfully pinned at %s\n", pin_path, __FUNCTION__);
+        printf("%s - map successfully pinned at %s\n", __FUNCTION__, pin_path);
     } else {
-        printf("%s -pinned map found%s\n", pin_path);
+        printf("%s -pinned map found%s\n", __FUNCTION__, pin_path);
     }
     return 0;
 }
