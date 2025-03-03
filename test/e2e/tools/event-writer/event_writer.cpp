@@ -117,7 +117,7 @@ pin_maps_load_programs(const char* bpf_sys_path) {
         return 1;
     }
 
-    // Load cilium_events map and tcp_connect bpf program
+    // Load cilium_events map and event_writer bpf program
     if (bpf_object__load(obj) < 0) {
         fprintf(stderr, "%s - failed to load BPF sys\n", __FUNCTION__);
         bpf_object__close(obj);
@@ -279,7 +279,8 @@ int main(int argc, char* argv[]) {
     }
 
     //Sleep for 10 minutes
-    Sleep(600000);
+    sleep(600);
+    printf("Starting event writer\n");
     unload_programs_detach();
     return 0;
 }
