@@ -5,11 +5,11 @@ import (
 	"github.com/microsoft/retina/test/e2e/framework/types"
 )
 
-func ValidateCiliumMetricScenario() *types.Scenario {
+func ValidateWinBpfMetricScenario() *types.Scenario {
 	name := "Validate Windows Cilium Basic Metrics"
 	steps := []*types.StepWrapper{
 		{
-			Step: &ValidateCiliumMetric{
+			Step: &ValidateWinBpfMetric{
 				KubeConfigFilePath:        "./test.pem",
 				RetinaDaemonSetNamespace:  common.KubeSystemNamespace,
 				RetinaDaemonSetName:       "retina-agent-win",

@@ -83,6 +83,6 @@ func TestE2ERetina(t *testing.T) {
 	//validatehubble.Run(ctx)
 
 	// Validate Cilium Windows Metrics
-	validateCiliumMetrics := types.NewRunner(t, jobs.ValidateCiliumMetrics(kubeConfigFilePath))
-	validateCiliumMetrics.Run(ctx)
+	validateWinBpfMetrics := types.NewRunner(t, jobs.ValidateWinBpfMetricJob(kubeConfigFilePath))
+	validateWinBpfMetrics.Run(ctx)
 }
