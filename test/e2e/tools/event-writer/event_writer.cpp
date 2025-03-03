@@ -111,7 +111,7 @@ pin_maps_load_programs(const char* bpf_sys_path) {
     struct bpf_map *map_ev, *map_met, *map_fvt, *map_flt;
 
     // Load the BPF object file
-    obj = bpf_object__open(bpf_sys_path);
+    obj = bpf_object__open("bpf_event_writer.sys");
     if (obj == NULL) {
         fprintf(stderr, "%s - failed to open BPF object: %s\n", __FUNCTION__, bpf_sys_path);
         return 1;
@@ -280,6 +280,6 @@ int main(int argc, char* argv[]) {
 
     //Sleep for 10 minutes
     Sleep(600000);
-    //unload_programs_detach();
+    unload_programs_detach();
     return 0;
 }
