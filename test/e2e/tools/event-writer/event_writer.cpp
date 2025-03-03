@@ -167,6 +167,10 @@ pin_maps_load_programs(void) {
         return 1;
     }
 
+    if (set_filter(&flt) != 0) {
+        return 1;
+    }
+
     return 0; // Return success
 }
 
@@ -259,10 +263,6 @@ int main(int argc, char* argv[]) {
     printf("Destination Port: %u\n", flt.dstprt);
     printf("Starting event writer\n");
     if (pin_maps_load_programs() != 0) {
-        return 1;
-    }
-
-    if (set_filter(&flt) != 0) {
         return 1;
     }
 
