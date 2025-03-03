@@ -48,7 +48,7 @@ int pin_map(const char* pin_path, bpf_map* map) {
 
         printf("%s - map successfully pinned at %s\n", pin_path, __FUNCTION__);
     } else {
-        printf("%s -pinned map found at %s\n", pin_path, __FUNCTION__);
+        printf("%s -pinned map found%s\n", pin_path);
     }
     return 0;
 }

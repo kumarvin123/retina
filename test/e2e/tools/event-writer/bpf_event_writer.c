@@ -236,7 +236,7 @@ event_writer(xdp_md_t* ctx) {
 
         //Create a Mock Trace Event
         trc_elm = (struct trace_notify *) bpf_map_lookup_elem(&trc_buffer, &buf_key);
-        if (trc_elm == NULL) {
+        if (trc_elm == NULL || trc_elm->data == NULL) {
             return XDP_PASS;
         }
         create_trace_ntfy_event(trc_elm);
