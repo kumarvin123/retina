@@ -279,8 +279,7 @@ int main(int argc, char* argv[]) {
     }
 
     //Sleep for 10 minutes
-    sleep(600);
-    printf("Starting event writer\n");
-    unload_programs_detach();
+    Sleep(600000);
+    //unload_programs_detach();
     return 0;
 }
