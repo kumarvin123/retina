@@ -48,7 +48,7 @@ int pin_map(const char* pin_path, bpf_map* map) {
 
         printf("%s - map successfully pinned at %s\n", __FUNCTION__, pin_path);
     } else {
-        printf("%s -pinned map found%s\n", __FUNCTION__, pin_path);
+        printf("%s -pinned map found %s\n", __FUNCTION__, pin_path);
     }
     return 0;
 }
@@ -178,6 +178,7 @@ pin_maps_load_programs(void) {
 // Function to unload programs and detach
 int
 unload_programs_detach() {
+
     for (auto it = link_list.begin(); it != link_list.end(); it ++) {
         auto ifidx = it->first;
         auto link = it->second;
@@ -194,6 +195,7 @@ unload_programs_detach() {
         bpf_object__close(obj);
     }
 
+    printf("%s - unloaded successfully\n", __FUNCTION__);
     return 0;
 }
 
