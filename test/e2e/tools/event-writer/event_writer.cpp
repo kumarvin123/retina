@@ -109,6 +109,7 @@ int
 pin_maps_load_programs(void) {
     struct bpf_program* prg = NULL;
     struct bpf_map *map_ev, *map_met, *map_fvt, *map_flt;
+    struct filter flt;
 
     // Load the BPF object file
     obj = bpf_object__open("bpf_event_writer.sys");
