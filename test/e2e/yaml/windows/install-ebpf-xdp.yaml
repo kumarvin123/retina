@@ -14,7 +14,8 @@ spec:
     spec:
       containers:
       - name: install-ebpf-xdp-container
-        image: demoebpfregistry.azurecr.io/vpidatala94/retina/e2e-test-event-writer
+        image: demoebpfregistry.azurecr.io/vpidatala94/retina/e2e-test-event-writer:latest
+        imagePullPolicy: Always
         command:
           - powershell.exe
           - -command
