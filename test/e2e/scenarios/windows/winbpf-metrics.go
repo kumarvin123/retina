@@ -71,13 +71,14 @@ func (v *ValidateWinBpfMetric) Run() error {
 	// Hardcoding IP addr for aka.ms - 23.213.38.151 - 399845015
 	//aksmsIpaddr := 399845015
 	// Enable
-	v.ExecCommandInPod("cp .\\event_writer.exe C:\\", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace)
-	v.ExecCommandInPod("cp .\\bpf_event_writer.sys C:\\", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace)
-	v.ExecCommandInPod("cd C:\\", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace)
-	v.ExecCommandInPod("powershell -Command \"Start-Process -FilePath '.\\event_writer.exe' -ArgumentList '-event 4'\"", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace)
+	v.ExecCommandInPod("dir", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace)
+	//v.ExecCommandInPod("cp .\\event_writer.exe C:\\", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace)
+	//v.ExecCommandInPod("cp .\\bpf_event_writer.sys C:\\", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace)
+	//v.ExecCommandInPod("cd C:\\", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace)
+	//v.ExecCommandInPod("powershell -Command \"Start-Process -FilePath '.\\event_writer.exe' -ArgumentList '-event 4'\"", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace)
 
 	time.Sleep(time.Second * time.Duration(20))
-	cmd := fmt.Sprintf("curl -s http://localhost:%d/metrics", common.RetinaPort)
+	cmd := fmt.Sprintf("powershell -Command \"Invoke-WebRequest -Uri 'http://localhost:%d/metrics'\"", common.RetinaPort)
 	v.ExecCommandInPod(cmd, v.RetinaDaemonSetName, v.RetinaDaemonSetNamespace)
 	return nil
 }
