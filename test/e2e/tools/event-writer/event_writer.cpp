@@ -264,7 +264,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    if (set_filter(flt) != 0) {
+    if (set_filter(&flt) != 0) {
         return 1;
     } else {
         printf("%s - filter updated successfully\n", __FUNCTION__);
