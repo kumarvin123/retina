@@ -91,9 +91,6 @@ void create_trace_ntfy_event(struct trace_notify* trc_elm)
 	trc_elm->dst_id		= 0;
 	trc_elm->reason		= 0;
 	trc_elm->ifindex	= 0;
-    /*
-	trc_elm->ipv6		= 0;
-    */
 }
 
 void create_drop_event(struct drop_notify* drp_elm)
@@ -257,8 +254,7 @@ event_writer(xdp_md_t* ctx) {
         create_drop_event(drp_elm);
         memset(drp_elm->data, 0, sizeof(drp_elm->data));
         memcpy(drp_elm->data, ctx->data, size_to_copy);
-        //bpf_ringbuf_output(&cilium_events, drp_elm, sizeof(struct drop_notify), 0);
-        //update_metrics(10, METRIC_EGRESS, 0, 0, 0);
+        bpf_ringbuf_output(&cilium_events, drp_elm, sizeof(struct drop_notify), 0);
     }
 
     return XDP_PASS;
