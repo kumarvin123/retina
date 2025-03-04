@@ -236,7 +236,7 @@ int main(int argc, char* argv[]) {
     struct filter flt;
     memset(&flt, 0, sizeof(flt));
     // Parse the command-line arguments (flags)
-    flt.event = 4;
+    //flt.event = 4;
     if (pin_maps_load_programs(&flt) != 0) {
         return 1;
     }
