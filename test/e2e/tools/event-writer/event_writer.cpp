@@ -260,7 +260,7 @@ int main(int argc, char* argv[]) {
     printf("Destination Port: %u\n", flt.dstprt);
     printf("Starting event writer\n");
 
-    if (pin_maps_load_programs(&flt) != 0) {
+    if (pin_maps_load_programs() != 0) {
         return 1;
     }
 
