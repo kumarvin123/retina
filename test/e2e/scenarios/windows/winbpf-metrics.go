@@ -71,7 +71,7 @@ func (v *ValidateWinBpfMetric) Run() error {
 	// Hardcoding IP addr for aka.ms - 23.213.38.151 - 399845015
 	//aksmsIpaddr := 399845015
 	// Enable
-	v.ExecCommandInPod("dir", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace)
+	v.ExecCommandInPod("dir C:", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace)
 	//v.ExecCommandInPod("cp .\\event_writer.exe C:\\", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace)
 	//v.ExecCommandInPod("cp .\\bpf_event_writer.sys C:\\", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace)
 	//v.ExecCommandInPod("cd C:\\", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace)
