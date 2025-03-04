@@ -84,7 +84,7 @@ func TestE2ERetina(t *testing.T) {
 
 	// Validate Cilium Windows Metrics
 	validateWinBpfMetrics := types.NewRunner(t, jobs.ValidateWinBpfMetricJob(kubeConfigFilePath))
-	err = validateWinBpfMetrics()
+	err = validateWinBpfMetrics.Run(ctx)
 	if err != nil {
 		t.Fatalf("validateWinBpfMetrics failed: %v", err)
 	}
