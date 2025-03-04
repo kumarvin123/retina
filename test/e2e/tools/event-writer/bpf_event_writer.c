@@ -90,8 +90,8 @@ void create_trace_ntfy_event(struct trace_notify* trc_elm)
 	trc_elm->dst_label	= 0;
 	trc_elm->dst_id		= 0;
 	trc_elm->reason		= 0;
-    /*
 	trc_elm->ifindex	= 0;
+    /*
 	trc_elm->ipv6		= 0;
     */
 }
