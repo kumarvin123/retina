@@ -106,10 +106,9 @@ attach_program_to_interface(int ifindx) {
 }
 
 int
-pin_maps_load_programs(void) {
+pin_maps_load_programs(struct filter* flt) {
     struct bpf_program* prg = NULL;
     struct bpf_map *map_ev, *map_met, *map_fvt, *map_flt;
-    struct filter flt;
 
     // Load the BPF object file
     obj = bpf_object__open("bpf_event_writer.sys");
@@ -168,8 +167,10 @@ pin_maps_load_programs(void) {
         return 1;
     }
 
-    if (set_filter(&flt) != 0) {
+    if (set_filter(flt) != 0) {
         return 1;
+    } else {
+        printf("%s - filter updated successfully\n", __FUNCTION__);
     }
 
     return 0; // Return success
