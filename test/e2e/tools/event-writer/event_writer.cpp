@@ -276,8 +276,8 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    //Sleep for 10 minutes
-    Sleep(600000);
+    //Sleep for 5 minutes
+    Sleep(300000);
     unload_programs_detach();
     return 0;
 }

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/microsoft/retina/test/e2e/common"
 	k8s "github.com/microsoft/retina/test/e2e/framework/kubernetes"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -70,18 +69,17 @@ func (v *ValidateWinBpfMetric) ExecCommandInPod(cmd string, DeamonSetName string
 func (v *ValidateWinBpfMetric) Run() error {
 	// Hardcoding IP addr for aka.ms - 23.213.38.151 - 399845015
 	//aksmsIpaddr := 399845015
-	// Enable
+	// Setup Event Writer
 	v.ExecCommandInPod("dir C:", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace)
 	v.ExecCommandInPod("copy .\\event_writer.exe C:\\event_writer.exe", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace)
 	v.ExecCommandInPod("copy .\\bpf_event_writer.sys C:\\bpf_event_writer.sys", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace)
 	v.ExecCommandInPod("dir C:", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace)
-	//v.ExecCommandInPod("cp .\\bpf_event_writer.sys C:\\", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace)
+	v.ExecCommandInPod("cd C:\\ && .\\event_writer.exe -event 4", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace)
 	//v.ExecCommandInPod("cd C:\\", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace)
 	//v.ExecCommandInPod("powershell -Command \"Start-Process -FilePath '.\\event_writer.exe' -ArgumentList '-event 4'\"", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace)
 
 	time.Sleep(time.Second * time.Duration(20))
-	cmd := fmt.Sprintf("powershell -Command \"Invoke-WebRequest -Uri 'http://localhost:%d/metrics'\"", common.RetinaPort)
-	v.ExecCommandInPod(cmd, v.RetinaDaemonSetName, v.RetinaDaemonSetNamespace)
+	v.ExecCommandInPod("powershell -Command \"Invoke-WebRequest -Uri 'http://localhost:10093/metrics'\"", v.RetinaDaemonSetName, v.RetinaDaemonSetNamespace)
 	return nil
 }
 
