@@ -1,7 +1,0 @@
-^C:\USERS\VPIDATALA\CODE\VINODRETINA\RETINA\TEST\E2E\TOOLS\EVENT-WRITER\BPF_EVENT_WRITER.C
-C:\Users\vpidatala\Code\vinodRetina\retina\test\e2e\tools\event-writer\packages\XDP-for-Windows.1.1.0\build\native\bin\x64\xdpbpfexport.exe --clear
-        C:\Users\vpidatala\Code\vinodRetina\retina\test\e2e\tools\event-writer\packages\XDP-for-Windows.1.1.0\build\native\bin\x64\xdpbpfexport.exe
-        clang -g -target bpf -O2 -Werror -IC:\Users\vpidatala\Code\vinodRetina\retina\test\e2e\tools\event-writer\packages\eBPF-for-Windows.x64.0.20.0\build\native\include -IC:\Users\vpidatala\Code\vinodRetina\retina\test\e2e\tools\event-writer\packages\XDP-for-Windows.1.1.0\build\native\include -c bpf_event_writer.c -o x64\Release\bpf_event_writer.o
-        pushd C:\Users\vpidatala\Code\vinodRetina\retina\test\e2e\tools\event-writer\x64\Release\
-        powershell -NonInteractive -ExecutionPolicy Unrestricted C:\Users\vpidatala\Code\vinodRetina\retina\test\e2e\tools\event-writer\packages\eBPF-for-Windows.x64.0.20.0\build\native\bin\Convert-BpfToNative.ps1 -FileName bpf_event_writer -IncludeDir C:\Users\vpidatala\Code\vinodRetina\retina\test\e2e\tools\event-writer\packages\eBPF-for-Windows.x64.0.20.0\build\native\include -Platform x64 -Packages C:\Users\vpidatala\Code\vinodRetina\retina\test\e2e\tools\event-writer\packages -Configuration Release -KernelMode $true
-        popd
