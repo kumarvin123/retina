@@ -238,10 +238,10 @@ event_writer(xdp_md_t* ctx) {
         if (trc_elm == NULL) {
             return XDP_PASS;
         }
-        create_trace_ntfy_event(trc_elm);
+        //create_trace_ntfy_event(trc_elm);
         //memset(trc_elm->data, 0, sizeof(trc_elm->data));
         //memcpy(trc_elm->data, ctx->data, size_to_copy);
-        bpf_ringbuf_output(&cilium_events, trc_elm, sizeof(struct trace_notify), 0);
+        //bpf_ringbuf_output(&cilium_events, trc_elm, sizeof(struct trace_notify), 0);
     }
 
     if (flt_evttype == CILIUM_NOTIFY_DROP) {
