@@ -106,7 +106,7 @@ attach_program_to_interface(int ifindx) {
 }
 
 int
-pin_maps_load_programs(struct filter* flt) {
+pin_maps_load_programs(void) {
     struct bpf_program* prg = NULL;
     struct bpf_map *map_ev, *map_met, *map_fvt, *map_flt;
 
@@ -165,12 +165,6 @@ pin_maps_load_programs(struct filter* flt) {
     }
     if (pin_map(FILTER_MAP_PIN_PATH, map_flt) != 0) {
         return 1;
-    }
-
-    if (set_filter(flt) != 0) {
-        return 1;
-    } else {
-        printf("%s - filter updated successfully\n", __FUNCTION__);
     }
 
     return 0; // Return success
@@ -236,9 +230,44 @@ int main(int argc, char* argv[]) {
     struct filter flt;
     memset(&flt, 0, sizeof(flt));
     // Parse the command-line arguments (flags)
-    flt.event = 4;
+    for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "-event") == 0) {
+            if (i + 1 < argc)
+                flt.event = static_cast<uint8_t>(atoi(argv[++i]));
+        } else if (strcmp(argv[i], "-srcIP") == 0) {
+            if (i + 1 < argc)
+                flt.srcIP = ipStrToUint(argv[++i]);
+        } else if (strcmp(argv[i], "-dstIP") == 0) {
+            if (i + 1 < argc)
+                flt.dstIP = ipStrToUint(argv[++i]);
+        } else if (strcmp(argv[i], "-srcprt") == 0) {
+            if (i + 1 < argc)
+                flt.srcprt = static_cast<uint16_t>(atoi(argv[++i]));
+        } else if (strcmp(argv[i], "-dstprt") == 0) {
+            if (i + 1 < argc)
+                flt.dstprt = static_cast<uint16_t>(atoi(argv[++i]));
+        }
+    }
+    printf("Parsed Values:\n");
+    printf("Event: %d\n", flt.event);
+    printf("Source IP: %u.%u.%u.%u\n",
+           (flt.srcIP >> 24) & 0xFF, (flt.srcIP >> 16) & 0xFF,
+           (flt.srcIP >> 8) & 0xFF, flt.srcIP & 0xFF);
+    printf("Destination IP: %u.%u.%u.%u\n",
+           (flt.dstIP >> 24) & 0xFF, (flt.dstIP >> 16) & 0xFF,
+           (flt.dstIP >> 8) & 0xFF, flt.dstIP & 0xFF);
+    printf("Source Port: %u\n", flt.srcprt);
+    printf("Destination Port: %u\n", flt.dstprt);
+    printf("Starting event writer\n");
+
     if (pin_maps_load_programs(&flt) != 0) {
         return 1;
+    }
+
+    if (set_filter(flt) != 0) {
+        return 1;
+    } else {
+        printf("%s - filter updated successfully\n", __FUNCTION__);
     }
 
     std::vector<int> interface_indices = get_physical_interface_indices();
