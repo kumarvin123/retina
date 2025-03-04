@@ -20,7 +20,7 @@ type ValidateWinBpfMetric struct {
 	RetinaDaemonSetName       string
 }
 
-func (v *ValidateWinBpfMetric) ExecCommandInPod(cmd string, DeamonSetName string, DaemonSetNamespace string) error {
+func (v *ValidateWinBpfMetric) ExecCommandInPod(cmd string, DeamonSetName string, DaemonSetNamespace string, OS string) error {
 	config, err := clientcmd.BuildConfigFromFlags("", v.KubeConfigFilePath)
 	if err != nil {
 		return fmt.Errorf("error building kubeconfig: %w", err)
@@ -41,7 +41,7 @@ func (v *ValidateWinBpfMetric) ExecCommandInPod(cmd string, DeamonSetName string
 
 	var windowsPod *v1.Pod
 	for pod := range pods.Items {
-		if pods.Items[pod].Spec.NodeSelector["kubernetes.io/os"] == "windows" {
+		if pods.Items[pod].Spec.NodeSelector["kubernetes.io/os"] == OS {
 			windowsPod = &pods.Items[pod]
 		}
 	}
@@ -70,16 +70,17 @@ func (v *ValidateWinBpfMetric) Run() error {
 	// Hardcoding IP addr for aka.ms - 23.213.38.151 - 399845015
 	//aksmsIpaddr := 399845015
 	// Setup Event Writer
-	v.ExecCommandInPod("dir C:", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace)
-	v.ExecCommandInPod("copy .\\event_writer.exe C:\\event_writer.exe", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace)
-	v.ExecCommandInPod("copy .\\bpf_event_writer.sys C:\\bpf_event_writer.sys", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace)
-	v.ExecCommandInPod("dir C:", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace)
-	v.ExecCommandInPod("cd C:\\ && .\\event_writer.exe -event 4", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace)
+	v.ExecCommandInPod("dir C:", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, "windows")
+	v.ExecCommandInPod("copy .\\event_writer.exe C:\\event_writer.exe", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, "windows")
+	v.ExecCommandInPod("copy .\\bpf_event_writer.sys C:\\bpf_event_writer.sys", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, "windows")
+	v.ExecCommandInPod("dir C:", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, "windows")
+	v.ExecCommandInPod("cd C:\\ && .\\event_writer.exe -event 4", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, "windows")
 	//v.ExecCommandInPod("cd C:\\", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace)
 	//v.ExecCommandInPod("powershell -Command \"Start-Process -FilePath '.\\event_writer.exe' -ArgumentList '-event 4'\"", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace)
 
-	time.Sleep(time.Second * time.Duration(20))
-	v.ExecCommandInPod("powershell -Command \"Invoke-WebRequest -Uri 'http://localhost:10093/metrics'\"", v.RetinaDaemonSetName, v.RetinaDaemonSetNamespace)
+	time.Sleep(time.Second * time.Duration(300))
+	v.ExecCommandInPod("curl -s \"http://localhost:10093/metrics\"", v.RetinaDaemonSetName, v.RetinaDaemonSetNamespace, "windows")
+	//v.ExecCommandInPod("powershell -Command \"Invoke-WebRequest -Uri 'http://localhost:10093/metrics'\"", v.RetinaDaemonSetName, v.RetinaDaemonSetNamespace, "windows")
 	return nil
 }
 
