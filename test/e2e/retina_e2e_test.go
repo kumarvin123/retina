@@ -88,9 +88,4 @@ func TestE2ERetina(t *testing.T) {
 	if err != nil {
 		t.Fatalf("validateWinBpfMetrics failed: %v", err)
 	}
-
-	err = validateWinBpfMetrics.Run(ctx)
-	if err != nil {
-		t.Fatalf("validateWinBpfMetrics failed: %v", err)
-	}
 }
