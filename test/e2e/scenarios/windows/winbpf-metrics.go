@@ -77,8 +77,8 @@ func (v *ValidateWinBpfMetric) Run() error {
 	//v.ExecCommandInPod("cd C:\\", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace)
 	//v.ExecCommandInPod("powershell -Command \"Start-Process -FilePath '.\\event_writer.exe' -ArgumentList '-event 4'\"", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace)
 
-	v.ExecCommandInPod("curl -s \"http://localhost:10093/metrics\"", v.RetinaDaemonSetName, v.RetinaDaemonSetNamespace, "windows")
-	//v.ExecCommandInPod("powershell -Command \"Invoke-WebRequest -Uri 'http://localhost:10093/metrics'\"", v.RetinaDaemonSetName, v.RetinaDaemonSetNamespace, "windows")
+	//v.ExecCommandInPod("curl -s \"http://localhost:10093/metrics\"", v.RetinaDaemonSetName, v.RetinaDaemonSetNamespace, "windows")
+	v.ExecCommandInPod("powershell -Command \"Invoke-WebRequest -Uri 'http://localhost:10093/metrics' -UseBasicParsing | Write-Host $_.Content\"", v.RetinaDaemonSetName, v.RetinaDaemonSetNamespace, "windows")
 	return nil
 }
 
