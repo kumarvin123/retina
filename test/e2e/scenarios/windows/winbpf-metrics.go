@@ -74,11 +74,11 @@ func (v *ValidateWinBpfMetric) Run() error {
 	v.ExecCommandInWinPod("copy .\\bpf_event_writer.sys C:\\bpf_event_writer.sys", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace)
 	v.ExecCommandInWinPod("dir C:", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace)
 	v.ExecCommandInWinPod("cd C:\\ && .\\event_writer.exe -event 4", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace)
-	//v.ExecCommandInWinPod("cd C:\\", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace)
 	//v.ExecCommandInWinPod("powershell -Command \"Start-Process -FilePath '.\\event_writer.exe' -ArgumentList '-event 4'\"", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace)
 
 	//v.ExecCommandInWinPod("curl -s \"http://localhost:10093/metrics\"", v.RetinaDaemonSetName, v.RetinaDaemonSetNamespace, "windows")
-	v.ExecCommandInWinPod("powershell -Command \"Invoke-WebRequest -Uri 'http://localhost:10093/metrics' -UseBasicParsing\"", v.RetinaDaemonSetName, v.RetinaDaemonSetNamespace)
+	v.ExecCommandInWinPod("powershell -Command \"Invoke-WebRequest -Uri \"http://localhost:10093/metrics\" -UseBasicParsing\"", v.RetinaDaemonSetName, v.RetinaDaemonSetNamespace)
+
 	return nil
 }
 
