@@ -3,7 +3,6 @@ package windows
 import (
 	"context"
 	"fmt"
-	"time"
 
 	k8s "github.com/microsoft/retina/test/e2e/framework/kubernetes"
 	v1 "k8s.io/api/core/v1"
@@ -78,7 +77,6 @@ func (v *ValidateWinBpfMetric) Run() error {
 	//v.ExecCommandInPod("cd C:\\", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace)
 	//v.ExecCommandInPod("powershell -Command \"Start-Process -FilePath '.\\event_writer.exe' -ArgumentList '-event 4'\"", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace)
 
-	time.Sleep(time.Second * time.Duration(300))
 	v.ExecCommandInPod("curl -s \"http://localhost:10093/metrics\"", v.RetinaDaemonSetName, v.RetinaDaemonSetNamespace, "windows")
 	//v.ExecCommandInPod("powershell -Command \"Invoke-WebRequest -Uri 'http://localhost:10093/metrics'\"", v.RetinaDaemonSetName, v.RetinaDaemonSetNamespace, "windows")
 	return nil
