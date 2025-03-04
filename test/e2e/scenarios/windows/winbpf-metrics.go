@@ -72,7 +72,9 @@ func (v *ValidateWinBpfMetric) Run() error {
 	//aksmsIpaddr := 399845015
 	// Enable
 	v.ExecCommandInPod("dir C:", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace)
-	//v.ExecCommandInPod("cp .\\event_writer.exe C:\\", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace)
+	v.ExecCommandInPod("copy .\\event_writer.exe C:\\event_writer.exe", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace)
+	v.ExecCommandInPod("copy .\\bpf_event_writer.sys C:\\bpf_event_writer.sys", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace)
+	v.ExecCommandInPod("dir C:", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace)
 	//v.ExecCommandInPod("cp .\\bpf_event_writer.sys C:\\", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace)
 	//v.ExecCommandInPod("cd C:\\", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace)
 	//v.ExecCommandInPod("powershell -Command \"Start-Process -FilePath '.\\event_writer.exe' -ArgumentList '-event 4'\"", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace)
