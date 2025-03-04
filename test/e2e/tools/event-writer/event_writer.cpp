@@ -241,7 +241,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    printf("TEST MESSAGE\n")
+    printf("TEST MESSAGE\n");
     std::vector<int> interface_indices = get_physical_interface_indices();
     for (int ifindx : interface_indices) {
         if (attach_program_to_interface(ifindx) != 0) {
