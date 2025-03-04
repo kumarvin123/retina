@@ -98,5 +98,6 @@ func ExecPod(ctx context.Context, clientset *kubernetes.Clientset, config *rest.
 	}
 
 	res := buf.Bytes()
+	fmt.Printf("command output: %s\n", res)
 	return res, nil
 }
