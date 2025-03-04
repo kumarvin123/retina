@@ -85,6 +85,7 @@ void create_trace_ntfy_event(struct trace_notify* trc_elm)
 	trc_elm->hash       = 0;
     trc_elm->len_orig   = 128;
 	trc_elm->len_cap    = 128;
+	/*
     trc_elm->version    = 1;
 	trc_elm->src_label	= 0;
 	trc_elm->dst_label	= 0;
@@ -92,6 +93,7 @@ void create_trace_ntfy_event(struct trace_notify* trc_elm)
 	trc_elm->reason		= 0;
 	trc_elm->ifindex	= 0;
 	trc_elm->ipv6		= 0;
+    */
 }
 
 void create_drop_event(struct drop_notify* drp_elm)
