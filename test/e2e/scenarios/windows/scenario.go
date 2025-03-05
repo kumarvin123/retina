@@ -6,7 +6,7 @@ import (
 )
 
 func ValidateWinBpfMetricScenario() *types.Scenario {
-	name := "Validate Windows Cilium Basic Metrics"
+	name := "Validate Windows BPF Basic and Advanced Metrics"
 	steps := []*types.StepWrapper{
 		{
 			Step: &ValidateWinBpfMetric{

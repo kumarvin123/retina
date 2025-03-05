@@ -3,6 +3,7 @@ REM Add logic to call a specific function based on the argument
 if "%1"=="Setup-EventWriter" goto Setup-EventWriter
 if "%1"=="Start-EventWriter" goto Start-EventWriter
 if "%1"=="GetRetinaPromMetrics" goto GetRetinaPromMetrics
+if "%1"=="CurlAkaMs" goto CurlAkaMs
 
 goto :EOF
 
@@ -26,8 +27,10 @@ REM Define the Start-EventWriter function
    echo Changing directory to C:\
    cd C:\
 
-   echo Starting event_writer.exe with -event 4
-   .\event_writer.exe -event 4
+   if "%2"=="-event" (
+        echo Starting event_writer.exe with -event %3 -srcIP %4
+        start /B .\event_writer.exe -event %3 -srcIP %4
+    )
 
    echo Changing directory to C:\hpc
    cd C:\hpc
@@ -39,4 +42,11 @@ REM Define the GetPromMetrics function
    echo Fetching Prometheus metrics from http://localhost:10093/metrics
    powershell -Command "Invoke-WebRequest -Uri 'http://localhost:10093/metrics' -UseBasicParsing | ForEach-Object { $_.Content }"
 
+   goto :EOF
+
+REM Curl AKA.MS
+:CurlAkaMs
+   // Hardcoding IP addr for aka.ms - 23.213.38.151
+   echo Curl AKA.MS or 23.213.38.151
+   start /B powershell -Command "Invoke-WebRequest -Uri '23.213.38.151' -UseBasicParsing | ForEach-Object { $_.Content }"
    goto :EOF

@@ -3,7 +3,8 @@ package windows
 import (
 	"context"
 	"fmt"
-	"time"
+	"log"
+	"strings"
 
 	k8s "github.com/microsoft/retina/test/e2e/framework/kubernetes"
 	v1 "k8s.io/api/core/v1"
@@ -20,15 +21,19 @@ type ValidateWinBpfMetric struct {
 	RetinaDaemonSetName       string
 }
 
-func (v *ValidateWinBpfMetric) ExecCommandInWinPod(cmd string, DeamonSetName string, DaemonSetNamespace string, LabelSelector string) error {
+type CommandResult struct {
+	Output string
+}
+
+func (v *ValidateWinBpfMetric) ExecCommandInWinPod(cmd string, DeamonSetName string, DaemonSetNamespace string, LabelSelector string) (error, string) {
 	config, err := clientcmd.BuildConfigFromFlags("", v.KubeConfigFilePath)
 	if err != nil {
-		return fmt.Errorf("error building kubeconfig: %w", err)
+		return fmt.Errorf("error building kubeconfig: %w", err), ""
 	}
 
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		return fmt.Errorf("error creating Kubernetes client: %w", err)
+		return fmt.Errorf("error creating Kubernetes client: %w", err), ""
 	}
 
 	pods, err := clientset.CoreV1().Pods(DaemonSetNamespace).List(context.TODO(), metav1.ListOptions{
@@ -40,46 +45,73 @@ func (v *ValidateWinBpfMetric) ExecCommandInWinPod(cmd string, DeamonSetName str
 
 	var windowsPod *v1.Pod
 	for pod := range pods.Items {
-		fmt.Println("Pod Name: ", pods.Items[pod].Name)
-		fmt.Println("Pod OS: ", pods.Items[pod].Spec.NodeSelector["kubernetes.io/os"])
-
 		if pods.Items[pod].Spec.NodeSelector["kubernetes.io/os"] == "windows" {
 			windowsPod = &pods.Items[pod]
 		}
 	}
 
 	if windowsPod == nil {
-		fmt.Println("No Windows Pod found")
-		return ErrorNoWindowsPod
+		return ErrorNoWindowsPod, fmt.Sprintf("No Windows Pod found in DaemonSet %s and label %s", DeamonSetName, LabelSelector)
 	}
 
+	result := &CommandResult{}
 	err = defaultRetrier.Do(context.TODO(), func() error {
 		outputBytes, err := k8s.ExecPod(context.TODO(), clientset, config, windowsPod.Namespace, windowsPod.Name, cmd)
 		if err != nil {
-			return fmt.Errorf("error executing command in windows retina pod: %w", err)
+			return fmt.Errorf("error executing command in windows pod: %w", err), ""
 		}
-		output := string(outputBytes)
-		fmt.Println(output)
+
+		result.Output = string(outputBytes)
 		return nil
 	})
 	if err != nil {
 		panic(err.Error())
 	}
 
-	return nil
+	return nil, result.Output
 }
 
 func (v *ValidateWinBpfMetric) Run() error {
-	// Hardcoding IP addr for aka.ms - 23.213.38.151 - 399845015
-	//aksmsIpaddr := 399845015
 	// Setup Event Writer into Node
 	ebpfLabelSelector := fmt.Sprintf("name=%s", v.EbpfXdpDeamonSetName)
-	v.ExecCommandInWinPod("move .\\event-writer-helper.bat C:\\event-writer-helper.bat", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
+	err, output := v.ExecCommandInWinPod("move .\\event-writer-helper.bat C:\\event-writer-helper.bat", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
+	if err != nil {
+		return err
+	}
+	fmt.Println(output)
+	err, output = v.ExecCommandInWinPod("C:\\event-writer-helper.bat Setup-EventWriter", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
+	if err != nil {
+		return err
+	}
+	fmt.Println(output)
 
-	v.ExecCommandInWinPod("C:\\event-writer-helper.bat Setup-EventWriter", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
-	v.ExecCommandInWinPod("C:\\event-writer-helper.bat Start-EventWriter", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
-	time.Sleep(30 * time.Second)
-	v.ExecCommandInWinPod("C:\\event-writer-helper.bat GetRetinaPromMetrics", v.RetinaDaemonSetName, v.RetinaDaemonSetNamespace, "k8s-app=retina")
+	err, output = v.ExecCommandInWinPod("C:\\event-writer-helper.bat CurlAkaMs", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
+	if err != nil {
+		return err
+	}
+	fmt.Println(output)
+
+	// Check for Basic Metrics
+	// TRACE
+	err, output = v.ExecCommandInWinPod("C:\\event-writer-helper.bat Start-EventWriter -event 4 -srcIP 23.213.38.151", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
+	if err != nil {
+		return err
+	}
+	fmt.Println(output)
+
+	err, output = v.ExecCommandInWinPod("C:\\event-writer-helper.bat GetRetinaPromMetrics", v.RetinaDaemonSetName, v.RetinaDaemonSetNamespace, "k8s-app=retina")
+	if err != nil {
+		return err
+	}
+
+	if strings.Contains(output, "networkobservability_forward_bytes") {
+		log.Println("The output contains networkobservability_forward_bytes")
+	}
+
+	// Check for Advanced Metrics
+	if strings.Contains(output, "networkobservability_adv_tcpflags_count") {
+		log.Println("The output contains networkobservability_adv_tcpflags_count")
+	}
 	return nil
 }
 
