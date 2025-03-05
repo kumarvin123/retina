@@ -49,5 +49,5 @@ REM Curl AKA.MS
 :CurlAkaMs
    // Hardcoding IP addr for aka.ms - 23.213.38.151
    echo Curl AKA.MS or 23.213.38.151
-   start cmd /c "for /L %%i in (1,1,1000) do (powershell -Command \"Invoke-WebRequest -Uri 'http://23.213.38.151' -UseBasicParsing | ForEach-Object { $_.Content }\" & timeout /t 1 >nul)"
+   start cmd /c "for /L %%i in (1,1,1000) do (powershell -Command \"Invoke-WebRequest -Uri 'http://23.213.38.151' -UseBasicParsing\" & timeout /t 1 >nul)"
    goto :EOF
