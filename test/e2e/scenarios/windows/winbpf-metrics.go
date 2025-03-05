@@ -87,12 +87,13 @@ func (v *ValidateWinBpfMetric) Run() error {
 	fmt.Println(output)
 
 	// TRACE
-	err, output = v.ExecCommandInWinPod("C:\\event-writer-helper.bat CurlAkaMs", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
-	if err != nil {
-		return err
-	}
-	fmt.Println(output)
-
+	/*
+		err, output = v.ExecCommandInWinPod("C:\\event-writer-helper.bat CurlAkaMs", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
+		if err != nil {
+			return err
+		}
+		fmt.Println(output)
+	*/
 	err, output = v.ExecCommandInWinPod("C:\\event-writer-helper.bat Start-EventWriter -event 4 -srcIP 23.213.38.151", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
 	if err != nil {
 		return err
