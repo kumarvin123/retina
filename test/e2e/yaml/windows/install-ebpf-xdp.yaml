@@ -19,7 +19,7 @@ spec:
         command:
           - powershell.exe
           - -command
-          - '& .\install-ebpf-xdp.ps1 ; while ($true) { Start-Sleep -Seconds 300; }'
+          - '& .\install-ebpf-xdp.ps1 ; mv .\event-writer-helper.bat C:\event-writer-helper.bat ; while ($true) { Start-Sleep -Seconds 300; }'
         readinessProbe:
           exec:
             command:
