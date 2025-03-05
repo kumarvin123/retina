@@ -93,14 +93,14 @@ func (v *ValidateWinBpfMetric) Run() error {
 		return err
 	}
 	fmt.Println(output)
-
+	time.Sleep(20 * time.Second)
 	err, output = v.ExecCommandInWinPod("C:\\event-writer-helper.bat CurlAkaMs", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
 	if err != nil {
 		return err
 	}
 	fmt.Println(output)
 
-	time.Sleep(5 * time.Second)
+	time.Sleep(10 * time.Second)
 	err, output = v.ExecCommandInWinPod("C:\\event-writer-helper.bat GetRetinaPromMetrics", v.RetinaDaemonSetName, v.RetinaDaemonSetNamespace, "k8s-app=retina")
 	if err != nil {
 		return err
