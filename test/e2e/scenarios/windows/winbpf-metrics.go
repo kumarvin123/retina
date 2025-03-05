@@ -73,16 +73,9 @@ func (v *ValidateWinBpfMetric) Run() error {
 	// Hardcoding IP addr for aka.ms - 23.213.38.151 - 399845015
 	//aksmsIpaddr := 399845015
 	// Setup Event Writer
-	v.ExecCommandInWinPod("dir C:", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace)
-	v.ExecCommandInWinPod("copy .\\event_writer.exe C:\\event_writer.exe", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace)
-	v.ExecCommandInWinPod("copy .\\bpf_event_writer.sys C:\\bpf_event_writer.sys", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace)
-	v.ExecCommandInWinPod("dir C:", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace)
-	v.ExecCommandInWinPod("cd C:\\ && .\\event_writer.exe -event 4", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace)
-	//v.ExecCommandInWinPod("powershell -Command \"Start-Process -FilePath '.\\event_writer.exe' -ArgumentList '-event 4'\"", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace)
-
-	//v.ExecCommandInWinPod("curl -s \"http://localhost:10093/metrics\"", v.RetinaDaemonSetName, v.RetinaDaemonSetNamespace, "windows")
-	v.ExecCommandInWinPod("powershell -Command \"Invoke-WebRequest -Uri \"http://localhost:10093/metrics\" -UseBasicParsing\"", v.RetinaDaemonSetName, v.RetinaDaemonSetNamespace)
-	v.ExecCommandInWinPod("dir C:", v.RetinaDaemonSetName, v.RetinaDaemonSetNamespace)
+	v.ExecCommandInWinPod("event-writer-helper.bat Setup-EventWriter", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace)
+	v.ExecCommandInWinPod("event-writer-helper.bat Start-EventWriter", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace)
+	v.ExecCommandInWinPod("event-writer-helper.bat GetRetinaPromMetrics", v.RetinaDaemonSetName, v.RetinaDaemonSetNamespace)
 	return nil
 }
 

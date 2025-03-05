@@ -1,4 +1,11 @@
 @echo on
+REM Add logic to call a specific function based on the argument
+if "%1"=="Setup-EventWriter" goto Setup-EventWriter
+if "%1"=="Start-EventWriter" goto Start-EventWriter
+if "%1"=="GetRetinaPromMetrics" goto GetRetinaPromMetrics
+
+goto :EOF
+
 REM Define the Setup-EventWriter function
 :Setup-EventWriter
    echo Listing contents of C:\
@@ -10,7 +17,7 @@ REM Define the Setup-EventWriter function
    echo Copying bpf_event_writer.sys to C:\
    copy .\bpf_event_writer.sys C:\bpf_event_writer.sys
 
-   echo Changing directory to C:\
+   echo Changing directory to C:\ and starting event_writer.exe
    goto :EOF
 
 REM Define the Start-EventWriter function
@@ -32,12 +39,3 @@ REM Define the GetPromMetrics function
    powershell -Command "Invoke-WebRequest -Uri 'http://localhost:10093/metrics' -UseBasicParsing | ForEach-Object { $_.Content }"
 
    goto :EOF
-
-
-REM Add logic to call a specific function based on an argument
-if "%1"=="Setup-EventWriter" goto Setup-EventWriter
-if "%1"=="Start-EventWriter" goto Start-EventWriter
-if "%1"=="GetRetinaPromMetrics" goto GetRetinaPromMetrics
-
-REM Default to GetRetinaPromMetrics if no argument is given
-goto Setup-EventWriter
