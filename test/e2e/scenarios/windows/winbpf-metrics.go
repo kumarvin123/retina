@@ -19,7 +19,7 @@ type ValidateWinBpfMetric struct {
 	RetinaDaemonSetName       string
 }
 
-func (v *ValidateWinBpfMetric) ExecCommandInWinPod(cmd string, DeamonSetName string, DaemonSetNamespace string) error {
+func (v *ValidateWinBpfMetric) ExecCommandInWinPod(cmd string, DeamonSetName string, DaemonSetNamespace string, LabelSelector string) error {
 	config, err := clientcmd.BuildConfigFromFlags("", v.KubeConfigFilePath)
 	if err != nil {
 		return fmt.Errorf("error building kubeconfig: %w", err)
@@ -30,7 +30,6 @@ func (v *ValidateWinBpfMetric) ExecCommandInWinPod(cmd string, DeamonSetName str
 		return fmt.Errorf("error creating Kubernetes client: %w", err)
 	}
 
-	LabelSelector := fmt.Sprintf("name=%s", DeamonSetName)
 	pods, err := clientset.CoreV1().Pods(DaemonSetNamespace).List(context.TODO(), metav1.ListOptions{
 		LabelSelector: LabelSelector,
 	})
@@ -73,9 +72,9 @@ func (v *ValidateWinBpfMetric) Run() error {
 	// Hardcoding IP addr for aka.ms - 23.213.38.151 - 399845015
 	//aksmsIpaddr := 399845015
 	// Setup Event Writer
-	v.ExecCommandInWinPod("event-writer-helper.bat Setup-EventWriter", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace)
-	v.ExecCommandInWinPod("event-writer-helper.bat Start-EventWriter", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace)
-	v.ExecCommandInWinPod("event-writer-helper.bat GetRetinaPromMetrics", v.RetinaDaemonSetName, v.RetinaDaemonSetNamespace)
+	v.ExecCommandInWinPod("event-writer-helper.bat Setup-EventWriter", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, fmt.Sprintf("name=%s", v.EbpfXdpDeamonSetName))
+	v.ExecCommandInWinPod("event-writer-helper.bat Start-EventWriter", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, fmt.Sprintf("name=%s", v.EbpfXdpDeamonSetName))
+	v.ExecCommandInWinPod("event-writer-helper.bat GetRetinaPromMetrics", v.RetinaDaemonSetName, v.RetinaDaemonSetNamespace, "k8s-app=retina")
 	return nil
 }
 
