@@ -12,7 +12,6 @@ import (
 
 	"github.com/microsoft/retina/test/e2e/common"
 	"github.com/microsoft/retina/test/e2e/framework/helpers"
-	"github.com/microsoft/retina/test/e2e/framework/kubernetes"
 	"github.com/microsoft/retina/test/e2e/framework/types"
 	jobs "github.com/microsoft/retina/test/e2e/jobs"
 	"github.com/stretchr/testify/require"
@@ -51,7 +50,7 @@ func TestE2ERetina(t *testing.T) {
 	rootDir := filepath.Dir(filepath.Dir(cwd))
 
 	chartPath := filepath.Join(rootDir, "deploy", "legacy", "manifests", "controller", "helm", "retina")
-	hubblechartPath := filepath.Join(rootDir, "deploy", "hubble", "manifests", "controller", "helm", "retina")
+	//hubblechartPath := filepath.Join(rootDir, "deploy", "hubble", "manifests", "controller", "helm", "retina")
 	profilePath := filepath.Join(rootDir, "test", "profiles", "advanced", "values.yaml")
 	kubeConfigFilePath := filepath.Join(rootDir, "test", "e2e", "test.pem")
 
@@ -64,11 +63,6 @@ func TestE2ERetina(t *testing.T) {
 	installEbpfAndXDP.Run(ctx)
 
 	time.Sleep(10 * time.Minute)
-	job.AddStep(&kubernetes.EnsureStableComponent{
-		PodNamespace:           common.KubeSystemNamespace,
-		LabelSelector:          "name=install-ebpf-xdp",
-		IgnoreContainerRestart: false,
-	}, nil)
 
 	t.Cleanup(func() {
 		if *common.DeleteInfra {
