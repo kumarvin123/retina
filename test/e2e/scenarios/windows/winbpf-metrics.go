@@ -88,6 +88,12 @@ func (v *ValidateWinBpfMetric) Run() error {
 
 	// Check for Basic Metrics
 	// TRACE
+	err, output = v.ExecCommandInWinPod("C:\\event-writer-helper.bat CurlAkaMs", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
+	if err != nil {
+		return err
+	}
+	fmt.Println(output)
+
 	err, output = v.ExecCommandInWinPod("C:\\event-writer-helper.bat Start-EventWriter -event 4 -srcIP 23.213.38.151", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
 	if err != nil {
 		return err
@@ -95,13 +101,6 @@ func (v *ValidateWinBpfMetric) Run() error {
 	fmt.Println(output)
 
 	time.Sleep(20 * time.Second)
-	err, _ = v.ExecCommandInWinPod("C:\\event-writer-helper.bat CurlAkaMs", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
-	if err != nil {
-		return err
-	}
-	fmt.Println(output)
-
-	time.Sleep(10 * time.Second)
 	err, output = v.ExecCommandInWinPod("C:\\event-writer-helper.bat GetRetinaPromMetrics", v.RetinaDaemonSetName, v.RetinaDaemonSetNamespace, "k8s-app=retina")
 	if err != nil {
 		return err

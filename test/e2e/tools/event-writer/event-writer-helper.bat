@@ -30,7 +30,7 @@ REM Define the Start-EventWriter function
 
    if "%2"=="-event" (
         echo Starting event_writer.exe with -event %3 -srcIP %4
-        .\event_writer.exe -event %3 -srcIP %4
+        .\event_writer.exe -event %3
     )
 
    echo Changing directory to C:\hpc
