@@ -86,7 +86,6 @@ func (v *ValidateWinBpfMetric) Run() error {
 	}
 	fmt.Println(output)
 
-	// Check for Basic Metrics
 	// TRACE
 	err, output = v.ExecCommandInWinPod("C:\\event-writer-helper.bat CurlAkaMs", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
 	if err != nil {
@@ -106,6 +105,7 @@ func (v *ValidateWinBpfMetric) Run() error {
 		return err
 	}
 
+	// Check for Basic Metrics
 	if strings.Contains(output, "networkobservability_forward_bytes") {
 		log.Println("The output contains networkobservability_forward_bytes")
 	}
