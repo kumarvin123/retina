@@ -114,6 +114,8 @@ func (v *ValidateWinBpfMetric) Run() error {
 	if strings.Contains(output, "networkobservability_adv_tcpflags_count") {
 		log.Println("The output contains networkobservability_adv_tcpflags_count")
 	}
+
+	fmt.Println(output)
 	return nil
 }
 
