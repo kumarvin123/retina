@@ -20,6 +20,7 @@ REM Define the Setup-EventWriter function
 
    echo Listing contents of C:\
    dir C:\
+
    goto :EOF
 
 REM Define the Start-EventWriter function
@@ -29,7 +30,7 @@ REM Define the Start-EventWriter function
 
    if "%2"=="-event" (
         echo Starting event_writer.exe with -event %3 -srcIP %4
-        start /B .\event_writer.exe -event %3 -srcIP %4
+        .\event_writer.exe -event %3 -srcIP %4
     )
 
    echo Changing directory to C:\hpc
@@ -47,6 +48,10 @@ REM Define the GetPromMetrics function
 REM Curl AKA.MS
 :CurlAkaMs
    // Hardcoding IP addr for aka.ms - 23.213.38.151
-   echo Curl AKA.MS or 23.213.38.151
-   start /B powershell -Command "Invoke-WebRequest -Uri '23.213.38.151' -UseBasicParsing | ForEach-Object { $_.Content }"
+   for /L %%i in (1,1,1000) do (
+      echo Curl AKA.MS or 23.213.38.151
+      start /B powershell -Command "Invoke-WebRequest -Uri '23.213.38.151' -UseBasicParsing | ForEach-Object { $_.Content }"
+      timeout /t 1 >nul
+   )
+
    goto :EOF

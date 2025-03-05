@@ -116,6 +116,7 @@ func InstallEbpfXdp(kubeConfigFilePath string) *types.Job {
 	job.AddStep(&kubernetes.ApplyYamlConfig{
 		YamlFilePath: "yaml/windows/install-ebpf-xdp.yaml",
 	}, nil)
+
 	return job
 }
 
