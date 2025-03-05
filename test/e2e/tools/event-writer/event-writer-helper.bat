@@ -17,7 +17,7 @@ REM Define the Setup-EventWriter function
    echo Copying bpf_event_writer.sys to C:\
    copy .\bpf_event_writer.sys C:\bpf_event_writer.sys
 
-   echo Changing directory to C:\ and starting event_writer.exe
+   dir C:\
    goto :EOF
 
 REM Define the Start-EventWriter function
