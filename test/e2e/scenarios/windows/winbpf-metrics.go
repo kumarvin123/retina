@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
 	k8s "github.com/microsoft/retina/test/e2e/framework/kubernetes"
 	v1 "k8s.io/api/core/v1"
@@ -85,12 +86,6 @@ func (v *ValidateWinBpfMetric) Run() error {
 	}
 	fmt.Println(output)
 
-	err, output = v.ExecCommandInWinPod("C:\\event-writer-helper.bat CurlAkaMs", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
-	if err != nil {
-		return err
-	}
-	fmt.Println(output)
-
 	// Check for Basic Metrics
 	// TRACE
 	err, output = v.ExecCommandInWinPod("C:\\event-writer-helper.bat Start-EventWriter -event 4 -srcIP 23.213.38.151", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
@@ -99,6 +94,13 @@ func (v *ValidateWinBpfMetric) Run() error {
 	}
 	fmt.Println(output)
 
+	err, output = v.ExecCommandInWinPod("C:\\event-writer-helper.bat CurlAkaMs", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
+	if err != nil {
+		return err
+	}
+	fmt.Println(output)
+
+	time.Sleep(5 * time.Second)
 	err, output = v.ExecCommandInWinPod("C:\\event-writer-helper.bat GetRetinaPromMetrics", v.RetinaDaemonSetName, v.RetinaDaemonSetNamespace, "k8s-app=retina")
 	if err != nil {
 		return err
