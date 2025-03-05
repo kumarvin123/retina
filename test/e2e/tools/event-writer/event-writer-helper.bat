@@ -27,7 +27,7 @@ REM Define the Start-EventWriter function
    cd C:\
 
    echo Starting event_writer.exe with -event 4
-   start .\event_writer.exe -event 4
+   .\event_writer.exe -event 4
 
    echo Changing directory to C:\hpc
    cd C:\hpc

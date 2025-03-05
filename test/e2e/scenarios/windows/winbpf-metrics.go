@@ -3,6 +3,7 @@ package windows
 import (
 	"context"
 	"fmt"
+	"time"
 
 	k8s "github.com/microsoft/retina/test/e2e/framework/kubernetes"
 	v1 "k8s.io/api/core/v1"
@@ -77,6 +78,7 @@ func (v *ValidateWinBpfMetric) Run() error {
 
 	v.ExecCommandInWinPod("C:\\event-writer-helper.bat Setup-EventWriter", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
 	v.ExecCommandInWinPod("C:\\event-writer-helper.bat Start-EventWriter", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
+	time.Sleep(30 * time.Second)
 	v.ExecCommandInWinPod("C:\\event-writer-helper.bat GetRetinaPromMetrics", v.RetinaDaemonSetName, v.RetinaDaemonSetNamespace, "k8s-app=retina")
 	return nil
 }
