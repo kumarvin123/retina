@@ -17,6 +17,7 @@ REM Define the Setup-EventWriter function
    echo Copying bpf_event_writer.sys to C:\
    copy .\bpf_event_writer.sys C:\bpf_event_writer.sys
 
+   echo Listing contents of C:\
    dir C:\
    goto :EOF
 
