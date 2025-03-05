@@ -59,7 +59,7 @@ func (v *ValidateWinBpfMetric) ExecCommandInWinPod(cmd string, DeamonSetName str
 	err = defaultRetrier.Do(context.TODO(), func() error {
 		outputBytes, err := k8s.ExecPod(context.TODO(), clientset, config, windowsPod.Namespace, windowsPod.Name, cmd)
 		if err != nil {
-			return fmt.Errorf("error executing command in windows pod: %w", err), ""
+			return fmt.Errorf("error executing command in windows pod: %w", err)
 		}
 
 		result.Output = string(outputBytes)
