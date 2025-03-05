@@ -74,9 +74,8 @@ func (v *ValidateWinBpfMetric) Run() error {
 	// Setup Event Writer
 	v.ExecCommandInWinPod("cmd /c call setup_event_writer.bat:Setup-EventWriter", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace)
 	v.ExecCommandInWinPod("cmd /c call setup_event_writer.bat:Start-EventWriter", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace)
-	//v.ExecCommandInWinPod("curl -s \"http://localhost:10093/metrics\"", v.RetinaDaemonSetName, v.RetinaDaemonSetNamespace, "windows")
-	//v.ExecCommandInWinPod("powershell -Command \"Invoke-WebRequest -Uri \"http://localhost:10093/metrics\" -UseBasicParsing\"", v.RetinaDaemonSetName, v.RetinaDaemonSetNamespace)
 	v.ExecCommandInWinPod("dir C:", v.RetinaDaemonSetName, v.RetinaDaemonSetNamespace)
+	v.ExecCommandInWinPod("cmd /c call setup_event_writer.bat:GetRetinaPromMetrics", v.RetinaDaemonSetName, v.RetinaDaemonSetNamespace)
 	return nil
 }
 
