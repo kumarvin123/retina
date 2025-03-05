@@ -78,8 +78,7 @@ func (v *ValidateWinBpfMetric) Run() error {
 
 	//v.ExecCommandInWinPod("curl -s \"http://localhost:10093/metrics\"", v.RetinaDaemonSetName, v.RetinaDaemonSetNamespace, "windows")
 	//v.ExecCommandInWinPod("powershell -Command \"Invoke-WebRequest -Uri \"http://localhost:10093/metrics\" -UseBasicParsing\"", v.RetinaDaemonSetName, v.RetinaDaemonSetNamespace)
-	cmd := fmt.Sprintf("powershell -Command \"Get-Location\"")
-	v.ExecCommandInWinPod(cmd, v.RetinaDaemonSetName, v.RetinaDaemonSetNamespace)
+	v.ExecCommandInWinPod("dir C:", v.RetinaDaemonSetName, v.RetinaDaemonSetNamespace)
 	return nil
 }
 
