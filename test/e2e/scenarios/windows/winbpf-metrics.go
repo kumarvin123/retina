@@ -3,7 +3,6 @@ package windows
 import (
 	"context"
 	"fmt"
-	"log"
 	"strings"
 	"time"
 
@@ -75,26 +74,24 @@ func (v *ValidateWinBpfMetric) ExecCommandInWinPod(cmd string, DeamonSetName str
 func (v *ValidateWinBpfMetric) Run() error {
 	// Setup Event Writer into Node
 	ebpfLabelSelector := fmt.Sprintf("name=%s", v.EbpfXdpDeamonSetName)
-	err, output := v.ExecCommandInWinPod("move .\\event-writer-helper.bat C:\\event-writer-helper.bat", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
+	err, _ := v.ExecCommandInWinPod("move .\\event-writer-helper.bat C:\\event-writer-helper.bat", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
 	if err != nil {
 		return err
 	}
-	fmt.Println(output)
-	err, output = v.ExecCommandInWinPod("C:\\event-writer-helper.bat Setup-EventWriter", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
+
+	err, _ = v.ExecCommandInWinPod("C:\\event-writer-helper.bat Setup-EventWriter", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
+	if err != nil {
+		return err
+	}
+
+	// TRACE
+	err, output := v.ExecCommandInWinPod("C:\\event-writer-helper.bat Start-EventWriter -event 4 -srcIP 23.213.38.151", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
 	if err != nil {
 		return err
 	}
 	fmt.Println(output)
 
-	// TRACE
-	/*
-		err, output = v.ExecCommandInWinPod("C:\\event-writer-helper.bat CurlAkaMs", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
-		if err != nil {
-			return err
-		}
-		fmt.Println(output)
-	*/
-	err, output = v.ExecCommandInWinPod("C:\\event-writer-helper.bat Start-EventWriter -event 4 -srcIP 23.213.38.151", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
+	err, output = v.ExecCommandInWinPod("C:\\event-writer-helper.bat CurlAkaMs", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
 	if err != nil {
 		return err
 	}
@@ -108,12 +105,12 @@ func (v *ValidateWinBpfMetric) Run() error {
 
 	// Check for Basic Metrics
 	if strings.Contains(output, "networkobservability_forward_bytes") {
-		log.Println("The output contains networkobservability_forward_bytes")
+		fmt.Println("The output contains networkobservability_forward_bytes")
 	}
 
 	// Check for Advanced Metrics
 	if strings.Contains(output, "networkobservability_adv_tcpflags_count") {
-		log.Println("The output contains networkobservability_adv_tcpflags_count")
+		fmt.Println("The output contains networkobservability_adv_tcpflags_count")
 	}
 
 	fmt.Println(output)
