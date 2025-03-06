@@ -240,6 +240,7 @@ Function Disable-TestSigning
       Start-Sleep -Seconds:5
 
       Restart-Computer
+      Start-Sleep -Seconds:60
    }
 
    Return $isSuccess
@@ -298,6 +299,7 @@ Function Enable-TestSigning
    }
    Catch
    {
+      Write-Host "Enable-TestSigning : $_"
       $isSuccess = $false
    }
 
@@ -309,6 +311,7 @@ Function Enable-TestSigning
       Start-Sleep -Seconds:5
 
       Restart-Computer
+      Start-Sleep -Seconds:60
    }
 
    Return $isSuccess
@@ -320,21 +323,21 @@ Function Enable-TestSigning
 
 <#
  .Name
-   Assert-WindowsCiliumIsReady
+   Assert-WindowsEbpfXdpIsReady
 
  .Synopsis
-   Check if Cilium for Windows is ready
+   Check if EBPF and XDP for Windows is ready
 
  .Description
-   Returns TRUE if Cilium for Windows is ready, otherwise FALSE.
+   Returns TRUE if EBPF and XDP for Windows is ready, otherwise FALSE.
 
  .Example
-   # Check if Cilium for Windows is ready
+   # Check if EBPF and XDP for Windows is ready
    Assert-WindowsCiliumFunctions
 #>
-Function Assert-WindowsCiliumIsReady
+Function Assert-WindowsEbpfXdpIsReady
 {
-    Write-Host -Object:'Validating Cilium for Windows is ready'
+    Write-Host -Object:'Validating EBPF and XDP for Windows is ready'
 
    [Boolean]  $isReady  = $true
    [String[]] $services = @(
@@ -402,18 +405,17 @@ Function Install-eBPF
       }
 
       Write-Host 'Installing extended Berkley Packet Filter for Windows'
-      $ProgressPreference = 'SilentlyContinue'
       # Download eBPF-for-Windows.
       $packageEbpfUrl = "https://github.com/microsoft/ebpf-for-windows/releases/download/Release-v0.20.0/Build-x64-native-only.NativeOnlyRelease.zip"
-      Invoke-WebRequest -Uri $packageEbpfUrl -OutFile "$LocalPath\\Build-x64-native-only-NativeOnlyRelease.zip"
-      Expand-Archive -Path "$LocalPath\\Build-x64-native-only-NativeOnlyRelease.zip" -DestinationPath "$LocalPath\\Build-x64-native-only-NativeOnlyRelease\\msi" -Force
-      Start-Process -FilePath:"$($env:WinDir)\System32\MSIExec.exe" -ArgumentList @("/i $($LocalPath)\ebpf-for-windows.msi", '/qn', "INSTALLFOLDER=`"$($env:ProgramFiles)\ebpf-for-windows`"", 'ADDLOCAL=eBPF_Runtime_Components') -PassThru | Wait-Process
+      Invoke-WebRequest -Uri $packageEbpfUrl -OutFile "$LocalPath\Build-x64-native-only.NativeOnlyRelease.zip"
+      Expand-Archive -Path "$LocalPath\Build-x64-native-only.NativeOnlyRelease.zip" -DestinationPath "$LocalPath\Build-x64-native-only.NativeOnlyRelease\msi" -Force
+      Copy-Item "$LocalPath\Build-x64-native-only.NativeOnlyRelease\msi\Build-x64-native-only NativeOnlyRelease\*.msi" -Destination $LocalPath
 
+      Start-Process -FilePath "$($env:WinDir)\System32\MSIExec.exe" -ArgumentList @("/i", "$LocalPath\ebpf-for-windows.msi", "/qn", "INSTALLFOLDER=`"$($env:ProgramFiles)\ebpf-for-windows`"", "ADDLOCAL=eBPF_Runtime_Components") -PassThru | Wait-Process
       If(-Not (Assert-SoftwareInstalled -ServiceName:'eBPFCore' -Silent) -Or
          -Not (Assert-SoftwareInstalled -ServiceName:'NetEbpfExt' -Silent))
       {
          Write-Error -Message:"`teBPF service failed to install"
-
          Throw
       }
 
@@ -471,10 +473,10 @@ Function Install-XDP
       # Download XDP-for-Windows.
       Write-Host 'Installing eXpress Data Path for Windows'
       $packageXdpUrl = "https://github.com/microsoft/xdp-for-windows/releases/download/v1.1.0%2Bbed474a/bin_Release_x64.zip"
-      Invoke-WebRequest -Uri $packageXdpUrl -OutFile "$LocalPath\\bin_Release_x64.zip"
-      Expand-Archive -Path "$LocalPath\\bin_Release_x64.zip" -DestinationPath "$LocalPath\\bin_Release_x64" -Force
-      copy "$LocalPath\\bin_Release_x64\\amd64fre\\xdp.cer" $LocalPath
-      copy "$LocalPath\\bin_Release_x64\\amd64fre\\xdpcfg.exe" $LocalPath
+      Invoke-WebRequest -Uri $packageXdpUrl -OutFile "$LocalPath\bin_Release_x64.zip"
+      Expand-Archive -Path "$LocalPath\bin_Release_x64.zip" -DestinationPath "$LocalPath\bin_Release_x64" -Force
+      copy "$LocalPath\bin_Release_x64\amd64fre\xdp.cer" $LocalPath
+      copy "$LocalPath\bin_Release_x64\amd64fre\xdpcfg.exe" $LocalPath
       CertUtil.exe -addstore Root "$LocalPath\xdp.cer"
       CertUtil.exe -addstore TrustedPublisher "$LocalPath\xdp.cer"
       Invoke-WebRequest -Uri "https://github.com/microsoft/xdp-for-windows/releases/download/v1.1.0%2Bbed474a/xdp-for-windows.1.1.0.msi" -OutFile "$LocalPath\xdp-for-windows.1.1.0.msi"
@@ -489,6 +491,10 @@ Function Install-XDP
       If(-Not (Assert-SoftwareInstalled -SoftwareName:'XDP for Windows' -Silent)) {
          Throw
       }
+
+      Restart-Computer -Force
+      #to prevent any further commands in between
+      Start-Sleep -Seconds:60
    }
    Catch
    {
@@ -502,57 +508,46 @@ Function Install-XDP
 
 <#
  .Name
-   Install-WindowsCilium
+   Install-EbpfXdp
+
+ .Synopsis
+   Installs EBPF and XDP for Windows
 
  .Description
-   Returns TRUE if the Cilium for Windows installation is successfully, otherwise FALSE.
-   Requires test signing to be enabled.  This is asserted up front and may trigger a restart.
-   A restart will occur if the NoRestart switch is not specified.  Any caller needs to account for this.
+   Returns TRUE if EBPF and XDP for Windows is installed successfully, otherwise FALSE.
+
+ .Example
+   # Install EBPF and XDP for Windows
+   Install-EbpfXdp
 #>
-Function Install-WindowsCilium
+Function Install-EbpfXdp
 {
-   [cmdletbinding(DefaultParameterSetName='Default')]
-
-   [Boolean] $isSuccess = $true
-
    Try
    {
-      If(Assert-WindowsCiliumIsReady) {
-          Write-Host 'Windows Cilium Installed already'
+      If(Assert-WindowsEbpfXdpIsReady) {
           return
       }
 
-      Write-Host 'Installing Windows Cilium'
-
       If(-Not (Assert-TestSigningIsEnabled -Silent))
       {
-         If(-Not (Enable-TestSigning -Reboot)) { Throw }
+         If(-Not (Enable-TestSigning -Reboot)) {Throw}
       }
 
       If(-Not (Install-eBPF)) {Throw}
 
       If(-Not (Install-XDP)) {Throw}
 
+      If(Assert-WindowsEbpfXdpIsReady) {Throw}
+
       # Create the probe ready file
       New-Item -Path "C:\install-ebpf-xdp-probe-ready" -ItemType File -Force
-
-      Write-Host -Object:'Restarting'
-
-      Start-Sleep -Seconds:5
-
-      If(Assert-WindowsCiliumIsReady) {
-         Throw "Cilium for Windows is not ready"
-      }
-
-      Restart-Computer
    }
    Catch
    {
-      Write-Host "Exception: $_"
       $isSuccess = $false
    }
 
-   Return $isSuccess
+   return $isSuccess
 }
 
 <#
@@ -739,67 +734,6 @@ Function Uninstall-XDP
    Return $isSuccess
 }
 
-<#
- .Name
-   Uninstall-WindowsCilium
-
- .Synopsis
-   Uninstalls Cilium for Windows
-
- .Parameter LocalPath
-   Local directory to the Cilium for Windows binaries.
-   Default location is $env:LocalAppData\Temp
-
- .Parameter DisableTestSigning
-   Optional switch used to disable test signing on the current Windows boot loader
-
- .Description
-   Returns TRUE if Cilium for Windows is uninstalled successfully, otherwise FALSE.
-
- .Example
-   # Uninstall Cilium for Windows
-   Uninstall-WindowsCilium
-#>
-Function Uninstall-WindowsCilium
-{
-   [cmdletbinding(DefaultParameterSetName='Default')]
-
-   Param
-   (
-      [Parameter(ParameterSetName='Default',Mandatory=$false)]
-      [ValidateScript({Test-Path $_ -PathType:'Container'})]
-      [String] $LocalPath = "$env:TEMP",
-
-      [Parameter(ParameterSetName='Default',Mandatory=$false)]
-      [Switch] $DisableTestSigning,
-
-      [Parameter(ParameterSetName='Default',Mandatory=$false)]
-      [Switch] $NoReboot
-   )
-
-   Write-Host 'Uninstalling Cilium for Windows'
-
-   [Boolean] $isSuccess = $true
-
-   Try
-   {
-      Uninstall-XDP -LocalPath:"$($LocalPath)"
-
-      Uninstall-eBPF -LocalPath:"$($LocalPath)"
-
-      If($DisableTestSigning.IsPresent)
-      {
-         Disable-TestSigning -Reboot:$(-Not ($NoReboot.IsPresent))
-      }
-   }
-   Catch
-   {
-      $isSuccess = $false
-   }
-
-   Return $isSuccess
-}
-
 
 #Script Start
-Install-WindowsCilium
+exit $(Install-EbpfXdp)
