@@ -9,16 +9,16 @@ goto :EOF
 
 REM Define the Setup-EventWriter function
 :Setup-EventWriter
-   echo Listing contents of C:\
+   powershell -Command "Write-Output 'Listing contents of C:\'"
    dir C:\
 
-   echo Copying event_writer.exe to C:\
+   powershell -Command "Write-Output 'Copying event_writer.exe to C:'"
    copy .\event_writer.exe C:\event_writer.exe
 
-   echo Copying bpf_event_writer.sys to C:\
+    powershell -Command "Write-Output 'Copying bpf_event_writer.sys to C:'"
    copy .\bpf_event_writer.sys C:\bpf_event_writer.sys
 
-   echo Listing contents of C:\
+   powershell -Command "Write-Output 'Listing contents of C:'"
    dir C:\
 
    goto :EOF
@@ -27,8 +27,8 @@ REM Define the Start-EventWriter function
 :Start-EventWriter
    echo Changing directory to C:\
    cd C:\
-   echo Starting event_writer.exe with -event %3 -srcIP %4
-   .\event_writer.exe -event %3
+   echo Starting event_writer.exe with -event %3 -srcIP %5
+   .\event_writer.exe -event %3 -srcIP %5
    echo Changing directory to C:\hpc
    cd C:\hpc
 
