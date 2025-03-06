@@ -36,7 +36,7 @@ image:
   tag: "4c3d745"
 
 enableConntrackMetrics: false
-enablePodLevel: false
+enablePodLevel: true
 remoteContext: false
 enableAnnotations: true
 bypassLookupIPOfInterest: false

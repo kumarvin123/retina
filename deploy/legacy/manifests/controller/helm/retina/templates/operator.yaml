@@ -48,7 +48,7 @@ spec:
                     operator: In
                     values:
                       - linux
-                      #- windows
+                      - windows
       securityContext:
         runAsNonRoot: true
       containers:
@@ -130,11 +130,11 @@ metadata:
   creationTimestamp: null
   name: "{{ .Values.operator.name }}-role"
 rules:
-  - apiGroups: 
+  - apiGroups:
       - "apiextensions.k8s.io"
-    resources: 
+    resources:
       - "customresourcedefinitions"
-    verbs: 
+    verbs:
       - "create"
       - "get"
       - "update"
@@ -387,11 +387,11 @@ spec:
       tlsConfig: {{- .Values.metrics.serviceMonitor.tlsConfig | nindent 8 }}
       {{- end }}
       {{- if .Values.metrics.serviceMonitor.relabelings }}
-      relabelings: 
+      relabelings:
       {{- toYaml .Values.metrics.serviceMonitor.relabelings | nindent 8 }}
       {{- end }}
       {{- if .Values.metrics.serviceMonitor.metricRelabelings }}
-      metricRelabelings: 
+      metricRelabelings:
       {{- toYaml .Values.metrics.serviceMonitor.metricRelabelings | nindent 8 }}
       {{- end }}
   namespaceSelector:
