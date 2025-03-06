@@ -99,9 +99,23 @@ func (v *ValidateWinBpfMetric) Run() error {
 	fmt.Println(output)
 
 	time.Sleep(20 * time.Second)
-	err, output = v.ExecCommandInWinPod("C:\\event-writer-helper.bat GetRetinaPromMetrics", v.RetinaDaemonSetName, v.RetinaDaemonSetNamespace, "k8s-app=retina")
-	if err != nil {
-		return err
+
+	var promOutput string
+	numAttempts := 10
+	for promOutput == "" && numAttempts > 0 {
+		err, promOutput = v.ExecCommandInWinPod("C:\\event-writer-helper.bat GetRetinaPromMetrics", v.RetinaDaemonSetName, v.RetinaDaemonSetNamespace, "k8s-app=retina")
+		if err != nil {
+			return err
+		}
+		if promOutput != "" {
+			break
+		}
+		numAttempts--
+		time.Sleep(5 * time.Second)
+	}
+
+	if promOutput == "" {
+		return fmt.Errorf("failed to get prometheus metrics from Retina DaemonSet")
 	}
 
 	// Check for Basic Metrics
