@@ -9,6 +9,7 @@ import (
 	"time"
 
 	k8s "github.com/microsoft/retina/test/e2e/framework/kubernetes"
+	prom "github.com/microsoft/retina/test/e2e/framework/prometheus"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kubernetes "k8s.io/client-go/kubernetes"
@@ -89,7 +90,7 @@ func (v *ValidateWinBpfMetric) Run() error {
 
 	// Resolve the hostname for aka.ms
 	// need only 1 IP address
-	ips, err := net.LookupIP("http://aka.ms")
+	ips, err := net.LookupIP("aka.ms")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -143,6 +144,24 @@ func (v *ValidateWinBpfMetric) Run() error {
 	}
 
 	fmt.Println(promOutput)
+
+	labels := map[string]string{
+		"direction": "ingress",
+	}
+	err = prom.CheckMetricFromBuffer([]byte(promOutput), "networkobservability_forward_bytes", labels)
+	if err != nil {
+		return fmt.Errorf("failed to verify networkobservability_forward_bytes: %w", err)
+	} else {
+		fmt.Println("The output contains networkobservability_forward_bytes")
+	}
+
+	err = prom.CheckMetricFromBuffer([]byte(promOutput), "networkobservability_forward_count", labels)
+	if err != nil {
+		return fmt.Errorf("failed to verify networkobservability_forward_count: %w", err)
+	} else {
+		fmt.Println("The output contains networkobservability_forward_count")
+	}
+
 	return nil
 }
 
