@@ -14,11 +14,10 @@ REM Define the Setup-EventWriter function
 
    goto :EOF
 
-REM Define the Start-EventWriter function
+REM Define the Start-EventWriter function .\event_writer.exe -event %3 -srcIP %5
 :Start-EventWriter
    cd C:\
-   start "" cmd .\event_writer.exe -event %3 -srcIP %5
-
+   start "" cmd .\event_writer.exe -event %3
    goto :EOF
 
 REM Define the GetPromMetrics function
@@ -29,6 +28,6 @@ REM Define the GetPromMetrics function
 
 REM Curl
 :Curl
-   powershell -Command "Write-Output 'Curl http://%2'"
+   powershell -Command "Write-Output 'wget http://%2'"
    start "" cmd /c "for /L %%i in (1,1,1000) do (powershell -Command \"wget -Uri 'http://%2' -UseBasicParsing\" & timeout /t 1 >nul)"
    goto :EOF
