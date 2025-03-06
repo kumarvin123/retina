@@ -3,6 +3,8 @@ package windows
 import (
 	"context"
 	"fmt"
+	"log"
+	"net"
 	"strings"
 	"time"
 
@@ -51,13 +53,14 @@ func (v *ValidateWinBpfMetric) ExecCommandInWinPod(cmd string, DeamonSetName str
 	}
 
 	if windowsPod == nil {
-		return ErrorNoWindowsPod, fmt.Sprintf("No Windows Pod found in DaemonSet %s and label %s", DeamonSetName, LabelSelector)
+		return fmt.Errorf("No Windows Pod found in DaemonSet %s and label %s", DeamonSetName, LabelSelector), ""
 	}
 
 	result := &CommandResult{}
 	err = defaultRetrier.Do(context.TODO(), func() error {
 		outputBytes, err := k8s.ExecPod(context.TODO(), clientset, config, windowsPod.Namespace, windowsPod.Name, cmd)
 		if err != nil {
+			fmt.Errorf("error executing command in windows pod: %w", err)
 			return fmt.Errorf("error executing command in windows pod: %w", err)
 		}
 
@@ -65,7 +68,7 @@ func (v *ValidateWinBpfMetric) ExecCommandInWinPod(cmd string, DeamonSetName str
 		return nil
 	})
 	if err != nil {
-		panic(err.Error())
+		return err, ""
 	}
 
 	return nil, result.Output
@@ -84,15 +87,24 @@ func (v *ValidateWinBpfMetric) Run() error {
 		return err
 	}
 
-	// TRACE
-	// Hardcoding aka.ms
-	err, output := v.ExecCommandInWinPod("C:\\event-writer-helper.bat Start-EventWriter -event 4 -srcIP 23.32.221.157", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
+	// Resolve the hostname for aka.ms
+	// need only 1 IP address
+	ips, err := net.LookupIP("http://aka.ms")
+	if err != nil {
+		log.Fatal(err)
+	}
+	aksIpaddress := ips[0].String()
+
+	//TRACE
+	cmd := fmt.Sprintf("C:\\event-writer-helper.bat Start-EventWriter -event 4 -srcIP %s", aksIpaddress)
+	err, output := v.ExecCommandInWinPod(cmd, v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
 	if err != nil {
 		return err
 	}
 	fmt.Println(output)
 
-	err, output = v.ExecCommandInWinPod("C:\\event-writer-helper.bat CurlAkaMs", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
+	cmd = fmt.Sprintf("C:\\event-writer-helper.bat Curl %s", aksIpaddress)
+	err, output = v.ExecCommandInWinPod(cmd, v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
 	if err != nil {
 		return err
 	}
@@ -104,7 +116,9 @@ func (v *ValidateWinBpfMetric) Run() error {
 	numAttempts := 10
 	for promOutput == "" && numAttempts > 0 {
 		err, promOutput = v.ExecCommandInWinPod("C:\\event-writer-helper.bat GetRetinaPromMetrics", v.RetinaDaemonSetName, v.RetinaDaemonSetNamespace, "k8s-app=retina")
+
 		if err != nil {
+			fmt.Println(err.Error())
 			return err
 		}
 		if promOutput != "" {

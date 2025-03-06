@@ -102,7 +102,7 @@ func UninstallRetina(kubeConfigFilePath, chartPath string) *types.Job {
 }
 
 func ValidateWinBpfMetricJob(kubeConfigFilePath string) *types.Job {
-	job := types.NewJob("Validate Cilium Metrics")
+	job := types.NewJob("Validate Win BPF Metrics")
 	job.AddScenario(windows.ValidateWinBpfMetricScenario())
 	return job
 }
