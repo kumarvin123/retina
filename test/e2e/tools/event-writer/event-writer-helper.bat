@@ -27,12 +27,8 @@ REM Define the Start-EventWriter function
 :Start-EventWriter
    echo Changing directory to C:\
    cd C:\
-
-   if "%2"=="-event" (
-        echo Starting event_writer.exe with -event %3 -srcIP %4
-        .\event_writer.exe -event %3
-    )
-
+   echo Starting event_writer.exe with -event %3 -srcIP %4
+   .\event_writer.exe -event %3
    echo Changing directory to C:\hpc
    cd C:\hpc
 
