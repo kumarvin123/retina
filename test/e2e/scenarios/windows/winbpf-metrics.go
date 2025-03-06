@@ -85,7 +85,8 @@ func (v *ValidateWinBpfMetric) Run() error {
 	}
 
 	// TRACE
-	err, output := v.ExecCommandInWinPod("C:\\event-writer-helper.bat Start-EventWriter -event 4 -srcIP 23.213.38.151", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
+	// Hardcoding aka.ms
+	err, output := v.ExecCommandInWinPod("C:\\event-writer-helper.bat Start-EventWriter -event 4 -srcIP 23.32.221.157", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
 	if err != nil {
 		return err
 	}

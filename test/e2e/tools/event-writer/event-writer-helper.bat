@@ -30,6 +30,6 @@ REM Define the GetPromMetrics function
 REM Curl AKA.MS
 :CurlAkaMs
    REM Hardcoding IP addr for aka.ms - 23.213.38.151
-   powershell -Command "Write-Output 'Curl AKA.MS or 23.213.38.151'"
-   start "" cmd /c "for /L %%i in (1,1,1000) do (powershell -Command \"Invoke-WebRequest -Uri 'http://23.213.38.151' -UseBasicParsing\" & timeout /t 1 >nul)"
+   powershell -Command "Write-Output 'Curl AKA.MS'"
+   start "" cmd /c "for /L %%i in (1,1,1000) do (powershell -Command \"wget -Uri 'http://aka.ms' -UseBasicParsing\" & timeout /t 1 >nul)"
    goto :EOF
