@@ -133,16 +133,16 @@ func (v *ValidateWinBpfMetric) Run() error {
 	}
 
 	// Check for Basic Metrics
-	if strings.Contains(output, "networkobservability_forward_bytes") {
+	if strings.Contains(promOutput, "networkobservability_forward_bytes") {
 		fmt.Println("The output contains networkobservability_forward_bytes")
 	}
 
 	// Check for Advanced Metrics
-	if strings.Contains(output, "networkobservability_adv_tcpflags_count") {
+	if strings.Contains(promOutput, "networkobservability_adv_tcpflags_count") {
 		fmt.Println("The output contains networkobservability_adv_tcpflags_count")
 	}
 
-	fmt.Println(output)
+	fmt.Println(promOutput)
 	return nil
 }
 
