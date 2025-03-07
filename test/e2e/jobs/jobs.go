@@ -245,6 +245,7 @@ func UpgradeAndTestRetinaAdvancedMetrics(kubeConfigFilePath, chartPath, valuesFi
 		for _, scenario := range dnsScenarios {
 			name := scenario.name + " - Arch: " + arch
 			job.AddScenario(dns.ValidateAdvancedDNSMetrics(name, scenario.req, scenario.resp, kubeConfigFilePath, testPodNamespace, arch))
+			job.AddScenario(windows.ValidateWindowsBasicMetric())
 		}
 	}
 

@@ -18,7 +18,7 @@ REM Define the Setup-EventWriter function
 REM Define the Start-EventWriter function .\event_writer.exe -event %3 -srcIP %5
 :Start-EventWriter
    cd C:\
-   start /B cmd /c ".\event_writer.exe -event %3 > C:\event_writer.out 2>&1"
+   start /B cmd /c ".\event_writer.exe -event %3 -srcIP %5 > C:\event_writer.out 2>&1"
    goto :EOF
 
 REM Define the Pin-Maps

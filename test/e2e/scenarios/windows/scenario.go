@@ -20,3 +20,17 @@ func ValidateWinBpfMetricScenario() *types.Scenario {
 	}
 	return types.NewScenario(name, steps...)
 }
+
+func ValidateWindowsBasicMetric() *types.Scenario {
+	name := "Windows Metrics"
+	steps := []*types.StepWrapper{
+		{
+			Step: &ValidateHNSMetric{
+				KubeConfigFilePath:       "./test.pem",
+				RetinaDaemonSetNamespace: common.KubeSystemNamespace,
+				RetinaDaemonSetName:      "retina-agent-win",
+			},
+		},
+	}
+	return types.NewScenario(name, steps...)
+}

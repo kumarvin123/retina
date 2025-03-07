@@ -75,7 +75,6 @@ func (v *ValidateWinBpfMetric) ExecCommandInWinPod(cmd string, DeamonSetName str
 }
 
 func (v *ValidateWinBpfMetric) Run() error {
-	// Copy Event Writer into Node
 	ebpfLabelSelector := fmt.Sprintf("name=%s", v.EbpfXdpDeamonSetName)
 	// Resolve the hostname for aka.ms
 	// need only 1 IP address
@@ -93,7 +92,6 @@ func (v *ValidateWinBpfMetric) Run() error {
 	}
 
 	time.Sleep(20 * time.Second)
-
 	err, _ = v.ExecCommandInWinPod("C:\\event-writer-helper.bat CurlAkaMs", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
 	if err != nil {
 		return err
@@ -104,11 +102,32 @@ func (v *ValidateWinBpfMetric) Run() error {
 	if err != nil {
 		return err
 	}
-
-	fmt.Println(output)
-
 	if strings.Contains(output, "failed") {
-		return fmt.Errorf("failed to start event writer output")
+		return fmt.Errorf("failed to start event writer")
+	}
+
+	//DROP
+	time.Sleep(60 * time.Second)
+	cmd = fmt.Sprintf("C:\\event-writer-helper.bat Start-EventWriter -event 2 -srcIP %s", aksMsIpaddress)
+	err, _ = v.ExecCommandInWinPod(cmd, v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
+	if err != nil {
+		return err
+	}
+
+	time.Sleep(20 * time.Second)
+	err, _ = v.ExecCommandInWinPod("C:\\event-writer-helper.bat CurlAkaMs", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
+	if err != nil {
+		return err
+	}
+
+	time.Sleep(5 * time.Second)
+	err, output = v.ExecCommandInWinPod("C:\\event-writer-helper.bat DumpEventWriter", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
+	if err != nil {
+		return err
+	}
+	fmt.Println(output)
+	if strings.Contains(output, "failed") {
+		return fmt.Errorf("failed to start event writer")
 	}
 
 	err, output = v.ExecCommandInWinPod("C:\\event-writer-helper.bat DumpCurl", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
@@ -120,6 +139,7 @@ func (v *ValidateWinBpfMetric) Run() error {
 		return fmt.Errorf("failed to curl to aka.ms")
 	}
 
+	time.Sleep(10 * time.Second)
 	var promOutput string
 	numAttempts := 10
 	for promOutput == "" && numAttempts > 0 {
@@ -140,7 +160,10 @@ func (v *ValidateWinBpfMetric) Run() error {
 		return fmt.Errorf("failed to get prometheus metrics from Retina DaemonSet")
 	}
 
-	// Check for Basic Metrics
+	fmt.Println(promOutput)
+
+	// Check for Basic Metrics (Node Level)
+	//Forward
 	if strings.Contains(promOutput, "networkobservability_forward_bytes{direction=\"ingress\"}") {
 		fmt.Println("prom metrics output contains networkobservability_forward_bytes{direction=\"ingress\"}")
 	} else {
@@ -153,12 +176,24 @@ func (v *ValidateWinBpfMetric) Run() error {
 		return fmt.Errorf("prom metrics output does not contain networkobservability_forward_count{direction=\"ingress\"}")
 	}
 
+	//Drop
+	if strings.Contains(promOutput, "networkobservability_drop_bytes{direction=\"ingress\"}") {
+		fmt.Println("prom metrics output contains networkobservability_drop_bytes{direction=\"ingress\"}")
+	} else {
+		return fmt.Errorf("prom metrics output does not contain networkobservability_drop_bytes{direction=\"ingress\"}")
+	}
+
+	if strings.Contains(promOutput, "networkobservability_drop_count{direction=\"ingress\"}") {
+		fmt.Println("prom metrics output contains networkobservability_drop_count{direction=\"ingress\"}")
+	} else {
+		return fmt.Errorf("prom metrics output does not contain networkobservability_drop_count{direction=\"ingress\"}")
+	}
+
 	// Check for Advanced Metrics
 	if strings.Contains(promOutput, "networkobservability_adv_tcpflags_count") {
 		fmt.Println("prom metrics output contains networkobservability_adv_tcpflags_count")
 	}
 
-	fmt.Println(promOutput)
 	return nil
 }
 
