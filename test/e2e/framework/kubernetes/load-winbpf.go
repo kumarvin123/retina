@@ -5,10 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	k8s "github.com/microsoft/retina/test/e2e/framework/kubernetes"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	kubernetes "k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
@@ -48,12 +47,12 @@ func (a *LoadWinBPFMaps) ExecCommandInWinPod(cmd string, DeamonSetName string, D
 	}
 
 	if windowsPod == nil {
-		return fmt.Errorf("No Windows Pod found in DaemonSet %s and label %s", DeamonSetName, LabelSelector), ""
+		return fmt.Errorf("no Windows Pod found in DaemonSet %s and label %s", DeamonSetName, LabelSelector), ""
 	}
 
 	result := &CommandResult{}
 	err = defaultRetrier.Do(context.TODO(), func() error {
-		outputBytes, err := k8s.ExecPod(context.TODO(), clientset, config, windowsPod.Namespace, windowsPod.Name, cmd)
+		outputBytes, err := ExecPod(context.TODO(), clientset, config, windowsPod.Namespace, windowsPod.Name, cmd)
 		if err != nil {
 			fmt.Errorf("error executing command in windows pod: %w", err)
 			return fmt.Errorf("error executing command in windows pod: %w", err)
