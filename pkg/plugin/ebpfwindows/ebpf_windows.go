@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"syscall"
 	"time"
 
 	"unsafe"
@@ -43,7 +44,7 @@ const (
 var (
 	ErrInvalidEventData = errors.New("The Cilium Event Data is invalid")
 	ErrNilEnricher      = errors.New("enricher is nil")
-	retinaEbpfApi 	 *syscall.LazyDLL
+	retinaEbpfApi       *syscall.LazyDLL
 )
 
 // Plugin is the ebpfwindows plugin
@@ -139,8 +140,7 @@ func (p *Plugin) eventsMapCallback(data unsafe.Pointer, size uint64) int {
 func ensureRetinaEbpfApiDLLPresent() error {
 	src := `C:\hpc\retinaebpfapi.dll`
 	if _, err := os.Stat(src); os.IsNotExist(err) {
-		return fmt.Errorf("Error: retinaebpfapi.dll not found at
-		%s", src)
+		return fmt.Errorf("Error: retinaebpfapi.dll not found at %s", src)
 	}
 
 	oldPath := os.Getenv("PATH")
