@@ -14,7 +14,7 @@ import (
 	"github.com/microsoft/retina/test/e2e/scenarios/drop"
 	"github.com/microsoft/retina/test/e2e/scenarios/latency"
 	"github.com/microsoft/retina/test/e2e/scenarios/perf"
-	"github.com/microsoft/retina/test/e2e/scenarios/tcp"
+	tcp "github.com/microsoft/retina/test/e2e/scenarios/tcp"
 	"github.com/microsoft/retina/test/e2e/scenarios/windows"
 )
 
