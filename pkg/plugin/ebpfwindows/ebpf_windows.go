@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"time"
 
-	//"fmt"
+	"fmt"
 	"unsafe"
 
 	v1 "github.com/cilium/cilium/pkg/hubble/api/v1"
@@ -93,11 +94,6 @@ func (p *Plugin) Name() string {
 // Start the plugin by starting a periodic timer.
 func (p *Plugin) Start(ctx context.Context) error {
 	p.l.Info("Start ebpfWindows plugin...")
-	if enricher.IsInitialized() {
-		p.enricher = enricher.Instance()
-	} else {
-		p.l.Warn("retina enricher is not initialized")
-	}
 	p.pullCiliumMetricsAndEvents(ctx)
 	p.l.Info("Complete ebpfWindows plugin...")
 	return nil
@@ -141,16 +137,62 @@ func (p *Plugin) eventsMapCallback(data unsafe.Pointer, size uint64) int {
 	return 0
 }
 
+func ensureRetinaEbpfApiDLLPresent() error {
+	dst := `C:\Windows\retinaebpfapi.dll`
+	src := `C:\hpc\retinaebpfapi.dll`
+
+	// Check if destination DLL exists.
+	if _, err := os.Stat(dst); os.IsNotExist(err) {
+		// Open the source DLL.
+		in, err := os.Open(src)
+		if err != nil {
+			return fmt.Errorf("failed to open source DLL: %w", err)
+		}
+		defer in.Close()
+
+		// Create the destination file.
+		out, err := os.Create(dst)
+		if err != nil {
+			return fmt.Errorf("failed to create destination DLL: %w", err)
+		}
+		defer out.Close()
+
+		// Copy contents from source to destination.
+		if _, err = io.Copy(out, in); err != nil {
+			return fmt.Errorf("failed to copy DLL: %w", err)
+		}
+		fmt.Println("DLL copied successfully.")
+	} else if err != nil {
+		return fmt.Errorf("failed to check destination DLL: %w", err)
+	} else {
+		fmt.Println("DLL already exists.")
+	}
+
+	oldPath := os.Getenv("PATH")
+	newPath := oldPath + ";" + "C:\\Program Files\\ebpf-for-windows\\"
+	if err := os.Setenv("PATH", newPath); err != nil {
+		fmt.Println("Error setting PATH environment variable: %v")
+	}
+
+	return nil
+}
+
 // pullCiliumeBPFMetrics is the function that is called periodically by the timer.
 func (p *Plugin) pullCiliumMetricsAndEvents(ctx context.Context) {
 	eventsMap := NewEventsMap()
 	metricsMap := NewMetricsMap()
-	oldPath := os.Getenv("PATH")
-	newPath := oldPath + ";" + "C:\\Program Files\\ebpf-for-windows\\"
-	fmt.Println("PATH environment variable:", newPath)
-	if err := os.Setenv("PATH", newPath); err != nil {
-		fmt.Println("Error setting PATH environment variable: %v")
+
+	if err := ensureRetinaEbpfApiDLLPresent(); err != nil {
+		p.l.Error("Error: %v\n", zap.Error(err))
+		return
 	}
+
+	if enricher.IsInitialized() {
+		p.enricher = enricher.Instance()
+	} else {
+		p.l.Warn("retina enricher is not initialized")
+	}
+
 	if p.enricher != nil {
 		err := eventsMap.RegisterForCallback(p.eventsMapCallback)
 		if err != nil {
