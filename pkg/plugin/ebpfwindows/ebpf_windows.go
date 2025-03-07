@@ -157,8 +157,8 @@ func (p *Plugin) pullCiliumMetricsAndEvents(ctx context.Context) {
 	eventsMap := NewEventsMap()
 	metricsMap := NewMetricsMap()
 
-	if err := ensureRetinaEbpfApiDLLPresent(); err != nil {
-		p.l.Error(zap.Error(err))
+	err := ensureRetinaEbpfApiDLLPresent()
+	if err != nil {
 		return
 	}
 	// Load the retinaebpfapi.dll
