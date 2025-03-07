@@ -44,7 +44,7 @@ const (
 var (
 	ErrInvalidEventData = errors.New("The Cilium Event Data is invalid")
 	ErrNilEnricher      = errors.New("enricher is nil")
-	retinaEbpfApi       *syscall.LazyDLL
+	retinaEbpfApi       = syscall.NewLazyDLL("retinaebpfapi.dll")
 )
 
 // Plugin is the ebpfwindows plugin
@@ -161,8 +161,6 @@ func (p *Plugin) pullCiliumMetricsAndEvents(ctx context.Context) {
 	if err != nil {
 		return
 	}
-	// Load the retinaebpfapi.dll
-	retinaEbpfApi = syscall.NewLazyDLL("retinaebpfapi.dll")
 
 	if enricher.IsInitialized() {
 		p.enricher = enricher.Instance()
