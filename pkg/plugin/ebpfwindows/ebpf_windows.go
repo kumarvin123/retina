@@ -8,7 +8,6 @@ import (
 	"os"
 	"time"
 
-	"fmt"
 	"unsafe"
 
 	v1 "github.com/cilium/cilium/pkg/hubble/api/v1"
