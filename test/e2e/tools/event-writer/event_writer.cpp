@@ -232,7 +232,10 @@ int main(int argc, char* argv[]) {
     memset(&flt, 0, sizeof(flt));
     // Parse the command-line arguments (flags)
     for (int i = 1; i < argc; i++) {
-        if (strcmp(argv[i], "-event") == 0) {
+        if (strcmp(argv[i], "-pinmaps") == 0) {
+            return pin_maps_load_programs();
+        }
+        elif (strcmp(argv[i], "-event") == 0) {
             if (i + 1 < argc)
                 flt.event = static_cast<uint8_t>(atoi(argv[++i]));
         } else if (strcmp(argv[i], "-srcIP") == 0) {

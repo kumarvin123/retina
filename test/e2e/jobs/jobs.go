@@ -114,7 +114,6 @@ func InstallEbpfXdp(kubeConfigFilePath string) *types.Job {
 	job.AddStep(&kubernetes.ApplyYamlConfig{
 		YamlFilePath: "yaml/windows/install-ebpf-xdp.yaml",
 	}, nil)
-
 	return job
 }
 
@@ -331,6 +330,17 @@ func RunPerfTest(kubeConfigFilePath string, chartPath string) *types.Job {
 	}, &types.StepOptions{
 		SkipSavingParametersToJob: true,
 	})
+
+	return job
+}
+
+func LoadWinBPFMapsJob(kubeConfigFilePath string) *types.Job {
+	job := types.NewJob("Load Windows BPF Maps")
+	job.AddStep(&kubernetes.LoadWinBPFMaps{
+		KubeConfigFilePath:               kubeConfigFilePath,
+		LoadWinBPFMapsDeamonSetNamespace: "install-ebpf-xdp",
+		LoadWinBPFMapsDeamonSetName:      "install-ebpf-xdp",
+	}, nil)
 
 	return job
 }

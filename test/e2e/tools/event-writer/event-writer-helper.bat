@@ -6,6 +6,7 @@ if "%1"=="GetRetinaPromMetrics" goto GetRetinaPromMetrics
 if "%1"=="CurlAkaMs" goto CurlAkaMs
 if "%1"=="DumpEventWriter" goto DumpEventWriter
 if "%1"=="DumpCurl" goto DumpCurl
+if "%1"=="PinMaps" goto Pin-Maps
 goto :EOF
 
 REM Define the Setup-EventWriter function
@@ -18,6 +19,12 @@ REM Define the Start-EventWriter function .\event_writer.exe -event %3 -srcIP %5
 :Start-EventWriter
    cd C:\
    start /B cmd /c ".\event_writer.exe -event %3 > C:\event_writer.out 2>&1"
+   goto :EOF
+
+REM Define the Pin-Maps
+:PinMaps
+   cd C:\
+   start /B cmd /c ".\event_writer.exe -pinmaps > C:\event_writer.out 2>&1"
    goto :EOF
 
 REM Define the GetPromMetrics function

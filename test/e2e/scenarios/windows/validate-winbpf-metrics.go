@@ -75,18 +75,6 @@ func (v *ValidateWinBpfMetric) ExecCommandInWinPod(cmd string, DeamonSetName str
 }
 
 func (v *ValidateWinBpfMetric) Run() error {
-	// Copy Event Writer into Node
-	ebpfLabelSelector := fmt.Sprintf("name=%s", v.EbpfXdpDeamonSetName)
-	err, _ := v.ExecCommandInWinPod("move .\\event-writer-helper.bat C:\\event-writer-helper.bat", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
-	if err != nil {
-		return err
-	}
-
-	err, _ = v.ExecCommandInWinPod("C:\\event-writer-helper.bat Setup-EventWriter", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
-	if err != nil {
-		return err
-	}
-
 	// Resolve the hostname for aka.ms
 	// need only 1 IP address
 	ips, err := net.LookupIP("aka.ms")
