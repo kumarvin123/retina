@@ -105,12 +105,6 @@ func UninstallRetina(kubeConfigFilePath, chartPath string) *types.Job {
 	return job
 }
 
-func ValidateWinBpfMetricJob(kubeConfigFilePath string) *types.Job {
-	job := types.NewJob("Validate Win BPF Metrics")
-	job.AddScenario(windows.ValidateWinBpfMetricScenario())
-	return job
-}
-
 func InstallEbpfXdp(kubeConfigFilePath string) *types.Job {
 	job := types.NewJob("Install ebpf and xdp")
 	job.AddStep(&kubernetes.CreateNamespace{
@@ -254,6 +248,9 @@ func UpgradeAndTestRetinaAdvancedMetrics(kubeConfigFilePath, chartPath, valuesFi
 			job.AddScenario(dns.ValidateAdvancedDNSMetrics(name, scenario.req, scenario.resp, kubeConfigFilePath, testPodNamespace, arch))
 		}
 	}
+
+	// Validate Windows BPF Metrics
+	job.AddScenario(windows.ValidateWinBpfMetricScenario())
 
 	job.AddScenario(latency.ValidateLatencyMetric(testPodNamespace))
 

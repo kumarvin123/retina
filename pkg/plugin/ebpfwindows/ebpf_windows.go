@@ -137,7 +137,7 @@ func (p *Plugin) eventsMapCallback(data unsafe.Pointer, size uint64) int {
 }
 
 func ensureRetinaEbpfApiDLLPresent() error {
-	dst := `C:\Windows\retinaebpfapi.dll`
+	dst := `C:\Windows\System32\retinaebpfapi.dll`
 	src := `C:\hpc\retinaebpfapi.dll`
 
 	// Check if destination DLL exists.
@@ -277,7 +277,6 @@ func (p *Plugin) handleTraceEvent(data unsafe.Pointer, size uint64) error {
 			p.l.Error("Could not convert event to flow", zap.Any("handleTraceEvent", data), zap.Error(err))
 			return ErrInvalidEventData
 		}
-
 		p.enricher.Write(e)
 	case CiliumNotifyTraceSock:
 		if uintptr(size) < unsafe.Sizeof(TraceSockNotify{}) {
