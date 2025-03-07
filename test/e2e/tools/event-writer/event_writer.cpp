@@ -228,6 +228,7 @@ uint32_t ipStrToUint(const char* ipStr) {
 
 int main(int argc, char* argv[]) {
     struct filter flt;
+    setvbuf(stdout, NULL, _IONBF, 0);
     memset(&flt, 0, sizeof(flt));
     // Parse the command-line arguments (flags)
     for (int i = 1; i < argc; i++) {
@@ -277,8 +278,9 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    //Sleep for 5 minutes
-    Sleep(300000);
+    //Sleep for 1 minute
+    printf("%s - holding for 1 minute!!\n", __FUNCTION__);
+    Sleep(60000);
     unload_programs_detach();
     return 0;
 }

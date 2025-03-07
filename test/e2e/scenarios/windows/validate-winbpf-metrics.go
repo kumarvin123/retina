@@ -75,7 +75,7 @@ func (v *ValidateWinBpfMetric) ExecCommandInWinPod(cmd string, DeamonSetName str
 }
 
 func (v *ValidateWinBpfMetric) Run() error {
-	// Setup Event Writer into Node
+	// Copy Event Writer into Node
 	ebpfLabelSelector := fmt.Sprintf("name=%s", v.EbpfXdpDeamonSetName)
 	err, _ := v.ExecCommandInWinPod("move .\\event-writer-helper.bat C:\\event-writer-helper.bat", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
 	if err != nil {
@@ -93,24 +93,42 @@ func (v *ValidateWinBpfMetric) Run() error {
 	if err != nil {
 		log.Fatal(err)
 	}
-	aksIpaddress := ips[0].String()
+	aksMsIpaddress := ips[0].String()
 
 	//TRACE
-	cmd := fmt.Sprintf("C:\\event-writer-helper.bat Start-EventWriter -event 4 -srcIP %s", aksIpaddress)
-	err, output := v.ExecCommandInWinPod(cmd, v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
+	cmd := fmt.Sprintf("C:\\event-writer-helper.bat Start-EventWriter -event 4 -srcIP %s", aksMsIpaddress)
+	err, _ = v.ExecCommandInWinPod(cmd, v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
 	if err != nil {
 		return err
 	}
-	fmt.Println(output)
-
-	cmd = fmt.Sprintf("C:\\event-writer-helper.bat Curl %s", aksIpaddress)
-	err, output = v.ExecCommandInWinPod(cmd, v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
-	if err != nil {
-		return err
-	}
-	fmt.Println(output)
 
 	time.Sleep(20 * time.Second)
+
+	err, _ = v.ExecCommandInWinPod("C:\\event-writer-helper.bat CurlAkaMs", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
+	if err != nil {
+		return err
+	}
+
+	time.Sleep(5 * time.Second)
+	err, output := v.ExecCommandInWinPod("C:\\event-writer-helper.bat DumpEventWriter", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(output)
+
+	if !strings.Contains(output, "failed") {
+		return fmt.Errorf("failed to start event writer output")
+	}
+
+	err, output = v.ExecCommandInWinPod("C:\\event-writer-helper.bat DumpCurl", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
+	if err != nil {
+		return err
+	}
+
+	if !strings.Contains(output, "failed") {
+		return fmt.Errorf("failed to curl to aka.ms")
+	}
 
 	var promOutput string
 	numAttempts := 10

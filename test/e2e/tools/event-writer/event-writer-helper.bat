@@ -4,30 +4,38 @@ if "%1"=="Setup-EventWriter" goto Setup-EventWriter
 if "%1"=="Start-EventWriter" goto Start-EventWriter
 if "%1"=="GetRetinaPromMetrics" goto GetRetinaPromMetrics
 if "%1"=="CurlAkaMs" goto CurlAkaMs
-
+if "%1"=="DumpEventWriter" goto DumpEventWriter
+if "%1"=="DumpCurl" goto DumpCurl
 goto :EOF
 
 REM Define the Setup-EventWriter function
 :Setup-EventWriter
    copy .\event_writer.exe C:\event_writer.exe
    copy .\bpf_event_writer.sys C:\bpf_event_writer.sys
-
    goto :EOF
 
 REM Define the Start-EventWriter function .\event_writer.exe -event %3 -srcIP %5
 :Start-EventWriter
    cd C:\
-   start "" cmd .\event_writer.exe -event %3
+   start /B cmd /c ".\event_writer.exe -event %3 > C:\event_writer.out 2>&1"
    goto :EOF
 
 REM Define the GetPromMetrics function
 :GetRetinaPromMetrics
-   powershell -Command "Invoke-WebRequest -Uri 'http://localhost:10093/metrics' -UseBasicParsing | ForEach-Object { $_.Content }"
-
+   curl http://localhost:10093/metrics
    goto :EOF
 
 REM Curl
-:Curl
-   powershell -Command "Write-Output 'wget http://%2'"
-   start "" cmd /c "for /L %%i in (1,1,1000) do (powershell -Command \"wget -Uri 'http://%2' -UseBasicParsing\" & timeout /t 1 >nul)"
+:CurlAkaMs
+   start /B cmd /c "for /L %i in (1,1,10) do (curl aka.ms >> C:\curl.out 2>&1 & timeout /t 1 >nul)"
+   goto :EOF
+
+REM Dump Event Writer output
+:DumpEventWriter
+   type C:\event_writer.out
+   goto :EOF
+
+REM Dump Curl Output
+:DumpCurl
+   type C:\curl.out
    goto :EOF
