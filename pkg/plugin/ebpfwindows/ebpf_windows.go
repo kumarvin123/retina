@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"os"
 	"time"
 
@@ -44,6 +43,7 @@ const (
 var (
 	ErrInvalidEventData = errors.New("The Cilium Event Data is invalid")
 	ErrNilEnricher      = errors.New("enricher is nil")
+	retinaEbpfApi 	 *syscall.LazyDLL
 )
 
 // Plugin is the ebpfwindows plugin
@@ -137,34 +137,10 @@ func (p *Plugin) eventsMapCallback(data unsafe.Pointer, size uint64) int {
 }
 
 func ensureRetinaEbpfApiDLLPresent() error {
-	dst := `C:\Windows\System32\retinaebpfapi.dll`
 	src := `C:\hpc\retinaebpfapi.dll`
-
-	// Check if destination DLL exists.
-	if _, err := os.Stat(dst); os.IsNotExist(err) {
-		// Open the source DLL.
-		in, err := os.Open(src)
-		if err != nil {
-			return fmt.Errorf("failed to open source DLL: %w", err)
-		}
-		defer in.Close()
-
-		// Create the destination file.
-		out, err := os.Create(dst)
-		if err != nil {
-			return fmt.Errorf("failed to create destination DLL: %w", err)
-		}
-		defer out.Close()
-
-		// Copy contents from source to destination.
-		if _, err = io.Copy(out, in); err != nil {
-			return fmt.Errorf("failed to copy DLL: %w", err)
-		}
-		fmt.Println("DLL copied successfully.")
-	} else if err != nil {
-		return fmt.Errorf("failed to check destination DLL: %w", err)
-	} else {
-		fmt.Println("DLL already exists.")
+	if _, err := os.Stat(src); os.IsNotExist(err) {
+		return fmt.Errorf("Error: retinaebpfapi.dll not found at
+		%s", src)
 	}
 
 	oldPath := os.Getenv("PATH")
@@ -182,9 +158,11 @@ func (p *Plugin) pullCiliumMetricsAndEvents(ctx context.Context) {
 	metricsMap := NewMetricsMap()
 
 	if err := ensureRetinaEbpfApiDLLPresent(); err != nil {
-		p.l.Error("Error: %v\n", zap.Error(err))
+		p.l.Error(zap.Error(err))
 		return
 	}
+	// Load the retinaebpfapi.dll
+	retinaEbpfApi = syscall.NewLazyDLL("retinaebpfapi.dll")
 
 	if enricher.IsInitialized() {
 		p.enricher = enricher.Instance()
