@@ -9,7 +9,6 @@ import (
 	"time"
 
 	k8s "github.com/microsoft/retina/test/e2e/framework/kubernetes"
-	prom "github.com/microsoft/retina/test/e2e/framework/prometheus"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kubernetes "k8s.io/client-go/kubernetes"
@@ -134,8 +133,16 @@ func (v *ValidateWinBpfMetric) Run() error {
 	}
 
 	// Check for Basic Metrics
-	if strings.Contains(promOutput, "networkobservability_forward_bytes") {
-		fmt.Println("The output contains networkobservability_forward_bytes")
+	if strings.Contains(promOutput, "networkobservability_forward_bytes{direction=\"ingress\"}") {
+		fmt.Println("The output contains networkobservability_forward_bytes{direction=\"ingress\"}")
+	} else {
+		return fmt.Errorf("The output does not contain networkobservability_forward_bytes{direction=\"ingress\"}")
+	}
+
+	if strings.Contains(promOutput, "networkobservability_forward_count{direction=\"ingress\"}") {
+		fmt.Println("The output contains networkobservability_forward_count{direction=\"ingress\"}")
+	} else {
+		return fmt.Errorf("The output does not contain networkobservability_forward_count{direction=\"ingress\"}")
 	}
 
 	// Check for Advanced Metrics
@@ -144,24 +151,6 @@ func (v *ValidateWinBpfMetric) Run() error {
 	}
 
 	fmt.Println(promOutput)
-
-	labels := map[string]string{
-		"direction": "ingress",
-	}
-	err = prom.CheckMetricFromBuffer([]byte(promOutput), "networkobservability_forward_bytes", labels)
-	if err != nil {
-		return fmt.Errorf("failed to verify networkobservability_forward_bytes: %w", err)
-	} else {
-		fmt.Println("The output contains networkobservability_forward_bytes")
-	}
-
-	err = prom.CheckMetricFromBuffer([]byte(promOutput), "networkobservability_forward_count", labels)
-	if err != nil {
-		return fmt.Errorf("failed to verify networkobservability_forward_count: %w", err)
-	} else {
-		fmt.Println("The output contains networkobservability_forward_count")
-	}
-
 	return nil
 }
 
