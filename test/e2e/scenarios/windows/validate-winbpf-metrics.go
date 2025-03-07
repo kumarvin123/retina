@@ -75,6 +75,8 @@ func (v *ValidateWinBpfMetric) ExecCommandInWinPod(cmd string, DeamonSetName str
 }
 
 func (v *ValidateWinBpfMetric) Run() error {
+	// Copy Event Writer into Node
+	ebpfLabelSelector := fmt.Sprintf("name=%s", v.EbpfXdpDeamonSetName)
 	// Resolve the hostname for aka.ms
 	// need only 1 IP address
 	ips, err := net.LookupIP("aka.ms")
