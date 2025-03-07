@@ -134,20 +134,20 @@ func (v *ValidateWinBpfMetric) Run() error {
 
 	// Check for Basic Metrics
 	if strings.Contains(promOutput, "networkobservability_forward_bytes{direction=\"ingress\"}") {
-		fmt.Println("The output contains networkobservability_forward_bytes{direction=\"ingress\"}")
+		fmt.Println("prom metrics output contains networkobservability_forward_bytes{direction=\"ingress\"}")
 	} else {
-		return fmt.Errorf("The output does not contain networkobservability_forward_bytes{direction=\"ingress\"}")
+		return fmt.Errorf("prom metrics output does not contain networkobservability_forward_bytes{direction=\"ingress\"}")
 	}
 
 	if strings.Contains(promOutput, "networkobservability_forward_count{direction=\"ingress\"}") {
-		fmt.Println("The output contains networkobservability_forward_count{direction=\"ingress\"}")
+		fmt.Println("prom metrics output contains networkobservability_forward_count{direction=\"ingress\"}")
 	} else {
-		return fmt.Errorf("The output does not contain networkobservability_forward_count{direction=\"ingress\"}")
+		return fmt.Errorf("prom metrics output does not contain networkobservability_forward_count{direction=\"ingress\"}")
 	}
 
 	// Check for Advanced Metrics
 	if strings.Contains(promOutput, "networkobservability_adv_tcpflags_count") {
-		fmt.Println("The output contains networkobservability_adv_tcpflags_count")
+		fmt.Println("prom metrics output contains networkobservability_adv_tcpflags_count")
 	}
 
 	fmt.Println(promOutput)
