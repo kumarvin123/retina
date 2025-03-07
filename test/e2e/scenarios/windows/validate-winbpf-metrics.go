@@ -107,7 +107,7 @@ func (v *ValidateWinBpfMetric) Run() error {
 
 	fmt.Println(output)
 
-	if !strings.Contains(output, "failed") {
+	if strings.Contains(output, "failed") {
 		return fmt.Errorf("failed to start event writer output")
 	}
 
@@ -116,7 +116,7 @@ func (v *ValidateWinBpfMetric) Run() error {
 		return err
 	}
 
-	if !strings.Contains(output, "failed") {
+	if strings.Contains(output, "failed") {
 		return fmt.Errorf("failed to curl to aka.ms")
 	}
 
