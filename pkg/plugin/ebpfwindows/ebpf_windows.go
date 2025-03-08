@@ -14,6 +14,7 @@ import (
 	observer "github.com/cilium/cilium/pkg/hubble/observer/types"
 	hp "github.com/cilium/cilium/pkg/hubble/parser"
 	kcfg "github.com/microsoft/retina/pkg/config"
+	"github.com/microsoft/retina/pkg/utils"
 
 	//"github.com/google/uuid"
 	"github.com/microsoft/retina/pkg/enricher"
@@ -238,6 +239,9 @@ func (p *Plugin) handleTraceEvent(data unsafe.Pointer, size uint64) error {
 			p.l.Error("Could not convert event to flow", zap.Any("handleTraceEvent", data), zap.Error(err))
 			return ErrInvalidEventData
 		}
+		meta := &utils.RetinaMetadata{}
+		// Add packet size to the flow's metadata.
+		utils.AddPacketSize(meta, bpfEvent.Bytes)
 		p.enricher.Write(e)
 	case CiliumNotifyTrace:
 		if uintptr(size) < unsafe.Sizeof(TraceNotify{}) {
