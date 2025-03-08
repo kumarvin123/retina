@@ -3,8 +3,6 @@ package windows
 import (
 	"context"
 	"fmt"
-	"log"
-	"net"
 	"strings"
 	"time"
 
@@ -76,52 +74,60 @@ func (v *ValidateWinBpfMetric) ExecCommandInWinPod(cmd string, DeamonSetName str
 
 func (v *ValidateWinBpfMetric) Run() error {
 	ebpfLabelSelector := fmt.Sprintf("name=%s", v.EbpfXdpDeamonSetName)
-	// Resolve the hostname for aka.ms
-	// need only 1 IP address
-	ips, err := net.LookupIP("aka.ms")
-	if err != nil {
-		log.Fatal(err)
-	}
-	aksMsIpaddress := ips[0].String()
 
 	//TRACE
-	cmd := fmt.Sprintf("C:\\event-writer-helper.bat Start-EventWriter -event 4 -srcIP %s", aksMsIpaddress)
-	err, _ = v.ExecCommandInWinPod(cmd, v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
+	err, _ := v.ExecCommandInWinPod("C:\\event-writer-helper.bat Start-EventWriter -event 4 -srcIP 23.192.228.84",
+		v.EbpfXdpDeamonSetName,
+		v.EbpfXdpDeamonSetNamespace,
+		ebpfLabelSelector)
 	if err != nil {
 		return err
 	}
 
-	time.Sleep(20 * time.Second)
-	err, _ = v.ExecCommandInWinPod("C:\\event-writer-helper.bat CurlAkaMs", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
+	time.Sleep(10 * time.Second)
+	err, _ = v.ExecCommandInWinPod("C:\\event-writer-helper.bat CurlExampleCOM",
+		v.EbpfXdpDeamonSetName,
+		v.EbpfXdpDeamonSetNamespace,
+		ebpfLabelSelector)
 	if err != nil {
 		return err
 	}
 
-	time.Sleep(5 * time.Second)
-	err, output := v.ExecCommandInWinPod("C:\\event-writer-helper.bat DumpEventWriter", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
+	err, output := v.ExecCommandInWinPod("C:\\event-writer-helper.bat DumpEventWriter",
+		v.EbpfXdpDeamonSetName,
+		v.EbpfXdpDeamonSetNamespace,
+		ebpfLabelSelector)
 	if err != nil {
 		return err
 	}
+	fmt.Println(output)
 	if strings.Contains(output, "failed") {
 		return fmt.Errorf("failed to start event writer")
 	}
 
 	//DROP
 	time.Sleep(60 * time.Second)
-	cmd = fmt.Sprintf("C:\\event-writer-helper.bat Start-EventWriter -event 1 -srcIP %s", aksMsIpaddress)
-	err, _ = v.ExecCommandInWinPod(cmd, v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
+	err, _ = v.ExecCommandInWinPod("C:\\event-writer-helper.bat Start-EventWriter -event 1 -srcIP 23.192.228.84",
+		v.EbpfXdpDeamonSetName,
+		v.EbpfXdpDeamonSetNamespace,
+		ebpfLabelSelector)
 	if err != nil {
 		return err
 	}
 
-	time.Sleep(20 * time.Second)
-	err, _ = v.ExecCommandInWinPod("C:\\event-writer-helper.bat CurlExampleCOM", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
+	time.Sleep(10 * time.Second)
+	err, _ = v.ExecCommandInWinPod("C:\\event-writer-helper.bat CurlExampleCOM",
+		v.EbpfXdpDeamonSetName,
+		v.EbpfXdpDeamonSetNamespace,
+		ebpfLabelSelector)
 	if err != nil {
 		return err
 	}
 
-	time.Sleep(5 * time.Second)
-	err, output = v.ExecCommandInWinPod("C:\\event-writer-helper.bat DumpEventWriter", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
+	err, output = v.ExecCommandInWinPod("C:\\event-writer-helper.bat DumpEventWriter",
+		v.EbpfXdpDeamonSetName,
+		v.EbpfXdpDeamonSetNamespace,
+		ebpfLabelSelector)
 	if err != nil {
 		return err
 	}
@@ -134,12 +140,10 @@ func (v *ValidateWinBpfMetric) Run() error {
 	if err != nil {
 		return err
 	}
-
 	if strings.Contains(output, "failed") {
-		return fmt.Errorf("failed to curl to aka.ms")
+		return fmt.Errorf("failed to curl to example.com")
 	}
 
-	time.Sleep(10 * time.Second)
 	var promOutput string
 	numAttempts := 10
 	for promOutput == "" && numAttempts > 0 {
@@ -159,7 +163,6 @@ func (v *ValidateWinBpfMetric) Run() error {
 	if promOutput == "" {
 		return fmt.Errorf("failed to get prometheus metrics from Retina DaemonSet")
 	}
-
 	fmt.Println(promOutput)
 
 	// Check for Basic Metrics (Node Level)
