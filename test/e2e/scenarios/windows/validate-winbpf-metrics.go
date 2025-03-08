@@ -108,14 +108,14 @@ func (v *ValidateWinBpfMetric) Run() error {
 
 	//DROP
 	time.Sleep(60 * time.Second)
-	cmd = fmt.Sprintf("C:\\event-writer-helper.bat Start-EventWriter -event 2 -srcIP %s", aksMsIpaddress)
+	cmd = fmt.Sprintf("C:\\event-writer-helper.bat Start-EventWriter -event 1 -srcIP %s", aksMsIpaddress)
 	err, _ = v.ExecCommandInWinPod(cmd, v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
 	if err != nil {
 		return err
 	}
 
 	time.Sleep(20 * time.Second)
-	err, _ = v.ExecCommandInWinPod("C:\\event-writer-helper.bat CurlAkaMs", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
+	err, _ = v.ExecCommandInWinPod("C:\\event-writer-helper.bat CurlExampleCOM", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
 	if err != nil {
 		return err
 	}

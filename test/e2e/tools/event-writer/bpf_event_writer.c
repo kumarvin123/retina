@@ -81,7 +81,7 @@ void create_trace_ntfy_event(struct trace_notify* trc_elm)
     memset(trc_elm, 0, sizeof(struct trace_notify));
     trc_elm->type       = CILIUM_NOTIFY_TRACE;
     trc_elm->subtype    = 0;
-	trc_elm->source     = 0;
+	trc_elm->source     = 10; // random source
 	trc_elm->hash       = 0;
     trc_elm->len_orig   = 128;
 	trc_elm->len_cap    = 128;
@@ -89,7 +89,7 @@ void create_trace_ntfy_event(struct trace_notify* trc_elm)
 	trc_elm->src_label	= 0;
 	trc_elm->dst_label	= 0;
 	trc_elm->dst_id		= 0;
-	trc_elm->reason		= 0;
+	trc_elm->reason		= 2; // reply
 	trc_elm->ifindex	= 0;
 }
 
@@ -98,7 +98,7 @@ void create_drop_event(struct drop_notify* drp_elm)
     memset(drp_elm, 0, sizeof(struct drop_notify));
     drp_elm->type       = CILIUM_NOTIFY_DROP;
 	drp_elm->subtype    = 0;
-	drp_elm->source     = 0;
+	drp_elm->source     = 10; // random source
 	drp_elm->hash       = 0;
 	drp_elm->len_orig   = 128;
 	drp_elm->len_cap    = 128;
