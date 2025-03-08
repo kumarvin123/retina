@@ -267,7 +267,7 @@ func (p *Plugin) handleTraceEvent(data unsafe.Pointer, size uint32) error {
 		p.enricher.Write(e)
 	case CiliumNotifyTraceSock:
 		if uintptr(size) < unsafe.Sizeof(TraceSockNotify{}) {
-			p.l.Error("Invalid TraceSockNotify data size", zap.Uint64("size", size))
+			p.l.Error("Invalid TraceSockNotify data size", zap.Uint32("size", size))
 			return ErrInvalidEventData
 		}
 		e, err := p.parser.Decode(&observer.MonitorEvent{

@@ -51,7 +51,7 @@ func (v *ValidateWinBpfMetric) ExecCommandInWinPod(cmd string, DeamonSetName str
 	}
 
 	if windowsPod == nil {
-		return fmt.Errorf("No Windows Pod found in DaemonSet %s and label %s", DeamonSetName, LabelSelector), ""
+		return fmt.Errorf("no Windows Pod found in DaemonSet %s and label %s", DeamonSetName, LabelSelector), ""
 	}
 
 	result := &CommandResult{}
