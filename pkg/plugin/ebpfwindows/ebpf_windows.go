@@ -139,10 +139,10 @@ func (p *Plugin) eventsMapCallback(data unsafe.Pointer, size uint32) int {
 }
 
 func ensureRetinaEbpfApiDLLPresent() error {
-	//src := `C:\hpc\retinaebpfapi.dll`
-	//if _, err := os.Stat(src); os.IsNotExist(err) {
-	//	return fmt.Errorf("Error: retinaebpfapi.dll not found at %s", src)
-	//}
+	src := `C:\hpc\retinaebpfapi.dll`
+	if _, err := os.Stat(src); os.IsNotExist(err) {
+		return fmt.Errorf("Error: retinaebpfapi.dll not found at %s", src)
+	}
 
 	oldPath := os.Getenv("PATH")
 	newPath := oldPath + ";" + "C:\\Program Files\\ebpf-for-windows\\"
@@ -243,6 +243,8 @@ func (p *Plugin) handleTraceEvent(data unsafe.Pointer, size uint32) error {
 		// Add packet size to the flow's metadata.
 		utils.AddPacketSize(meta, size-uint32(unsafe.Sizeof(DropNotify{})))
 		fl := e.GetFlow()
+		// TEST
+		p.l.Info("TEST", zap.Any("Direction", fl.GetTrafficDirection()))
 		utils.AddRetinaMetadata(fl, meta)
 		p.enricher.Write(e)
 	case CiliumNotifyTrace:

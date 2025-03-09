@@ -34,7 +34,7 @@ REM Define the GetPromMetrics function
 
 REM Curl
 :CurlExampleCOM
-   start /B cmd /c "for /L %i in (1,1,10) do (curl http://23.192.228.84 >> C:\curl.out 2>&1 & timeout /t 1 >nul)"
+   start /B cmd /c "for /L %i in (1,1,10) do (curl ""http://23.192.228.84"" >> C:\curl.out 2>&1 & timeout /t 1 >nul)"
    goto :EOF
 
 REM Dump Event Writer output

@@ -25,7 +25,7 @@ type TraceSockNotify struct {
 	CgroupID   uint64
 	L4Proto    uint8
 	IPv6       bool
-	Data [128]byte
+	Data       [128]byte
 }
 
 // NotifyCommonHdr is the common header for all notifications
@@ -54,7 +54,7 @@ type DropNotify struct {
 	File     uint8
 	ExtError int8
 	Ifindex  uint32
-	Data [128]byte
+	Data     [128]byte
 }
 
 // TraceNotify is the notification for a packet trace
@@ -67,7 +67,7 @@ type TraceNotify struct {
 	IPv6     bool
 	Ifindex  uint32
 	OrigIP   IP
-	Data [128]byte
+	Data     [128]byte
 }
 
 // Notification types

@@ -71,7 +71,7 @@ func (a *LoadWinBPFMaps) ExecCommandInWinPod(cmd string, DeamonSetName string, D
 func (a *LoadWinBPFMaps) Run() error {
 	// Copy Event Writer into Node
 	loadWinBPFMapsDLabelSelector := fmt.Sprintf("name=%s", a.LoadWinBPFMapsDeamonSetName)
-	err, _ := a.ExecCommandInWinPod("move .\\event-writer-helper.bat C:\\event-writer-helper.bat", a.LoadWinBPFMapsDeamonSetName, a.LoadWinBPFMapsDeamonSetNamespace, loadWinBPFMapsDLabelSelector)
+	err, _ := a.ExecCommandInWinPod("move /Y .\\event-writer-helper.bat C:\\event-writer-helper.bat", a.LoadWinBPFMapsDeamonSetName, a.LoadWinBPFMapsDeamonSetNamespace, loadWinBPFMapsDLabelSelector)
 	if err != nil {
 		return err
 	}
