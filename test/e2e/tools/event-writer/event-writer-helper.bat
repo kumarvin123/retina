@@ -3,7 +3,7 @@ REM Add logic to call a specific function based on the argument
 if "%1"=="Setup-EventWriter" goto Setup-EventWriter
 if "%1"=="Start-EventWriter" goto Start-EventWriter
 if "%1"=="GetRetinaPromMetrics" goto GetRetinaPromMetrics
-if "%1"=="CurlExampleCOM" goto CurlExampleCOM
+if "%1"=="Curl" goto Curl
 if "%1"=="DumpEventWriter" goto DumpEventWriter
 if "%1"=="DumpCurl" goto DumpCurl
 if "%1"=="PinMaps" goto Pin-Maps
@@ -33,8 +33,8 @@ REM Define the GetPromMetrics function
    goto :EOF
 
 REM Curl
-:CurlExampleCOM
-   start /B cmd /c "for /L %i in (1,1,10) do (curl ""http://23.192.228.84"" >> C:\curl.out 2>&1 & timeout /t 1 >nul)"
+:Curl
+   start /B cmd /c "curl http://%2 >> C:\curl.out 2>&1 & timeout /t 1 >nul)"
    goto :EOF
 
 REM Dump Event Writer output

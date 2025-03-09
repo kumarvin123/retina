@@ -85,12 +85,16 @@ func (v *ValidateWinBpfMetric) Run() error {
 	}
 
 	time.Sleep(10 * time.Second)
-	err, _ = v.ExecCommandInWinPod("C:\\event-writer-helper.bat CurlExampleCOM",
-		v.EbpfXdpDeamonSetName,
-		v.EbpfXdpDeamonSetNamespace,
-		ebpfLabelSelector)
-	if err != nil {
-		return err
+	numcurls := 10
+	for numcurls > 0 {
+		err, _ = v.ExecCommandInWinPod("C:\\event-writer-helper.bat Curl 23.192.228.84",
+			v.EbpfXdpDeamonSetName,
+			v.EbpfXdpDeamonSetNamespace,
+			ebpfLabelSelector)
+		if err != nil {
+			return err
+		}
+		numcurls--
 	}
 
 	err, output := v.ExecCommandInWinPod("C:\\event-writer-helper.bat DumpEventWriter",
@@ -116,12 +120,16 @@ func (v *ValidateWinBpfMetric) Run() error {
 	}
 
 	time.Sleep(10 * time.Second)
-	err, _ = v.ExecCommandInWinPod("C:\\event-writer-helper.bat CurlExampleCOM",
-		v.EbpfXdpDeamonSetName,
-		v.EbpfXdpDeamonSetNamespace,
-		ebpfLabelSelector)
-	if err != nil {
-		return err
+	numcurls = 10
+	for numcurls > 0 {
+		err, _ = v.ExecCommandInWinPod("C:\\event-writer-helper.bat Curl 23.192.228.84",
+			v.EbpfXdpDeamonSetName,
+			v.EbpfXdpDeamonSetNamespace,
+			ebpfLabelSelector)
+		if err != nil {
+			return err
+		}
+		numcurls--
 	}
 
 	err, output = v.ExecCommandInWinPod("C:\\event-writer-helper.bat DumpEventWriter",
