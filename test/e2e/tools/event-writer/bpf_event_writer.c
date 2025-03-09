@@ -89,7 +89,7 @@ void create_trace_ntfy_event(struct trace_notify* trc_elm)
 	trc_elm->src_label	= 0;
 	trc_elm->dst_label	= 0;
 	trc_elm->dst_id		= 0;
-	trc_elm->reason		= 0 //2; // reply
+	trc_elm->reason		= 0; //2; // reply
 	trc_elm->ifindex	= 0;
 }
 
