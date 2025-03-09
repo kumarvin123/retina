@@ -244,7 +244,10 @@ func (p *Plugin) handleTraceEvent(data unsafe.Pointer, size uint32) error {
 		utils.AddPacketSize(meta, size-uint32(unsafe.Sizeof(DropNotify{})))
 		fl := e.GetFlow()
 		// TEST
-		p.l.Info("TEST", zap.Any("Direction", fl.GetTrafficDirection()))
+		p.l.Info("TEST DROP", zap.Any("Size", size-uint32(unsafe.Sizeof(DropNotify{}))))
+		p.l.Info("TEST DROP", zap.Any("Direction", fl.GetTrafficDirection()))
+		p.l.Info("TEST DROP", zap.Any("Source EP", fl.GetSource()))
+
 		utils.AddRetinaMetadata(fl, meta)
 		p.enricher.Write(e)
 	case CiliumNotifyTrace:
