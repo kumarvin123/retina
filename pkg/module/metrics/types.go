@@ -221,6 +221,8 @@ func (c *ContextOptions) getLocalCtxValues(f *flow.Flow) map[string][]string {
 		values[ingress] = c.getByDirectionValues(f, true)
 	}
 
+	// when ipgetter is not enabled, we will not have source and destination endpoint.
+	// use flow object direction
 	if f.Source == nil && f.Destination == nil {
 		if f.GetTrafficDirection() == 1 {
 			values[ingress] = c.getByDirectionValues(f, true)
