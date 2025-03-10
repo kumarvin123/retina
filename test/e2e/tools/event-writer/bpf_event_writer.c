@@ -248,7 +248,7 @@ event_writer(xdp_md_t* ctx) {
     }
 
     // Drop Reason to 181: "POLICY_DENY",
-    update_metrics(size_to_copy, METRIC_INGRESS, 0, 0, 0);
+    update_metrics(size_to_copy, METRIC_INGRESS, reason, 0, 0);
 
     return XDP_PASS;
 }
