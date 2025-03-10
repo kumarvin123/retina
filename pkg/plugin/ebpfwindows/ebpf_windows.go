@@ -251,10 +251,14 @@ func (p *Plugin) handleTraceEvent(data unsafe.Pointer, size uint32) error {
 		sep := fl.GetSource()
 		if sep != nil {
 			p.l.Info("TEST DROP SOURCE", zap.Any("IP", fl.GetIP().Source))
+			p.l.Info("TEST DROP SOURCE", zap.Any("SOURCE ENDPOINT", sep.Namespace))
+			p.l.Info("TEST DROP SOURCE", zap.Any("SOURCE LABELS", sep.Labels))
 		}
 		dep := fl.GetDestination()
 		if dep != nil {
 			p.l.Info("TEST DROP DESTINATION", zap.Any("IP", fl.GetIP().Destination))
+			p.l.Info("TEST DROP DESTINATION", zap.Any("DEST ENDPOINT", dep.Namespace))
+			p.l.Info("TEST DROP DESTINATION", zap.Any("DEST LABELS", dep.Labels))
 		}
 
 		utils.AddRetinaMetadata(fl, meta)
