@@ -225,9 +225,9 @@ func (c *ContextOptions) getLocalCtxValues(f *flow.Flow) map[string][]string {
 	// use flow object direction
 	if f.Source == nil && f.Destination == nil {
 		if f.GetTrafficDirection() == 1 {
-			values[ingress] = c.getByDirectionValues(f, true)
+			values[ingress] = c.getByDirectionValues(f, false)
 		} else {
-			values[egress] = c.getByDirectionValues(f, false)
+			values[egress] = c.getByDirectionValues(f, true)
 		}
 	}
 
