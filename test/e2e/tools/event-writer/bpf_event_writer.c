@@ -192,7 +192,7 @@ event_writer(xdp_md_t* ctx) {
     struct five_tuple tup;
     uint32_t size_to_copy = 128;
     uint8_t flt_evttype, present = 1;
-    int reason  = 0;
+    uint8_t reason  = 0;
 
     if ((uintptr_t)ctx->data + size_to_copy > (uintptr_t)ctx->data_end) {
 		size_to_copy = (uintptr_t)ctx->data_end - (uintptr_t)ctx->data;
