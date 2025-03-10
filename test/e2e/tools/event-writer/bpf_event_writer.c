@@ -116,6 +116,10 @@ int extract_five_tuple_info(void* data, int bytes_to_copy, struct five_tuple* tu
     struct ethhdr *eth;
     uint8_t present = 1;
 
+    if (data == NULL || tup == NULL) {
+        return 1;
+    }
+
     if (bytes_to_copy < sizeof(struct ethhdr)) {
         return 1;
     }
@@ -163,6 +167,9 @@ int extract_five_tuple_info(void* data, int bytes_to_copy, struct five_tuple* tu
 
 int
 check_filter(struct filter* flt, struct five_tuple* tup) {
+    if (flt == NULL || tup == NULL) {
+        return 1;
+    }
 
     if (flt->srcIP != 0 && flt->srcIP != tup->srcIP) {
         return 1;
