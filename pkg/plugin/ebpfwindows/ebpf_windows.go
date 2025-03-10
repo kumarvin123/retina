@@ -250,12 +250,11 @@ func (p *Plugin) handleTraceEvent(data unsafe.Pointer, size uint32) error {
 		p.l.Info("Flow object", zap.Reflect("flow", fl))
 		sep := fl.GetSource()
 		if sep != nil {
-			p.l.Info("TEST DROP SOURCE")
+			p.l.Info("TEST DROP SOURCE", zap.Any("IP", fl.GetIP().Source))
 		}
 		dep := fl.GetDestination()
 		if dep != nil {
-			p.l.Info("TEST DROP DESTINATION")
-
+			p.l.Info("TEST DROP DESTINATION", zap.Any("IP", fl.GetIP().Destination))
 		}
 
 		utils.AddRetinaMetadata(fl, meta)
