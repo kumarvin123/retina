@@ -199,6 +199,11 @@ event_writer(xdp_md_t* ctx) {
     struct five_tuple tup;
     uint32_t size_to_copy = 128;
     uint8_t flt_evttype, present = 1;
+    int reason  = 0;
+
+    if (ctx->data == NULL || ctx->data_end == NULL) {
+        return XDP_PASS;
+    }
 
     if ((uintptr_t)ctx->data + size_to_copy > (uintptr_t)ctx->data_end) {
 		size_to_copy = (uintptr_t)ctx->data_end - (uintptr_t)ctx->data;
@@ -235,7 +240,6 @@ event_writer(xdp_md_t* ctx) {
         memset(trc_elm->data, 0, sizeof(trc_elm->data));
         memcpy(trc_elm->data, ctx->data, size_to_copy);
         bpf_ringbuf_output(&cilium_events, trc_elm, sizeof(struct trace_notify), 0);
-        update_metrics(size_to_copy, METRIC_INGRESS, 0, 0, 0);
     }
 
     if (flt_evttype == CILIUM_NOTIFY_DROP) {
@@ -246,13 +250,16 @@ event_writer(xdp_md_t* ctx) {
         if (drp_elm == NULL) {
             return XDP_PASS;
         }
+        // Drop Reason to 181: "POLICY_DENY",
+        reason = 181;
         create_drop_event(drp_elm);
         memset(drp_elm->data, 0, sizeof(drp_elm->data));
         memcpy(drp_elm->data, ctx->data, size_to_copy);
         bpf_ringbuf_output(&cilium_events, drp_elm, sizeof(struct drop_notify), 0);
-        // Drop Reason to 181: "POLICY_DENY",
-        update_metrics(size_to_copy, METRIC_INGRESS, 181, 0, 0);
     }
+
+    // Drop Reason to 181: "POLICY_DENY",
+    update_metrics(size_to_copy, METRIC_INGRESS, reason, 0, 0);
 
     return XDP_PASS;
 }
