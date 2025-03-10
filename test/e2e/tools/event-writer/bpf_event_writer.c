@@ -112,13 +112,31 @@ void create_drop_event(struct drop_notify* drp_elm)
 	drp_elm->ifindex	= 0;
 }
 
+int
+check_filter(struct filter* flt, struct five_tuple* tup) {
+
+    if (flt->srcIP != 0 && flt->srcIP != tup->srcIP) {
+        return 1;
+    }
+
+    if (flt->dstIP != 0 && flt->dstIP != tup->dstIP) {
+        return 1;
+    }
+
+    if (flt->srcprt != 0 && flt->srcprt != tup->srcprt) {
+        return 1;
+    }
+
+    if (flt->dstprt != 0 && flt->dstprt != tup->dstprt) {
+        return 1;
+    }
+
+    return 0;
+}
+
 int extract_five_tuple_info(void* data, int bytes_to_copy, struct five_tuple* tup) {
     struct ethhdr *eth;
     uint8_t present = 1;
-
-    if (data == NULL || tup == NULL) {
-        return 1;
-    }
 
     if (bytes_to_copy < sizeof(struct ethhdr)) {
         return 1;
@@ -165,31 +183,6 @@ int extract_five_tuple_info(void* data, int bytes_to_copy, struct five_tuple* tu
     return 0;
 }
 
-int
-check_filter(struct filter* flt, struct five_tuple* tup) {
-    if (flt == NULL || tup == NULL) {
-        return 1;
-    }
-
-    if (flt->srcIP != 0 && flt->srcIP != tup->srcIP) {
-        return 1;
-    }
-
-    if (flt->dstIP != 0 && flt->dstIP != tup->dstIP) {
-        return 1;
-    }
-
-    if (flt->srcprt != 0 && flt->srcprt != tup->srcprt) {
-        return 1;
-    }
-
-    if (flt->dstprt != 0 && flt->dstprt != tup->dstprt) {
-        return 1;
-    }
-
-    return 0;
-}
-
 SEC("xdp")
 int
 event_writer(xdp_md_t* ctx) {
@@ -200,10 +193,6 @@ event_writer(xdp_md_t* ctx) {
     uint32_t size_to_copy = 128;
     uint8_t flt_evttype, present = 1;
     int reason  = 0;
-
-    if (ctx->data == NULL || ctx->data_end == NULL) {
-        return XDP_PASS;
-    }
 
     if ((uintptr_t)ctx->data + size_to_copy > (uintptr_t)ctx->data_end) {
 		size_to_copy = (uintptr_t)ctx->data_end - (uintptr_t)ctx->data;
