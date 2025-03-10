@@ -188,16 +188,16 @@ func (v *ValidateWinBpfMetric) Run() error {
 	}
 
 	//Drop
-	if strings.Contains(promOutput, "networkobservability_drop_bytes{direction=\"ingress\",reason=\"181, 0\"}") {
-		fmt.Println("prom metrics output contains networkobservability_drop_bytes{direction=\"ingress\",reason=\"181, 0\"}")
+	if strings.Contains(promOutput, "networkobservability_drop_bytes{direction=\"ingress\",reason=\"8, 0\"}") {
+		fmt.Println("prom metrics output contains networkobservability_drop_bytes{direction=\"ingress\",reason=\"8, 0\"}")
 	} else {
-		return fmt.Errorf("prom metrics output does not contain networkobservability_drop_bytes{direction=\"ingress\",reason=\"181, 0\"}")
+		return fmt.Errorf("prom metrics output does not contain networkobservability_drop_bytes{direction=\"ingress\",reason=\"8, 0\"}")
 	}
 
-	if strings.Contains(promOutput, "networkobservability_drop_count{direction=\"ingress\",reason=\"181, 0\"}") {
-		fmt.Println("prom metrics output contains networkobservability_drop_count{direction=\"ingress\",reason=\"181, 0\"}")
+	if strings.Contains(promOutput, "networkobservability_drop_count{direction=\"ingress\",reason=\"8, 0\"}") {
+		fmt.Println("prom metrics output contains networkobservability_drop_count{direction=\"ingress\",reason=\"8, 0\"}")
 	} else {
-		return fmt.Errorf("prom metrics output does not contain networkobservability_drop_count{direction=\"ingress\",reason=\"181, 0\"}")
+		return fmt.Errorf("prom metrics output does not contain networkobservability_drop_count{direction=\"ingress\",reason=\"8, 0\"}")
 	}
 
 	// Check for Advanced Metrics

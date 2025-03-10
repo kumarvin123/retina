@@ -250,7 +250,8 @@ func (p *Plugin) handleTraceEvent(data unsafe.Pointer, size uint32) error {
 			fl.Source = nil
 			fl.Destination = nil
 		}
-
+		dropNotify := (*DropNotify)(data)
+		meta.DropReason = utils.DropReason(dropNotify.Subtype)
 		utils.AddRetinaMetadata(fl, meta)
 		p.enricher.Write(e)
 	case CiliumNotifyTrace:

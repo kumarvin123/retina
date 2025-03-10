@@ -239,15 +239,14 @@ event_writer(xdp_md_t* ctx) {
         if (drp_elm == NULL) {
             return XDP_PASS;
         }
-        // Drop Reason to 181: "POLICY_DENY",
-        reason = 181;
+        // Drop Reason to Drop_Filtered,
+        reason = 8;
         create_drop_event(drp_elm);
         memset(drp_elm->data, 0, sizeof(drp_elm->data));
         memcpy(drp_elm->data, ctx->data, size_to_copy);
         bpf_ringbuf_output(&cilium_events, drp_elm, sizeof(struct drop_notify), 0);
     }
 
-    // Drop Reason to 181: "POLICY_DENY",
     update_metrics(size_to_copy, METRIC_INGRESS, reason, 0, 0);
 
     return XDP_PASS;
