@@ -243,12 +243,20 @@ func (p *Plugin) handleTraceEvent(data unsafe.Pointer, size uint32) error {
 		}
 		meta := &utils.RetinaMetadata{}
 		// Add packet size to the flow's metadata.
-		utils.AddPacketSize(meta, size-uint32(unsafe.Sizeof(DropNotify{})))
+		utils.AddPacketSize(meta, 128)
 		fl := e.GetFlow()
 		// TEST
-		p.l.Info("TEST DROP", zap.Any("Size", size-uint32(unsafe.Sizeof(DropNotify{}))))
 		p.l.Info("TEST DROP", zap.Any("Direction", fl.GetTrafficDirection()))
-		p.l.Info("TEST DROP", zap.Any("Source EP", fl.GetSource()))
+		p.l.Info("Flow object", zap.Reflect("flow", fl))
+		sep := fl.GetSource()
+		if sep != nil {
+			p.l.Info("TEST DROP SOURCE")
+		}
+		dep := fl.GetDestination()
+		if dep != nil {
+			p.l.Info("TEST DROP DESTINATION")
+
+		}
 
 		utils.AddRetinaMetadata(fl, meta)
 		p.enricher.Write(e)
@@ -268,7 +276,7 @@ func (p *Plugin) handleTraceEvent(data unsafe.Pointer, size uint32) error {
 		}
 		meta := &utils.RetinaMetadata{}
 		// Add packet size to the flow's metadata.
-		utils.AddPacketSize(meta, size-uint32(unsafe.Sizeof(DropNotify{})))
+		utils.AddPacketSize(meta, 128)
 		fl := e.GetFlow()
 		utils.AddRetinaMetadata(fl, meta)
 		p.enricher.Write(e)
@@ -288,7 +296,7 @@ func (p *Plugin) handleTraceEvent(data unsafe.Pointer, size uint32) error {
 		}
 		meta := &utils.RetinaMetadata{}
 		// Add packet size to the flow's metadata.
-		utils.AddPacketSize(meta, size-uint32(unsafe.Sizeof(DropNotify{})))
+		utils.AddPacketSize(meta, 128)
 		fl := e.GetFlow()
 		utils.AddRetinaMetadata(fl, meta)
 		p.enricher.Write(e)
