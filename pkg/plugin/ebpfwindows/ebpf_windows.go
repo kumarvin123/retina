@@ -245,21 +245,9 @@ func (p *Plugin) handleTraceEvent(data unsafe.Pointer, size uint32) error {
 		// Add packet size to the flow's metadata.
 		utils.AddPacketSize(meta, 128)
 		fl := e.GetFlow()
-		// TEST
-		p.l.Info("TEST DROP", zap.Any("Direction", fl.GetTrafficDirection()))
-		p.l.Info("Flow object", zap.Reflect("flow", fl))
-		sep := fl.GetSource()
-		if sep != nil && sep.GetNamespace() == "" {
-			p.l.Info("TEST DROP SOURCE", zap.Any("IP", fl.GetIP().Source))
-			p.l.Info("TEST DROP SOURCE", zap.Any("SOURCE ENDPOINT", sep.Namespace))
-			p.l.Info("TEST DROP SOURCE", zap.Any("SOURCE LABELS", sep.Labels))
+		// ip endpointgetter not supported.
+		if fl.GetSource() != nil && fl.GetSource().Namespace == "" && fl.GetDestination() != nil && fl.GetDestination().Namespace == "" {
 			fl.Source = nil
-		}
-		dep := fl.GetDestination()
-		if dep != nil && dep.GetNamespace() == "" {
-			p.l.Info("TEST DROP DESTINATION", zap.Any("IP", fl.GetIP().Destination))
-			p.l.Info("TEST DROP DESTINATION", zap.Any("DEST ENDPOINT", dep.Namespace))
-			p.l.Info("TEST DROP DESTINATION", zap.Any("DEST LABELS", dep.Labels))
 			fl.Destination = nil
 		}
 
@@ -283,21 +271,9 @@ func (p *Plugin) handleTraceEvent(data unsafe.Pointer, size uint32) error {
 		// Add packet size to the flow's metadata.
 		utils.AddPacketSize(meta, 128)
 		fl := e.GetFlow()
-		// TEST
-		p.l.Info("TEST TRACE", zap.Any("Direction", fl.GetTrafficDirection()))
-		p.l.Info("Flow object", zap.Reflect("flow", fl))
-		sep := fl.GetSource()
-		if sep != nil && sep.GetNamespace() == "" {
-			p.l.Info("TEST TRACE SOURCE", zap.Any("IP", fl.GetIP().Source))
-			p.l.Info("TEST TRACE SOURCE", zap.Any("SOURCE ENDPOINT", sep.Namespace))
-			p.l.Info("TEST TRACE SOURCE", zap.Any("SOURCE LABELS", sep.Labels))
+		// ip endpointgetter not supported.
+		if fl.GetSource() != nil && fl.GetSource().Namespace == "" && fl.GetDestination() != nil && fl.GetDestination().Namespace == "" {
 			fl.Source = nil
-		}
-		dep := fl.GetDestination()
-		if dep != nil && dep.GetNamespace() == "" {
-			p.l.Info("TEST TRACE DESTINATION", zap.Any("IP", fl.GetIP().Destination))
-			p.l.Info("TEST TRACE DESTINATION", zap.Any("DEST ENDPOINT", dep.Namespace))
-			p.l.Info("TEST TRACE DESTINATION", zap.Any("DEST LABELS", dep.Labels))
 			fl.Destination = nil
 		}
 		utils.AddRetinaMetadata(fl, meta)
