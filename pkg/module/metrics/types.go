@@ -214,13 +214,19 @@ func (c *ContextOptions) getLocalCtxValues(f *flow.Flow) map[string][]string {
 	}
 
 	if f.Source != nil && !isAPIServerPod(f.Source) {
-		fmt.Print("types.go -- f.Source: ", f.Source)
 		values[egress] = c.getByDirectionValues(f, false)
 	}
 
-	if f.Destination != nil && !isAPIServerPod(f.Destination) {
-		fmt.Print("types.go f.Destination: ", f.Destination)
+	if f.Destination != nil {
 		values[ingress] = c.getByDirectionValues(f, true)
+	}
+
+	if f.Source == nil && f.Destination == nil {
+		if f.GetTrafficDirection() == 1 {
+			values[ingress] = c.getByDirectionValues(f, true)
+		} else {
+			values[egress] = c.getByDirectionValues(f, false)
+		}
 	}
 
 	return values
