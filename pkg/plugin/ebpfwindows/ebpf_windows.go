@@ -107,9 +107,9 @@ func (p *Plugin) metricsMapIterateCallback(key *MetricsKey, value *MetricsValues
 	p.l.Debug("Value", zap.String("Value", value.String()))
 	if key.IsDrop() {
 		if key.IsEgress() {
-			metrics.DropPacketsGauge.WithLabelValues(egressLabel).Set(float64(value.Count()))
+			metrics.DropPacketsGauge.WithLabelValues(key.String(), egressLabel).Set(float64(value.Count()))
 		} else if key.IsIngress() {
-			metrics.DropPacketsGauge.WithLabelValues(ingressLabel).Set(float64(value.Count()))
+			metrics.DropPacketsGauge.WithLabelValues(key.String(), ingressLabel).Set(float64(value.Count()))
 		}
 	} else {
 		if key.IsEgress() {
