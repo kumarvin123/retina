@@ -245,11 +245,6 @@ func (p *Plugin) handleTraceEvent(data unsafe.Pointer, size uint32) error {
 		// Add packet size to the flow's metadata.
 		utils.AddPacketSize(meta, 128)
 		fl := e.GetFlow()
-		// ip endpointgetter not supported.
-		if fl.GetSource() != nil && fl.GetSource().Namespace == "" && fl.GetDestination() != nil && fl.GetDestination().Namespace == "" {
-			fl.Source = nil
-			fl.Destination = nil
-		}
 		dropNotify := (*DropNotify)(data)
 		meta.DropReason = utils.DropReason(dropNotify.Subtype)
 		utils.AddRetinaMetadata(fl, meta)
@@ -272,11 +267,6 @@ func (p *Plugin) handleTraceEvent(data unsafe.Pointer, size uint32) error {
 		// Add packet size to the flow's metadata.
 		utils.AddPacketSize(meta, 128)
 		fl := e.GetFlow()
-		// ip endpointgetter not supported.
-		if fl.GetSource() != nil && fl.GetSource().Namespace == "" && fl.GetDestination() != nil && fl.GetDestination().Namespace == "" {
-			fl.Source = nil
-			fl.Destination = nil
-		}
 		utils.AddRetinaMetadata(fl, meta)
 		p.enricher.Write(e)
 	case CiliumNotifyTraceSock:
