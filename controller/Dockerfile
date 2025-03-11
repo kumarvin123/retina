@@ -139,6 +139,11 @@ COPY --from=controller-bin /go/src/github.com/microsoft/retina/windows/setkubeco
 COPY --from=controller-bin /go/bin/retina/controller controller.exe
 COPY --from=capture-bin /go/bin/retina/captureworkload captureworkload.exe
 ADD https://github.com/microsoft/etl2pcapng/releases/download/v1.10.0/etl2pcapng.exe /etl2pcapng.exe
+RUN mkdir eBPFRetina && \
+    curl -o eBPFRetina.zip https://www.nuget.org/api/v2/package/Microsoft.Wcn.Observability.eBPF.Retina.x64/0.1.0-prerelease.3 && \
+    tar -xf eBPFRetina.zip -C eBPFRetina && \
+    rm eBPFRetina.zip
+COPY .\eBPFRetina\build\native\bin\Release\retinaebpfapi.dll .\retinaebpfapi.dll
 
 CMD ["controller.exe", "start", "--kubeconfig=.\\kubeconfig"]
 CMD ["controller.exe", "start", "--kubeconfig=.\\kubeconfig"]
