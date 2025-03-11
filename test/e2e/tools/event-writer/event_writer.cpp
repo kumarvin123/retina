@@ -71,7 +71,7 @@ std::vector<int> get_physical_interface_indices()
     if (GetAdaptersAddresses(family, flags, NULL, pAddresses, &outBufLen) == NO_ERROR) {
         pCurrAddresses = pAddresses;
         while (pCurrAddresses) {
-            if (pCurrAddresses->IfType ==  && pCurrAddresses->OperStatus == IfOperStatusUp) {
+            if (pCurrAddresses->IfType == IF_TYPE_ETHERNET_CSMACD && pCurrAddresses->OperStatus == IfOperStatusUp) {
                 physical_indices.push_back(pCurrAddresses->IfIndex);
             }
             pCurrAddresses = pCurrAddresses->Next;
@@ -281,7 +281,6 @@ int main(int argc, char* argv[]) {
     //    }
     //}
     attach_program_to_interface(7);
-    //attach_program_to_interface(13);
 
     //Sleep for 1 minute
     printf("%s - holding for 1 minute!!\n", __FUNCTION__);
