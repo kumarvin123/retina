@@ -32,7 +32,6 @@ RUN if [ "$GOOS" = "linux" ] ; then \
     fi
 COPY ./pkg/plugin /go/src/github.com/microsoft/retina/pkg/plugin
 WORKDIR /go/src/github.com/microsoft/retina
-RUN dir /go/src/github.com/microsoft/retina/pkg/plugin/ebpfwindows
 RUN if [ "$GOOS" = "linux" ] ; then \
       go mod init github.com/microsoft/retina; \
       go generate -skip "mockgen" -x /go/src/github.com/microsoft/retina/pkg/plugin/...; \
@@ -45,6 +44,9 @@ COPY . .
 RUN if [ "$GOOS" = "linux" ] ; then \
       rm -rf ./pkg/plugin && tar xvf /gen.tar.gz ./pkg/plugin; \
     fi
+WORKDIR  /tmp
+RUN curl -L -o eBPFRetina.zip https://www.nuget.org/api/v2/package/Microsoft.Wcn.Observability.eBPF.Retina.x64/0.1.0-prerelease.3 && mkdir eBPFRetina && tar -xf eBPFRetina.zip -C eBPFRetina
+RUN cp eBPFRetina/build/native/bin/Release/retinaebpfapi.dll /tmp/retinaebpfapi.dll
 
 # capture binary
 FROM intermediate AS capture-bin
@@ -138,7 +140,7 @@ COPY --from=controller-bin /go/src/github.com/microsoft/retina/windows/kubeconfi
 COPY --from=controller-bin /go/src/github.com/microsoft/retina/windows/setkubeconfigpath.ps1 setkubeconfigpath.ps1
 COPY --from=controller-bin /go/bin/retina/controller controller.exe
 COPY --from=capture-bin /go/bin/retina/captureworkload captureworkload.exe
-RUN dir
+COPY --from=intermediate /tmp/retinaebpfapi.dll retinaebpfapi.dll
 ADD https://github.com/microsoft/etl2pcapng/releases/download/v1.10.0/etl2pcapng.exe /etl2pcapng.exe
 CMD ["controller.exe", "start", "--kubeconfig=.\\kubeconfig"]
 CMD ["controller.exe", "start", "--kubeconfig=.\\kubeconfig"]
