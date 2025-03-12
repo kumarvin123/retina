@@ -117,7 +117,7 @@ func (p *Plugin) metricsMapIterateCallback(key *MetricsKey, value *MetricsValues
 		if key.IsEgress() {
 			metrics.ForwardBytesGauge.WithLabelValues(egressLabel).Set(float64(value.Bytes()))
 			p.l.Debug("emitting bytes sent count metric", zap.Uint64(bytesSent, value.Bytes()))
-			metrics.WindowsGauge.WithLabelValues(packetsSent).Set(float64(value.Count()))
+			metrics.HNSStatsGauge.WithLabelValues(packetsSent).Set(float64(value.Count()))
 			p.l.Debug("emitting packets sent count metric", zap.Uint64(packetsSent, value.Count()))
 		} else if key.IsIngress() {
 			metrics.ForwardPacketsGauge.WithLabelValues(ingressLabel).Set(float64(value.Count()))
@@ -227,7 +227,7 @@ func (p *Plugin) handleTraceEvent(data unsafe.Pointer, size uint32) error {
 	}
 	eventType := *(*uint8)(data)
 	switch eventType {
-	case CiliumNotifyDrop:
+	case NotifyDrop:
 		if uintptr(size) < unsafe.Sizeof(DropNotify{}) {
 			p.l.Error("Invalid DropNotify data size", zap.Uint32("size", size))
 			return ErrInvalidEventData
@@ -249,7 +249,7 @@ func (p *Plugin) handleTraceEvent(data unsafe.Pointer, size uint32) error {
 		meta.DropReason = utils.DropReason(dropNotify.Subtype)
 		utils.AddRetinaMetadata(fl, meta)
 		p.enricher.Write(e)
-	case CiliumNotifyTrace:
+	case NotifyTrace:
 		if uintptr(size) < unsafe.Sizeof(TraceNotify{}) {
 			p.l.Error("Invalid TraceNotify data size", zap.Uint32("size", size))
 			return ErrInvalidEventData
