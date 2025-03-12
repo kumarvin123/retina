@@ -53,37 +53,36 @@ int pin_map(const char* pin_path, bpf_map* map) {
     return 0;
 }
 
-std::vector<int> get_physical_interface_indices()
-{
-    std::vector<int> physical_indices;
-    ULONG flags = GAA_FLAG_INCLUDE_PREFIX;
-    ULONG family = AF_UNSPEC;
-    ULONG outBufLen = 0;
-    PIP_ADAPTER_ADDRESSES pAddresses = NULL;
-    PIP_ADAPTER_ADDRESSES pCurrAddresses = NULL;
+int get_physical_interface_indice() {
+    // Command to extract the first Mellanox adapter ifIndex using PowerShell.
+    const char* cmd = "powershell -Command \"Get-NetAdapter | Where-Object { $_.InterfaceDescription -match 'Mellanox' } | Select-Object -First 1 | ForEach-Object { Write-Output $_.ifIndex }\"";
 
-    // Get the size needed for the buffer
-    if (GetAdaptersAddresses(family, flags, NULL, pAddresses, &outBufLen) == ERROR_BUFFER_OVERFLOW) {
-        pAddresses = (IP_ADAPTER_ADDRESSES*)malloc(outBufLen);
+    // Open a pipe to execute the command.
+    FILE* pipe = _popen(cmd, "r");
+    if (!pipe) {
+        fprintf(stderr, "Failed to run command\n");
+        return -1;
     }
 
-    // Get the actual data
-    if (GetAdaptersAddresses(family, flags, NULL, pAddresses, &outBufLen) == NO_ERROR) {
-        pCurrAddresses = pAddresses;
-        while (pCurrAddresses) {
-            if (pCurrAddresses->OperStatus == IfOperStatusUp) {
-                printf("Interface name - %s, Index - %d\n", pCurrAddresses->FriendlyName, pCurrAddresses->IfIndex);
-                physical_indices.push_back(pCurrAddresses->IfIndex);
-            }
-            pCurrAddresses = pCurrAddresses->Next;
-        }
+    char buffer[128];
+    memset(buffer, '\0', sizeof(buffer));
+    std::string result;
+    // Read the output of the command.
+    while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
+        result += buffer;
+    }
+    _pclose(pipe);
+
+    // Check if result is empty.
+    if (result.empty()) {
+        fprintf(stderr, "No output received from PowerShell command; cannot extract ifIndex.\n");
+        return -1;
     }
 
-    if (pAddresses) {
-        free(pAddresses);
-    }
-
-    return physical_indices;
+    // Convert the output string to an integer.
+    int ifIndex = atoi(result.c_str());
+    printf("Extracted ifIndex: %d\n", ifIndex);
+    return ifIndex;
 }
 
 int
@@ -275,11 +274,13 @@ int main(int argc, char* argv[]) {
         printf("%s - filter updated successfully\n", __FUNCTION__);
     }
 
-    std::vector<int> interface_indices = get_physical_interface_indices();
-    for (int ifindx : interface_indices) {
-        if (attach_program_to_interface(ifindx) != 0) {
-            return 1;
-        }
+    int ifindx = get_physical_interface_indice();
+    if (ifindx != -1) {
+        return 1;
+    }
+
+    if (attach_program_to_interface(ifindx) != 0) {
+        return 1;
     }
 
     //Sleep for 1 minute
