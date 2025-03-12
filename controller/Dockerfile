@@ -31,9 +31,10 @@ RUN if [ "$GOOS" = "linux" ] ; then \
     fi
 COPY ./pkg/plugin /go/src/github.com/microsoft/retina/pkg/plugin
 RUN if [ "$GOOS" = "windows" ] ; then \
-      curl -L -o eBPFRetina.tar https://www.nuget.org/api/v2/package/Microsoft.Wcn.Observability.eBPF.Retina.x64/0.1.0-prerelease.3 && \
-      mkdir eBPFRetina && \
-      tar -xf eBPFRetina.tar -C eBPFRetina; \
+      curl -L -o nuget.exe https://dist.nuget.org/win-x86-commandline/latest/nuget.exe && \
+      curl -L -o eBPFRetina.zip https://www.nuget.org/api/v2/package/Microsoft.Wcn.Observability.eBPF.Retina.x64/0.1.0-prerelease.3 && \
+      rename eBPFRetina.zip eBPFRetina.nupkg && \
+      nuget.exe install eBPFRetina.nupkg -OutputDirectory eBPFRetina -ExcludeVersion; \
     fi
 WORKDIR /go/src/github.com/microsoft/retina
 RUN if [ "$GOOS" = "linux" ] ; then \
