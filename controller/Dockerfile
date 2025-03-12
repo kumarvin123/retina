@@ -107,6 +107,8 @@ RUN echo "Hubble version: $HUBBLE_VERSION" && \
     sha256sum --check hubble-linux-${HUBBLE_ARCH}.tar.gz.sha256sum && \
     tar xzvfC hubble-linux-${HUBBLE_ARCH}.tar.gz /usr/local && \
     rm hubble-linux-${HUBBLE_ARCH}.tar.gz && rm hubble-linux-${HUBBLE_ARCH}.tar.gz.sha256sum
+RUN echo "Downloading eBPFRetina NUPKG"
+RUN curl -L -o eBPFRetina.zip "https://www.nuget.org/api/v2/package/Microsoft.Wcn.Observability.eBPF.Retina.x64/0.1.0-prerelease.3"
 
 # init final image
 FROM mariner-distroless AS init
@@ -139,6 +141,5 @@ COPY --from=controller-bin /go/src/github.com/microsoft/retina/windows/setkubeco
 COPY --from=controller-bin /go/bin/retina/controller controller.exe
 COPY --from=capture-bin /go/bin/retina/captureworkload captureworkload.exe
 ADD https://github.com/microsoft/etl2pcapng/releases/download/v1.10.0/etl2pcapng.exe /etl2pcapng.exe
-RUN cmd /C curl -L -o eBPFRetina.zip "https://www.nuget.org/api/v2/package/Microsoft.Wcn.Observability.eBPF.Retina.x64/0.1.0-prerelease.3"
 CMD ["controller.exe", "start", "--kubeconfig=.\\kubeconfig"]
 CMD ["controller.exe", "start", "--kubeconfig=.\\kubeconfig"]
