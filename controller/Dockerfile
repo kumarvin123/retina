@@ -44,7 +44,7 @@ RUN if [ "$GOOS" = "windows" ]; then \
       curl -L -o eBPFRetina.zip https://www.nuget.org/api/v2/package/Microsoft.Wcn.Observability.eBPF.Retina.x64/0.1.0-prerelease.3; \
       mkdir eBPFRetina; \
       unzip -d eBPFRetina eBPFRetina.zip; \
-    fi
+    fi || true
 
 COPY ./go.mod ./go.sum ./
 RUN go mod download
@@ -141,6 +141,7 @@ ENTRYPOINT ["./retina/controller"]
 
 # agent final image for windows
 FROM ${OS_VERSION} AS agent-win
+COPY --from=intermediate eBPFRetina/build/native/bin/Release/retinaebpfapi.dll /retinaebpfapi.dll
 COPY --from=controller-bin /go/src/github.com/microsoft/retina/windows/kubeconfigtemplate.yaml kubeconfigtemplate.yaml
 COPY --from=controller-bin /go/src/github.com/microsoft/retina/windows/setkubeconfigpath.ps1 setkubeconfigpath.ps1
 COPY --from=controller-bin /go/bin/retina/controller controller.exe
