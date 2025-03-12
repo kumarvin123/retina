@@ -15,19 +15,6 @@ type IP struct {
 	Pad3    uint32
 }
 
-// TraceSockNotify is the notification for a socket trace
-type TraceSockNotify struct {
-	Type       uint8
-	XlatePoint uint8
-	DstIP      IP
-	DstPort    uint16
-	SockCookie uint64
-	CgroupID   uint64
-	L4Proto    uint8
-	IPv6       bool
-	Data       [128]byte
-}
-
 // NotifyCommonHdr is the common header for all notifications
 type NotifyCommonHdr struct {
 	Type    uint8
@@ -114,10 +101,4 @@ func (k *DropNotify) String() string {
 func (k *TraceNotify) String() string {
 	ipAddress := k.OrigIP.ConvertToString(k.IPv6)
 	return fmt.Sprintf("Ifindex: %d, SrcLabel:%d, DstLabel:%d, IpV6:%t, OrigIP:%s", k.Ifindex, k.SrcLabel, k.DstLabel, k.IPv6, ipAddress)
-}
-
-// String returns a string representation of the TraceSockNotify
-func (k *TraceSockNotify) String() string {
-	ipAddress := k.DstIP.ConvertToString(k.IPv6)
-	return fmt.Sprintf("DstIP:%s, DstPort:%d, SockCookie:%d, CgroupID:%d, L4Proto:%d, IPv6:%t", ipAddress, k.DstPort, k.SockCookie, k.CgroupID, k.L4Proto, k.IPv6)
 }

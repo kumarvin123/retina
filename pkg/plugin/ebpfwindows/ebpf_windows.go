@@ -269,26 +269,6 @@ func (p *Plugin) handleTraceEvent(data unsafe.Pointer, size uint32) error {
 		fl := e.GetFlow()
 		utils.AddRetinaMetadata(fl, meta)
 		p.enricher.Write(e)
-	case CiliumNotifyTraceSock:
-		if uintptr(size) < unsafe.Sizeof(TraceSockNotify{}) {
-			p.l.Error("Invalid TraceSockNotify data size", zap.Uint32("size", size))
-			return ErrInvalidEventData
-		}
-		e, err := p.parser.Decode(&observer.MonitorEvent{
-			Payload: &observer.PerfEvent{
-				Data: (*[unsafe.Sizeof(TraceSockNotify{})]byte)(data)[:],
-			},
-		})
-		if err != nil {
-			p.l.Error("Could not convert event to flow", zap.Any("handleTraceEvent", data), zap.Error(err))
-			return ErrInvalidEventData
-		}
-		meta := &utils.RetinaMetadata{}
-		// Add packet size to the flow's metadata.
-		utils.AddPacketSize(meta, 128)
-		fl := e.GetFlow()
-		utils.AddRetinaMetadata(fl, meta)
-		p.enricher.Write(e)
 	}
 	return nil
 }

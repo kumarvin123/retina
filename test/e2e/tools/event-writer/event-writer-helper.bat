@@ -1,4 +1,4 @@
-@echo on
+@echo off
 REM Add logic to call a specific function based on the argument
 if "%1"=="Setup-EventWriter" goto Setup-EventWriter
 if "%1"=="Start-EventWriter" goto Start-EventWriter
