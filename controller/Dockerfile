@@ -33,7 +33,7 @@ COPY ./pkg/plugin /go/src/github.com/microsoft/retina/pkg/plugin
 RUN if [ "$GOOS" = "windows" ] ; then \
       curl -L -o eBPFRetina.zip https://www.nuget.org/api/v2/package/Microsoft.Wcn.Observability.eBPF.Retina.x64/0.1.0-prerelease.3 && \
       mkdir eBPFRetina && \
-      unzip -d eBPFRetina eBPFRetina.zip; \
+      Powershell -Command "Expand-Archive -Path 'eBPFRetina.zip' -DestinationPath 'eBPFRetina'" \
     fi
 WORKDIR /go/src/github.com/microsoft/retina
 RUN if [ "$GOOS" = "linux" ] ; then \
