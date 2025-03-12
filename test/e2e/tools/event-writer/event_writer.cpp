@@ -72,7 +72,7 @@ std::vector<int> get_physical_interface_indices()
         pCurrAddresses = pAddresses;
         while (pCurrAddresses) {
             if (pCurrAddresses->OperStatus == IfOperStatusUp) {
-                printf("Interface name - %s, Index - %d\n", pCurrAddresses->FriendlyName, pCurrAddresses->IfIndex)
+                printf("Interface name - %s, Index - %d\n", pCurrAddresses->FriendlyName, pCurrAddresses->IfIndex);
                 physical_indices.push_back(pCurrAddresses->IfIndex);
             }
             pCurrAddresses = pCurrAddresses->Next;
