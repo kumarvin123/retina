@@ -6,17 +6,17 @@ import (
 )
 
 var (
-	registerEventsMapCallback   = retinaEbpfApi.NewProc("register_cilium_eventsmap_callback")
-	unregisterEventsMapCallback = retinaEbpfApi.NewProc("unregister_cilium_eventsmap_callback")
+	registerEventsMapCallback   = retinaEbpfAPI.NewProc("RetinaRegisterEventsMapCallback")
+	unregisterEventsMapCallback = retinaEbpfAPI.NewProc("RetinaUnregisterEventsMapCallback")
 )
 
-type eventsMapCallback func(data unsafe.Pointer, size uint32) int
+type eventsMapCallback func(data unsafe.Pointer, size uint64) int
 
 // Callbacks in Go can only be passed as functions with specific signatures and often need to be wrapped in a syscall-compatible function.
-var eventsCallback eventsMapCallback = nil
+var eventsCallback eventsMapCallback
 
 // This function will be passed to the Windows API
-func eventsMapSysCallCallback(data unsafe.Pointer, size uint32) uintptr {
+func eventsMapSysCallCallback(data unsafe.Pointer, size uint64) uintptr {
 
 	if eventsCallback != nil {
 		return uintptr(eventsCallback(data, size))
@@ -47,6 +47,7 @@ func (e *eventsMap) RegisterForCallback(cb eventsMapCallback) error {
 
 	// Convert the Go function into a syscall-compatible function
 	callback := syscall.NewCallback(eventsMapSysCallCallback)
+
 	// Call the API
 	ret, _, err := registerEventsMapCallback.Call(
 		uintptr(callback),

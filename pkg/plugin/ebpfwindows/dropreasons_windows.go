@@ -2,6 +2,7 @@ package ebpfwindows
 
 import (
 	"fmt"
+	"strconv"
 )
 
 // DropMin numbers less than this are non-drop reason codes
@@ -61,20 +62,22 @@ func BPFFileName(id uint8) string {
 }
 
 func extendedReason(extError int8) string {
-	if extError == int8(0) {
+	if extError == 0 {
 		return ""
 	}
-	return fmt.Sprintf("%d", extError)
+	return strconv.Itoa(int(extError))
 }
 
 func DropReasonExt(reason uint8, extError int8) string {
+	var ext string
+
 	if err, ok := dropErrors[reason]; ok {
-		if ext := extendedReason(extError); ext == "" {
+		if ext = extendedReason(extError); ext == "" {
 			return err
-		} else {
-			return err + ", " + ext
 		}
+		return err + ", " + ext
 	}
+
 	return fmt.Sprintf("%d, %d", reason, extError)
 }
 

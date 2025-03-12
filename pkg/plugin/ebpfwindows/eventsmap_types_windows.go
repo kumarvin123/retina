@@ -15,6 +15,18 @@ type IP struct {
 	Pad3    uint32
 }
 
+// TraceSockNotify is the notification for a socket trace
+type TraceSockNotify struct {
+	Type       uint8
+	XlatePoint uint8
+	DstIP      IP
+	DstPort    uint16
+	SockCookie uint64
+	CgroupID   uint64
+	L4Proto    uint8
+	Ipv6       bool
+}
+
 // NotifyCommonHdr is the common header for all notifications
 type NotifyCommonHdr struct {
 	Type    uint8
@@ -41,7 +53,6 @@ type DropNotify struct {
 	File     uint8
 	ExtError int8
 	Ifindex  uint32
-	Data     [128]byte
 }
 
 // TraceNotify is the notification for a packet trace
@@ -51,25 +62,24 @@ type TraceNotify struct {
 	DstLabel uint32
 	DstID    uint16
 	Reason   uint8
-	IPv6     bool
+	Ipv6     bool
 	Ifindex  uint32
 	OrigIP   IP
-	Data     [128]byte
 }
 
 // Notification types
 const (
-	CiliumNotifyUnspec        = 0
-	CiliumNotifyDrop          = 1
-	CiliumNotifyDebugMessage  = 2
-	CiliumNotifyDebugCapture  = 3
-	CiliumNotifyTrace         = 4
-	CiliumNotifyPolicyVerdict = 5
-	CiliumNotifyCapture       = 6
-	CiliumNotifyTraceSock     = 7
+	NotifyUnspec        = 0
+	NotifyDrop          = 1
+	NotifyDebugMessage  = 2
+	NotifyDebugCapture  = 3
+	NotifyTrace         = 4
+	NotifyPolicyVerdict = 5
+	NotifyCapture       = 6
+	NotifyTraceSock     = 7
 )
 
-func (ip *IP) ConvertToString(IPv6 bool) string {
+func (ip *IP) ConvertToString(Ipv6 bool) string {
 	var ipAddress string
 	var buf bytes.Buffer
 
@@ -81,7 +91,7 @@ func (ip *IP) ConvertToString(IPv6 bool) string {
 
 	byteArray := buf.Bytes()
 
-	if IPv6 {
+	if Ipv6 {
 		ipAddress = net.IP(byteArray[:16]).String()
 	} else {
 		ipAddress = net.IP(byteArray[:4]).String()
@@ -99,6 +109,12 @@ func (k *DropNotify) String() string {
 
 // String returns a string representation of the TraceNotify
 func (k *TraceNotify) String() string {
-	ipAddress := k.OrigIP.ConvertToString(k.IPv6)
-	return fmt.Sprintf("Ifindex: %d, SrcLabel:%d, DstLabel:%d, IpV6:%t, OrigIP:%s", k.Ifindex, k.SrcLabel, k.DstLabel, k.IPv6, ipAddress)
+	ipAddress := k.OrigIP.ConvertToString(k.Ipv6)
+	return fmt.Sprintf("Ifindex: %d, SrcLabel:%d, DstLabel:%d, IpV6:%t, OrigIP:%s", k.Ifindex, k.SrcLabel, k.DstLabel, k.Ipv6, ipAddress)
+}
+
+// String returns a string representation of the TraceSockNotify
+func (k *TraceSockNotify) String() string {
+	ipAddress := k.DstIP.ConvertToString(k.Ipv6)
+	return fmt.Sprintf("DstIP:%s, DstPort:%d, SockCookie:%d, CgroupID:%d, L4Proto:%d, IPv6:%t", ipAddress, k.DstPort, k.SockCookie, k.CgroupID, k.L4Proto, k.Ipv6)
 }
