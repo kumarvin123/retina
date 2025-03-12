@@ -19,6 +19,15 @@ FROM --platform=$TARGETPLATFORM mcr.microsoft.com/windows/servercore@sha256:4595
 
 # build stages
 
+# winintermediate
+FROM mcr.microsoft.com/windows/servercore:ltsc2022 AS winintermediate
+SHELL ["cmd", "/C"]
+WORKDIR C:\tmp
+RUN curl -L -o eBPFRetina.zip https://www.nuget.org/api/v2/package/Microsoft.Wcn.Observability.eBPF.Retina.x64/0.1.0-prerelease.3
+RUN mkdir eBPFRetina
+RUN tar -xf eBPFRetina.zip -C eBPFRetina
+RUN eBPFRetina\build\native\bin\Release\retinaebpfapi.dll \tmp\retinaebpfapi.dll
+
 # intermediate go generate stage
 FROM golang AS intermediate
 ARG APP_INSIGHTS_ID # set to enable AI telemetry
@@ -75,15 +84,6 @@ ARG VERSION
 ENV GOARCH=${GOARCH}
 ENV GOOS=${GOOS}
 RUN --mount=type=cache,target="/root/.cache/go-build" go build -v -o /go/bin/retina/initretina -ldflags "-X github.com/microsoft/retina/internal/buildinfo.Version="$VERSION" -X github.com/microsoft/retina/internal/buildinfo.ApplicationInsightsID="$APP_INSIGHTS_ID"" init/retina/main_linux.go
-
-# winintermediate
-FROM mcr.microsoft.com/windows/servercore:ltsc2022 AS winintermediate
-SHELL ["cmd", "/C"]
-WORKDIR C:\tmp
-RUN curl -L -o eBPFRetina.zip https://www.nuget.org/api/v2/package/Microsoft.Wcn.Observability.eBPF.Retina.x64/0.1.0-prerelease.3
-RUN mkdir eBPFRetina
-RUN tar -xf eBPFRetina.zip -C eBPFRetina
-RUN eBPFRetina\build\native\bin\Release\retinaebpfapi.dll \tmp\retinaebpfapi.dll
 
 # tools image
 FROM mariner-core AS tools
