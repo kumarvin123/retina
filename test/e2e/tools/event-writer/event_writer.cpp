@@ -71,7 +71,8 @@ std::vector<int> get_physical_interface_indices()
     if (GetAdaptersAddresses(family, flags, NULL, pAddresses, &outBufLen) == NO_ERROR) {
         pCurrAddresses = pAddresses;
         while (pCurrAddresses) {
-            if (wcsstr(pCurrAddresses->FriendlyName, L"Mellanox") != nullptr && pCurrAddresses->OperStatus == IfOperStatusUp) {
+            if (pCurrAddresses->OperStatus == IfOperStatusUp) {
+                printf("Interface name - %s, Index - %d\n", pCurrAddresses->FriendlyName, pCurrAddresses->IfIndex)
                 physical_indices.push_back(pCurrAddresses->IfIndex);
             }
             pCurrAddresses = pCurrAddresses->Next;
