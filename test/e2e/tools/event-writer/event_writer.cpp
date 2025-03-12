@@ -275,7 +275,7 @@ int main(int argc, char* argv[]) {
     }
 
     int ifindx = get_physical_interface_indice();
-    if (ifindx != -1) {
+    if (ifindx == -1) {
         return 1;
     }
 
