@@ -21,6 +21,13 @@ FROM --platform=$TARGETPLATFORM mcr.microsoft.com/windows/servercore@sha256:4595
 
 # intermediate go generate stage
 
+FROM ltsc2022 AS intermediate-win
+WORKDIR /tmp
+RUN tdnf install -y unzip && \
+    curl -L -o eBPFRetina.zip https://www.nuget.org/api/v2/package/Microsoft.Wcn.Observability.eBPF.Retina.x64/0.1.0-prerelease.3 && \
+    mkdir eBPFRetina && \
+    unzip -d eBPFRetina eBPFRetina.zip
+
 FROM golang AS intermediate
 ARG APP_INSIGHTS_ID # set to enable AI telemetry
 ARG GOARCH=amd64 # default to amd64
@@ -38,13 +45,6 @@ RUN if [ "$GOOS" = "linux" ] ; then \
       tar czf /gen.tar.gz ./pkg/plugin; \
       rm go.mod; \
       fi
-
-RUN if [ "$GOOS" = "windows" ]; then \
-      tdnf install -y unzip; \
-      curl -L -o eBPFRetina.zip https://www.nuget.org/api/v2/package/Microsoft.Wcn.Observability.eBPF.Retina.x64/0.1.0-prerelease.3; \
-      mkdir eBPFRetina; \
-      unzip -d eBPFRetina eBPFRetina.zip; \
-    fi || true
 
 COPY ./go.mod ./go.sum ./
 RUN go mod download
@@ -141,7 +141,7 @@ ENTRYPOINT ["./retina/controller"]
 
 # agent final image for windows
 FROM ${OS_VERSION} AS agent-win
-COPY --from=intermediate /eBPFRetina/build/native/bin/Release/retinaebpfapi.dll /retinaebpfapi.dll
+COPY --from=intermediate-win /tmp/eBPFRetina/build/native/bin/Release/retinaebpfapi.dll /retinaebpfapi.dll
 COPY --from=controller-bin /go/src/github.com/microsoft/retina/windows/kubeconfigtemplate.yaml kubeconfigtemplate.yaml
 COPY --from=controller-bin /go/src/github.com/microsoft/retina/windows/setkubeconfigpath.ps1 setkubeconfigpath.ps1
 COPY --from=controller-bin /go/bin/retina/controller controller.exe
