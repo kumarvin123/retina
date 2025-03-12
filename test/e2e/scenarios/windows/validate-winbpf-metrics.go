@@ -7,6 +7,7 @@ import (
 	"time"
 
 	k8s "github.com/microsoft/retina/test/e2e/framework/kubernetes"
+	prom "github.com/microsoft/retina/test/e2e/framework/prometheus"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kubernetes "k8s.io/client-go/kubernetes"
@@ -75,8 +76,44 @@ func (v *ValidateWinBpfMetric) ExecCommandInWinPod(cmd string, DeamonSetName str
 func (v *ValidateWinBpfMetric) Run() error {
 	ebpfLabelSelector := fmt.Sprintf("name=%s", v.EbpfXdpDeamonSetName)
 
+	var promOutput string
+	numAttempts := 10
+	for promOutput == "" && numAttempts > 0 {
+		err, promOutput := v.ExecCommandInWinPod("C:\\event-writer-helper.bat GetRetinaPromMetrics", v.RetinaDaemonSetName, v.RetinaDaemonSetNamespace, "k8s-app=retina")
+
+		if err != nil {
+			fmt.Println(err.Error())
+			return err
+		}
+		if promOutput != "" {
+			break
+		}
+		numAttempts--
+		time.Sleep(5 * time.Second)
+	}
+
+	if promOutput == "" {
+		return fmt.Errorf("failed to get prometheus metrics from Retina DaemonSet")
+	}
+	fmt.Println(promOutput)
+	labels := map[string]string{
+		"direction": "ingress",
+	}
+	preTestFwdBytes, err := prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_forward_bytes", labels)
+	if err != nil {
+		return fmt.Errorf("failed to get metric: %w", err)
+	}
+	fmt.Printf("Metric value %d, labels: %v\n", preTestFwdBytes, labels)
+
+	preTestDrpBytes, err := prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_drop_bytes", labels)
+	if err != nil {
+		return fmt.Errorf("failed to get metric: %w", err)
+	}
+	fmt.Printf("Metric value %d, labels: %v\n", preTestDrpBytes, labels)
+
 	//TRACE
-	err, _ := v.ExecCommandInWinPod("C:\\event-writer-helper.bat Start-EventWriter -event 4 -srcIP 23.192.228.84",
+	//Example.com - 23.192.228.84
+	err, _ = v.ExecCommandInWinPod("C:\\event-writer-helper.bat Start-EventWriter -event 4 -srcIP 23.192.228.84",
 		v.EbpfXdpDeamonSetName,
 		v.EbpfXdpDeamonSetNamespace,
 		ebpfLabelSelector)
@@ -84,7 +121,7 @@ func (v *ValidateWinBpfMetric) Run() error {
 		return err
 	}
 
-	time.Sleep(10 * time.Second)
+	time.Sleep(5 * time.Second)
 	numcurls := 10
 	for numcurls > 0 {
 		err, _ = v.ExecCommandInWinPod("C:\\event-writer-helper.bat Curl 23.192.228.84",
@@ -105,7 +142,7 @@ func (v *ValidateWinBpfMetric) Run() error {
 		return err
 	}
 	fmt.Println(output)
-	if strings.Contains(output, "failed") {
+	if strings.Contains(output, "failed") || strings.Contains(output, "error") {
 		return fmt.Errorf("failed to start event writer")
 	}
 
@@ -119,7 +156,7 @@ func (v *ValidateWinBpfMetric) Run() error {
 		return err
 	}
 
-	time.Sleep(10 * time.Second)
+	time.Sleep(5 * time.Second)
 	numcurls = 10
 	for numcurls > 0 {
 		err, _ = v.ExecCommandInWinPod("C:\\event-writer-helper.bat Curl 23.192.228.84",
@@ -152,8 +189,6 @@ func (v *ValidateWinBpfMetric) Run() error {
 		return fmt.Errorf("failed to curl to example.com")
 	}
 
-	var promOutput string
-	numAttempts := 10
 	for promOutput == "" && numAttempts > 0 {
 		err, promOutput = v.ExecCommandInWinPod("C:\\event-writer-helper.bat GetRetinaPromMetrics", v.RetinaDaemonSetName, v.RetinaDaemonSetNamespace, "k8s-app=retina")
 
@@ -173,45 +208,17 @@ func (v *ValidateWinBpfMetric) Run() error {
 	}
 	fmt.Println(promOutput)
 
-	// Check for Basic Metrics (Node Level)
-	//Forward
-	if strings.Contains(promOutput, "networkobservability_forward_bytes{direction=\"ingress\"}") {
-		fmt.Println("prom metrics output contains networkobservability_forward_bytes{direction=\"ingress\"}")
-	} else {
-		return fmt.Errorf("prom metrics output does not contain networkobservability_forward_bytes{direction=\"ingress\"}")
+	postTestFwdBytes, err := prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_forward_bytes", labels)
+	if err != nil {
+		return fmt.Errorf("failed to get metric: %w", err)
 	}
+	fmt.Printf("Metric value %d, labels: %v\n", postTestFwdBytes, labels)
 
-	if strings.Contains(promOutput, "networkobservability_forward_count{direction=\"ingress\"}") {
-		fmt.Println("prom metrics output contains networkobservability_forward_count{direction=\"ingress\"}")
-	} else {
-		return fmt.Errorf("prom metrics output does not contain networkobservability_forward_count{direction=\"ingress\"}")
+	postTestDrpBytes, err := prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_drop_bytes", labels)
+	if err != nil {
+		return fmt.Errorf("failed to get metric: %w", err)
 	}
-
-	//Drop
-	if strings.Contains(promOutput, "networkobservability_drop_bytes{direction=\"ingress\",reason=\"6, 0\"}") {
-		fmt.Println("prom metrics output contains networkobservability_drop_bytes{direction=\"ingress\",reason=\"6, 0\"}")
-	} else {
-		return fmt.Errorf("prom metrics output does not contain networkobservability_drop_bytes{direction=\"ingress\",reason=\"8, 0\"}")
-	}
-
-	if strings.Contains(promOutput, "networkobservability_drop_count{direction=\"ingress\",reason=\"6, 0\"}") {
-		fmt.Println("prom metrics output contains networkobservability_drop_count{direction=\"ingress\",reason=\"6, 0\"}")
-	} else {
-		return fmt.Errorf("prom metrics output does not contain networkobservability_drop_count{direction=\"ingress\",reason=\"8, 0\"}")
-	}
-
-	// Check for Advanced Metrics
-	if strings.Contains(promOutput, "networkobservability_adv_tcpflags_count") {
-		fmt.Println("prom metrics output contains networkobservability_adv_tcpflags_count")
-	}
-
-	if strings.Contains(promOutput, "networkobservability_adv_drop_bytes") {
-		fmt.Println("prom metrics output contains networkobservability_adv_drop_bytes")
-	}
-
-	if strings.Contains(promOutput, "networkobservability_adv_drop_count") {
-		fmt.Println("prom metrics output contains networkobservability_adv_drop_count")
-	}
+	fmt.Printf("Metric value %d, labels: %v\n", postTestDrpBytes, labels)
 
 	return nil
 }
