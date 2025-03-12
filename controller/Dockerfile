@@ -21,7 +21,7 @@ FROM --platform=$TARGETPLATFORM mcr.microsoft.com/windows/servercore@sha256:4595
 
 # intermediate go generate stage
 
-FROM mariner-core AS eBPFRetinaStage
+FROM golang AS eBPFRetinaStage
 WORKDIR /tmp
 RUN tdnf install -y unzip && \
     curl -L -o eBPFRetina.zip https://www.nuget.org/api/v2/package/Microsoft.Wcn.Observability.eBPF.Retina.x64/0.1.0-prerelease.3 && \
