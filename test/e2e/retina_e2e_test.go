@@ -29,23 +29,22 @@ func TestE2ERetina(t *testing.T) {
 
 	hubblechartPath := filepath.Join(rootDir, "deploy", "hubble", "manifests", "controller", "helm", "retina")
 
-	// CreateTestInfra
-	createTestInfra := types.NewRunner(t, jobs.CreateTestInfra(subID, rg, clusterName, location, kubeConfigFilePath, *common.CreateInfra))
-	createTestInfra.Run(ctx)
+	err = jobs.LoadGenericFlags().Run()
+	require.NoError(t, err, "failed to load generic flags")
+
+	if *common.KubeConfig == "" {
+		*common.KubeConfig = infra.CreateAzureTempK8sInfra(ctx, t, rootDir)
+	}
 
 	// Install Ebpf and XDP
-	installEbpfAndXDP := types.NewRunner(t, jobs.InstallEbpfXdp(kubeConfigFilePath))
+	installEbpfAndXDP := types.NewRunner(t, jobs.InstallEbpfXdp(common.KubeConfigFilePath(rootDir)))
 	installEbpfAndXDP.Run(ctx)
 
 	time.Sleep(10 * time.Minute)
 
 	// Load BPF Maps
-	loadWinBPFMapsJob := types.NewRunner(t, jobs.LoadWinBPFMapsJob(kubeConfigFilePath))
+	loadWinBPFMapsJob := types.NewRunner(t, jobs.LoadWinBPFMapsJob(common.KubeConfigFilePath(rootDir)))
 	loadWinBPFMapsJob.Run(ctx)
-
-	if *common.KubeConfig == "" {
-		*common.KubeConfig = infra.CreateAzureTempK8sInfra(ctx, t, rootDir)
-	}
 
 	// Install and test Retina basic metrics
 	basicMetricsE2E := types.NewRunner(t,
