@@ -17,6 +17,7 @@ FROM --platform=$TARGETPLATFORM mcr.microsoft.com/windows/servercore@sha256:6fdf
 # mcr.microsoft.com/windows/servercore:ltsc2022
 FROM --platform=$TARGETPLATFORM mcr.microsoft.com/windows/servercore@sha256:45952938708fbde6ec0b5b94de68bcdec3f8c838be018536b1e9e5bd95e6b943 AS ltsc2022
 
+FROM  mcr.microsoft.com/windows/servercore:ltsc2022 AS winintermediate
 
 # build stages
 
@@ -44,9 +45,6 @@ COPY . .
 RUN if [ "$GOOS" = "linux" ] ; then \
       rm -rf ./pkg/plugin && tar xvf /gen.tar.gz ./pkg/plugin; \
     fi
-WORKDIR  /tmp
-RUN curl -L -o eBPFRetina.zip https://www.nuget.org/api/v2/package/Microsoft.Wcn.Observability.eBPF.Retina.x64/0.1.0-prerelease.3 && mkdir eBPFRetina && unzip -d eBPFRetina eBPFRetina.zip
-RUN cp eBPFRetina/build/native/bin/Release/retinaebpfapi.dll /tmp/retinaebpfapi.dll
 
 # capture binary
 FROM intermediate AS capture-bin
@@ -79,6 +77,12 @@ ARG VERSION
 ENV GOARCH=${GOARCH}
 ENV GOOS=${GOOS}
 RUN --mount=type=cache,target="/root/.cache/go-build" go build -v -o /go/bin/retina/initretina -ldflags "-X github.com/microsoft/retina/internal/buildinfo.Version="$VERSION" -X github.com/microsoft/retina/internal/buildinfo.ApplicationInsightsID="$APP_INSIGHTS_ID"" init/retina/main_linux.go
+
+# winintermediate
+FROM winintermediate
+WORKDIR  /tmp
+RUN curl -L -o eBPFRetina.zip https://www.nuget.org/api/v2/package/Microsoft.Wcn.Observability.eBPF.Retina.x64/0.1.0-prerelease.3 && mkdir eBPFRetina && tar -xf eBPFRetina.zip -C eBPFRetina
+RUN copy eBPFRetina/build/native/bin/Release/retinaebpfapi.dll /tmp/retinaebpfapi.dll
 
 # tools image
 FROM mariner-core AS tools
@@ -141,6 +145,7 @@ COPY --from=controller-bin /go/src/github.com/microsoft/retina/windows/setkubeco
 COPY --from=controller-bin /go/bin/retina/controller controller.exe
 COPY --from=capture-bin /go/bin/retina/captureworkload captureworkload.exe
 COPY --from=intermediate /tmp/retinaebpfapi.dll retinaebpfapi.dll
+COPY --from=winintermediate /tmp/retinaebpfapi.dll retinaebpfapi.dll
 ADD https://github.com/microsoft/etl2pcapng/releases/download/v1.10.0/etl2pcapng.exe /etl2pcapng.exe
 CMD ["controller.exe", "start", "--kubeconfig=.\\kubeconfig"]
 CMD ["controller.exe", "start", "--kubeconfig=.\\kubeconfig"]
