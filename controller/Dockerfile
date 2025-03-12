@@ -79,7 +79,7 @@ RUN --mount=type=cache,target="/root/.cache/go-build" go build -v -o /go/bin/ret
 # winintermediate
 FROM mcr.microsoft.com/windows/servercore:ltsc2022 AS winintermediate
 WORKDIR  /tmp
-RUN curl -L -o eBPFRetina.zip https://www.nuget.org/api/v2/package/Microsoft.Wcn.Observability.eBPF.Retina.x64/0.1.0-prerelease.3 && mkdir eBPFRetina && tar -xf eBPFRetina.zip -C eBPFRetina
+RUN powershell -Command "Invoke-WebRequest -Uri 'https://www.nuget.org/api/v2/package/Microsoft.Wcn.Observability.eBPF.Retina.x64/0.1.0-prerelease.3' -OutFile 'eBPFRetina.zip'; mkdir eBPFRetina; Expand-Archive -Path 'eBPFRetina.zip' -DestinationPath 'eBPFRetina'"
 RUN copy eBPFRetina/build/native/bin/Release/retinaebpfapi.dll /tmp/retinaebpfapi.dll
 
 # tools image
