@@ -142,7 +142,6 @@ ADD https://github.com/microsoft/etl2pcapng/releases/download/v1.10.0/etl2pcapng
 RUN curl -L -o eBPFRetina.zip https://www.nuget.org/api/v2/package/Microsoft.Wcn.Observability.eBPF.Retina.x64/0.1.0-prerelease.3 && mkdir eBPFRetina && tar -xf eBPFRetina.zip -C eBPFRetina
 RUN dir
 RUN dir eBPFRetina
-COPY eBPFRetina/build/native/bin/Release/retinaebpfapi.dll /retinaebpfapi.dll
 
 CMD ["controller.exe", "start", "--kubeconfig=.\\kubeconfig"]
 CMD ["controller.exe", "start", "--kubeconfig=.\\kubeconfig"]
