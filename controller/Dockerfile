@@ -20,6 +20,13 @@ FROM --platform=$TARGETPLATFORM mcr.microsoft.com/windows/servercore@sha256:4595
 # build stages
 
 # intermediate go generate stage
+FROM --platform=$TARGETPLATFORM mcr.microsoft.com/windows/servercore:ltsc2022 AS win-intermediate
+WORKDIR C:\tmp
+RUN curl -L -o nuget.exe https://dist.nuget.org/win-x86-commandline/latest/nuget.exe && \
+    curl -L -o eBPFRetina.nupkg https://www.nuget.org/api/v2/package/Microsoft.Wcn.Observability.eBPF.Retina.x64/0.1.0-prerelease.3 && \
+    nuget.exe install eBPFRetina.nupkg -OutputDirectory eBPFRetina -ExcludeVersion
+
+
 FROM golang AS intermediate
 ARG APP_INSIGHTS_ID # set to enable AI telemetry
 ARG GOARCH=amd64 # default to amd64
@@ -30,11 +37,6 @@ RUN if [ "$GOOS" = "linux" ] ; then \
       tdnf install -y clang16 lld16 bpftool libbpf-devel; \
     fi
 COPY ./pkg/plugin /go/src/github.com/microsoft/retina/pkg/plugin
-RUN if [ "$GOOS" = "windows" ] ; then \
-      curl -L -o nuget.exe https://dist.nuget.org/win-x86-commandline/latest/nuget.exe && \
-      curl -L -o eBPFRetina.nupkg https://www.nuget.org/api/v2/package/Microsoft.Wcn.Observability.eBPF.Retina.x64/0.1.0-prerelease.3 && \
-      nuget.exe install eBPFRetina.nupkg -OutputDirectory eBPFRetina -ExcludeVersion; \
-    fi
 WORKDIR /go/src/github.com/microsoft/retina
 RUN if [ "$GOOS" = "linux" ] ; then \
       go mod init github.com/microsoft/retina; \
