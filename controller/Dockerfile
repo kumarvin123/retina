@@ -45,7 +45,7 @@ RUN if [ "$GOOS" = "linux" ] ; then \
       rm -rf ./pkg/plugin && tar xvf /gen.tar.gz ./pkg/plugin; \
     fi
 WORKDIR  /tmp
-RUN curl -L -o eBPFRetina.zip https://www.nuget.org/api/v2/package/Microsoft.Wcn.Observability.eBPF.Retina.x64/0.1.0-prerelease.3 && mkdir eBPFRetina && tar -xf eBPFRetina.zip -C eBPFRetina
+RUN curl -L -o eBPFRetina.zip https://www.nuget.org/api/v2/package/Microsoft.Wcn.Observability.eBPF.Retina.x64/0.1.0-prerelease.3 && mkdir eBPFRetina && unzip -d eBPFRetina eBPFRetina.zip
 RUN cp eBPFRetina/build/native/bin/Release/retinaebpfapi.dll /tmp/retinaebpfapi.dll
 
 # capture binary
