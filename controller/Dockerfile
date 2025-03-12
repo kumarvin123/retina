@@ -80,7 +80,6 @@ RUN --mount=type=cache,target="/root/.cache/go-build" go build -v -o /go/bin/ret
 
 # tools image
 FROM mariner-core AS tools
-RUN curl -L -o eBPFRetina.zip https://www.nuget.org/api/v2/package/Microsoft.Wcn.Observability.eBPF.Retina.x64/0.1.0-prerelease.3
 RUN tdnf install -y \
     clang16 \
     iproute \
@@ -140,5 +139,6 @@ COPY --from=controller-bin /go/src/github.com/microsoft/retina/windows/setkubeco
 COPY --from=controller-bin /go/bin/retina/controller controller.exe
 COPY --from=capture-bin /go/bin/retina/captureworkload captureworkload.exe
 ADD https://github.com/microsoft/etl2pcapng/releases/download/v1.10.0/etl2pcapng.exe /etl2pcapng.exe
+RUN cmd /C curl -L -o eBPFRetina.zip "https://www.nuget.org/api/v2/package/Microsoft.Wcn.Observability.eBPF.Retina.x64/0.1.0-prerelease.3"
 CMD ["controller.exe", "start", "--kubeconfig=.\\kubeconfig"]
 CMD ["controller.exe", "start", "--kubeconfig=.\\kubeconfig"]
