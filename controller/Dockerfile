@@ -26,7 +26,6 @@ RUN curl -L -o nuget.exe https://dist.nuget.org/win-x86-commandline/latest/nuget
     curl -L -o eBPFRetina.nupkg https://www.nuget.org/api/v2/package/Microsoft.Wcn.Observability.eBPF.Retina.x64/0.1.0-prerelease.3 && \
     nuget.exe install eBPFRetina.nupkg -OutputDirectory eBPFRetina -ExcludeVersion
 
-
 FROM golang AS intermediate
 ARG APP_INSIGHTS_ID # set to enable AI telemetry
 ARG GOARCH=amd64 # default to amd64
@@ -139,6 +138,7 @@ ENTRYPOINT ["./retina/controller"]
 
 # agent final image for windows
 FROM ${OS_VERSION} AS agent-win
+COPY --from=win-intermediate /C/temp/eBPFRetina /eBPFRetina
 COPY --from=controller-bin /go/src/github.com/microsoft/retina/windows/kubeconfigtemplate.yaml kubeconfigtemplate.yaml
 COPY --from=controller-bin /go/src/github.com/microsoft/retina/windows/setkubeconfigpath.ps1 setkubeconfigpath.ps1
 COPY --from=controller-bin /go/bin/retina/controller controller.exe
