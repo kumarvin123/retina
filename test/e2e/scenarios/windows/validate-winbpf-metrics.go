@@ -116,7 +116,6 @@ func (v *ValidateWinBpfMetric) Run() error {
 	if promOutput == "" {
 		fmt.Println("PreTest - no prometheus metrics found")
 	} else {
-		fmt.Println(promOutput)
 		preTestFwdBytes, _ = prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_forward_bytes", fwd_labels)
 		fmt.Printf("Metric value %f, labels: %v\n", preTestFwdBytes, fwd_labels)
 
@@ -133,7 +132,7 @@ func (v *ValidateWinBpfMetric) Run() error {
 	//TRACE
 	fmt.Printf("Produce Trace Events\n")
 	//Example.com - 23.192.228.84
-	err, _ = v.ExecCommandInWinPod("C:\\event-writer-helper.bat Start-EventWriter -event 4 -srcIP 23.192.228.84",
+	err, _ = v.ExecCommandInWinPod("C:\\event-writer-helper.bat Start-EventWriter -event 1 -srcIP 23.192.228.84",
 		v.EbpfXdpDeamonSetName,
 		v.EbpfXdpDeamonSetNamespace,
 		ebpfLabelSelector)
@@ -169,7 +168,7 @@ func (v *ValidateWinBpfMetric) Run() error {
 	//DROP
 	time.Sleep(60 * time.Second)
 	fmt.Printf("Produce Drop Events\n")
-	err, _ = v.ExecCommandInWinPod("C:\\event-writer-helper.bat Start-EventWriter -event 1 -srcIP 23.192.228.84",
+	err, _ = v.ExecCommandInWinPod("C:\\event-writer-helper.bat Start-EventWriter -event 4 -srcIP 23.192.228.84",
 		v.EbpfXdpDeamonSetName,
 		v.EbpfXdpDeamonSetNamespace,
 		ebpfLabelSelector)
@@ -185,6 +184,7 @@ func (v *ValidateWinBpfMetric) Run() error {
 	if err != nil {
 		return err
 	}
+	fmt.Println(output)
 	if strings.Contains(output, "failed") || strings.Contains(output, "error") {
 		return fmt.Errorf("failed to start event writer")
 	}
@@ -210,14 +210,14 @@ func (v *ValidateWinBpfMetric) Run() error {
 	}
 
 	// TBR
-	fmt.Println("Waiting for 20 seconds for metrics to be updated as part of next polling cycle")
-	time.Sleep(20 * time.Second)
+	fmt.Println("Waiting for basic metrics to be updated as part of next polling cycle")
+	time.Sleep(60 * time.Second)
 	promOutput, err = v.GetPromMetrics(ebpfLabelSelector)
 	if err != nil {
 		return fmt.Errorf("failed to get prometheus metrics")
 	}
 	if promOutput == "" {
-		return fmt.Errorf("Post test - failed to get prometheus metrics")
+		return fmt.Errorf("post test - failed to get prometheus metrics")
 	}
 	fmt.Println(promOutput)
 	postTestFwdCount, _ := prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_forward_count", fwd_labels)
@@ -241,9 +241,11 @@ func (v *ValidateWinBpfMetric) Run() error {
 	if postTestFwdBytes < preTestFwdBytes {
 		return fmt.Errorf("fwd Bytes not incremented")
 	}
+
 	if postTestDrpBytes < preTestDrpBytes {
 		return fmt.Errorf("drp Bytes not incremented")
 	}
+
 	if postTestFwdCount < preTestFwdCount {
 		return fmt.Errorf("fwd count not incremented")
 	}
