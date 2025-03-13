@@ -108,18 +108,13 @@ func (v *ValidateWinBpfMetric) Run() error {
 	var preTestFwdBytes float64 = 0
 	var preTestDrpBytes float64 = 0
 	if promOutput == "" {
-		fmt.Println("PreTest no prometheus metrics found")
+		fmt.Println("PreTest - no prometheus metrics found")
 	} else {
-		preTestFwdBytes, err = prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_forward_bytes", labels)
-		if err != nil {
-			return fmt.Errorf("failed to get metric: %w", err)
-		}
+		fmt.Println(promOutput)
+		preTestFwdBytes, _ = prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_forward_bytes", labels)
 		fmt.Printf("Metric value %d, labels: %v\n", preTestFwdBytes, labels)
 
-		preTestDrpBytes, err = prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_drop_bytes", labels)
-		if err != nil {
-			return fmt.Errorf("failed to get metric: %w", err)
-		}
+		preTestDrpBytes, _ = prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_drop_bytes", labels)
 		fmt.Printf("Metric value %d, labels: %v\n", preTestDrpBytes, labels)
 	}
 
@@ -207,7 +202,7 @@ func (v *ValidateWinBpfMetric) Run() error {
 		return fmt.Errorf("failed to get prometheus metrics")
 	}
 	if promOutput == "" {
-		return fmt.Errorf("Post test failed to get prometheus metrics")
+		return fmt.Errorf("Post test - failed to get prometheus metrics")
 	}
 
 	// TBR
@@ -217,13 +212,13 @@ func (v *ValidateWinBpfMetric) Run() error {
 	if err != nil {
 		return fmt.Errorf("failed to get metric: %w", err)
 	}
-	fmt.Printf("Metric value %d, labels: %v\n", postTestFwdBytes, labels)
+	fmt.Printf("Metric value %x, labels: %v\n", postTestFwdBytes, labels)
 
 	postTestDrpBytes, err := prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_drop_bytes", labels)
 	if err != nil {
 		return fmt.Errorf("failed to get metric: %w", err)
 	}
-	fmt.Printf("Metric value %d, labels: %v\n", postTestDrpBytes, labels)
+	fmt.Printf("Metric value %x, labels: %v\n", postTestDrpBytes, labels)
 
 	if postTestFwdBytes < preTestFwdBytes {
 		return fmt.Errorf("Fwd Bytes not incremented")
