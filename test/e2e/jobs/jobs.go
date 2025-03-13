@@ -55,7 +55,6 @@ func CreateTestInfra(subID, rg, clusterName, location, kubeConfigFilePath string
 }
 
 func DeleteTestInfra(subID, rg, location string, deleteInfra bool) *types.Job {
-func DeleteTestInfra(subID, rg, location string, deleteInfra bool) *types.Job {
 	job := types.NewJob("Delete e2e test infrastructure")
 
 	if deleteInfra {
@@ -76,7 +75,6 @@ func DeleteTestInfra(subID, rg, location string, deleteInfra bool) *types.Job {
 	return job
 }
 
-func InstallRetina(kubeConfigFilePath, chartPath string, enableHeartBeat bool) *types.Job {
 func InstallRetina(kubeConfigFilePath, chartPath string, enableHeartBeat bool) *types.Job {
 	job := types.NewJob("Install and test Retina with basic metrics")
 
@@ -289,13 +287,6 @@ func ValidateHubble(kubeConfigFilePath, chartPath string, testPodNamespace strin
 	return job
 }
 
-func LoadGenericFlags() *types.Job {
-	job := types.NewJob("Loading Generic Flags to env")
-
-	job.AddStep(&generic.LoadFlags{
-		TagEnv:            generic.DefaultTagEnv,
-		ImageNamespaceEnv: generic.DefaultImageNamespace,
-		ImageRegistryEnv:  generic.DefaultImageRegistry,
 func LoadGenericFlags() *types.Job {
 	job := types.NewJob("Loading Generic Flags to env")
 
