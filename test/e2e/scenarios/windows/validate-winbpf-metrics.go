@@ -178,6 +178,17 @@ func (v *ValidateWinBpfMetric) Run() error {
 	}
 
 	time.Sleep(5 * time.Second)
+	err, output = v.ExecCommandInWinPod("C:\\event-writer-helper.bat DumpEventWriter",
+		v.EbpfXdpDeamonSetName,
+		v.EbpfXdpDeamonSetNamespace,
+		ebpfLabelSelector)
+	if err != nil {
+		return err
+	}
+	if strings.Contains(output, "failed") || strings.Contains(output, "error") {
+		return fmt.Errorf("failed to start event writer")
+	}
+
 	numcurls = 10
 	for numcurls > 0 {
 		err, _ = v.ExecCommandInWinPod("C:\\event-writer-helper.bat Curl 23.192.228.84",
@@ -188,17 +199,6 @@ func (v *ValidateWinBpfMetric) Run() error {
 			return err
 		}
 		numcurls--
-	}
-
-	err, output = v.ExecCommandInWinPod("C:\\event-writer-helper.bat DumpEventWriter",
-		v.EbpfXdpDeamonSetName,
-		v.EbpfXdpDeamonSetNamespace,
-		ebpfLabelSelector)
-	if err != nil {
-		return err
-	}
-	if strings.Contains(output, "failed") || strings.Contains(output, "error") {
-		return fmt.Errorf("failed to start event writer")
 	}
 
 	err, output = v.ExecCommandInWinPod("C:\\event-writer-helper.bat DumpCurl", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
