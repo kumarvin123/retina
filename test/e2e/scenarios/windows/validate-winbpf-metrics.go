@@ -106,7 +106,7 @@ func (v *ValidateWinBpfMetric) Run() error {
 	}
 	drp_labels := map[string]string{
 		"direction": "ingress",
-		"reason":    "6, 0",
+		"reason":    "130, 0",
 	}
 
 	var preTestFwdBytes float64 = 0
