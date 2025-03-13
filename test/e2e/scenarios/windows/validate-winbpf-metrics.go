@@ -156,6 +156,7 @@ func (v *ValidateWinBpfMetric) Run() error {
 
 	//DROP
 	time.Sleep(60 * time.Second)
+	fmt.Printf("Starting Event Writer to Produce Trace Events\n")
 	err, _ = v.ExecCommandInWinPod("C:\\event-writer-helper.bat Start-EventWriter -event 1 -srcIP 23.192.228.84",
 		v.EbpfXdpDeamonSetName,
 		v.EbpfXdpDeamonSetNamespace,
