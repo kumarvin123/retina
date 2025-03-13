@@ -101,20 +101,33 @@ func (v *ValidateWinBpfMetric) Run() error {
 		return fmt.Errorf("failed to get prometheus metrics")
 	}
 
-	labels := map[string]string{
+	fwd_labels := map[string]string{
 		"direction": "ingress",
 	}
+	drp_labels := map[string]string{
+		"direction": "ingress",
+		"reason":    "6, 0",
+	}
+
 	var preTestFwdBytes float64 = 0
 	var preTestDrpBytes float64 = 0
+	var preTestFwdCount float64 = 0
+	var preTestDrpCount float64 = 0
 	if promOutput == "" {
 		fmt.Println("PreTest - no prometheus metrics found")
 	} else {
 		fmt.Println(promOutput)
-		preTestFwdBytes, _ = prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_forward_bytes", labels)
-		fmt.Printf("Metric value %f, labels: %v\n", preTestFwdBytes, labels)
+		preTestFwdBytes, _ = prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_forward_bytes", fwd_labels)
+		fmt.Printf("Metric value %f, labels: %v\n", preTestFwdBytes, fwd_labels)
 
-		preTestDrpBytes, _ = prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_drop_bytes", labels)
-		fmt.Printf("Metric value %f, labels: %v\n", preTestDrpBytes, labels)
+		preTestFwdCount, _ = prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_forward_count", fwd_labels)
+		fmt.Printf("Metric value %f, labels: %v\n", preTestFwdBytes, fwd_labels)
+
+		preTestDrpBytes, _ = prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_drop_bytes", drp_labels)
+		fmt.Printf("Metric value %f, labels: %v\n", preTestDrpBytes, drp_labels)
+
+		preTestDrpCount, _ = prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_drop_count", drp_labels)
+		fmt.Printf("Metric value %f, labels: %v\n", preTestDrpBytes, drp_labels)
 	}
 
 	//TRACE
@@ -207,23 +220,95 @@ func (v *ValidateWinBpfMetric) Run() error {
 	// TBR
 	time.Sleep(20 * time.Second)
 	fmt.Println(promOutput)
-	postTestFwdBytes, err := prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_forward_bytes", labels)
-	if err != nil {
-		return fmt.Errorf("failed to get metric: %w", err)
-	}
-	fmt.Printf("Metric value %f, labels: %v\n", postTestFwdBytes, labels)
+	postTestFwdCount, _ := prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_forward_count", fwd_labels)
+	fmt.Printf("Metric value %f, labels: %v\n", preTestFwdBytes, fwd_labels)
 
-	postTestDrpBytes, err := prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_drop_bytes", labels)
+	postTestFwdBytes, err := prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_forward_bytes", fwd_labels)
 	if err != nil {
 		return fmt.Errorf("failed to get metric: %w", err)
 	}
-	fmt.Printf("Metric value %f, labels: %v\n", postTestDrpBytes, labels)
+	fmt.Printf("Metric value %f, labels: %v\n", postTestFwdBytes, fwd_labels)
+
+	postTestDrpBytes, err := prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_drop_bytes", drp_labels)
+	if err != nil {
+		return fmt.Errorf("failed to get metric: %w", err)
+	}
+	fmt.Printf("Metric value %f, labels: %v\n", postTestDrpBytes, drp_labels)
+
+	postTestDrpCount, _ := prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_drop_count", drp_labels)
+	fmt.Printf("Metric value %f, labels: %v\n", preTestDrpBytes, drp_labels)
 
 	if postTestFwdBytes < preTestFwdBytes {
 		return fmt.Errorf("fwd Bytes not incremented")
 	}
 	if postTestDrpBytes < preTestDrpBytes {
 		return fmt.Errorf("drp Bytes not incremented")
+	}
+	if postTestFwdCount < preTestFwdCount {
+		return fmt.Errorf("fwd count not incremented")
+	}
+	if postTestDrpCount < preTestDrpCount {
+		return fmt.Errorf("drp count not incremnted")
+	}
+
+	// Advanced Metrics
+	adv_fwd_count_labels := map[string]string{
+		"direction":     "egress",
+		"ip":            "23.192.228.84",
+		"namespace":     "",
+		"podname":       "",
+		"workload_kind": "unknown",
+		"workload_name": "unknown",
+	}
+	err = prom.CheckMetricFromBuffer([]byte(promOutput), "networkobservability_adv_forward_count", adv_fwd_count_labels)
+	if err != nil {
+		return fmt.Errorf("failed to find networkobservability_adv_forward_count")
+	}
+
+	tcpFlags := []string{"ACK", "FIN", "PSH"}
+	for _, flag := range tcpFlags {
+		tcpFlagLabels := map[string]string{
+			"flag":          flag,
+			"ip":            "23.192.228.84",
+			"namespace":     "",
+			"podname":       "",
+			"workload_kind": "unknown",
+			"workload_name": "unknown",
+		}
+
+		err = prom.CheckMetricFromBuffer([]byte(promOutput), "networkobservability_adv_tcpflags_count", tcpFlagLabels)
+		if err != nil {
+			return fmt.Errorf("failed to find networkobservability_adv_tcpflags_count for flag %s: %w", flag, err)
+		}
+		fmt.Printf("Found TCP flag metric for %s\n", flag)
+	}
+
+	adv_drop_byte_labels := map[string]string{
+		"direction":     "egress",
+		"ip":            "23.192.228.84",
+		"namespace":     "",
+		"podname":       "",
+		"reason":        "Drop_NotAccepted",
+		"workload_kind": "unknown",
+		"workload_name": "unknown",
+	}
+	err = prom.CheckMetricFromBuffer([]byte(promOutput), "networkobservability_adv_drop_bytes", adv_drop_byte_labels)
+	if err != nil {
+		return fmt.Errorf("failed to find networkobservability_adv_drop_bytes")
+	}
+
+	adv_drop_count_labels := map[string]string{
+		"direction":     "egress",
+		"ip":            "23.192.228.84",
+		"namespace":     "",
+		"podname":       "",
+		"reason":        "Drop_NotAccepted",
+		"workload_kind": "unknown",
+		"workload_name": "unknown",
+	}
+	err = prom.CheckMetricFromBuffer([]byte(promOutput), "networkobservability_adv_drop_count", adv_drop_count_labels)
+	if err != nil {
+		return fmt.Errorf("failed to find networkobservability_adv_drop_count")
 	}
 
 	return nil
