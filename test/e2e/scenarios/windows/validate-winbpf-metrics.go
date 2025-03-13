@@ -74,15 +74,16 @@ func (v *ValidateWinBpfMetric) ExecCommandInWinPod(cmd string, DeamonSetName str
 }
 
 func (v *ValidateWinBpfMetric) GetPromMetrics(ebpfLabelSelector string) (string, error) {
-	var promOutput string
+	var promOutput string = ""
 	numAttempts := 10
 	for promOutput == "" && numAttempts > 0 {
-		err, promOutput := v.ExecCommandInWinPod("C:\\event-writer-helper.bat GetRetinaPromMetrics", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
-
+		err, newPromOutput := v.ExecCommandInWinPod("C:\\event-writer-helper.bat GetRetinaPromMetrics", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
 		if err != nil {
 			fmt.Println(err.Error())
 			return "", err
 		}
+		promOutput = newPromOutput
+
 		if promOutput != "" {
 			break
 		}
