@@ -239,8 +239,7 @@ event_writer(xdp_md_t* ctx) {
         if (drp_elm == NULL) {
             return XDP_PASS;
         }
-        // Drop Reason to Drop_Filtered,
-        reason = 8;
+        reason = 6;
         create_drop_event(drp_elm);
         memset(drp_elm->data, 0, sizeof(drp_elm->data));
         memcpy(drp_elm->data, ctx->data, size_to_copy);
