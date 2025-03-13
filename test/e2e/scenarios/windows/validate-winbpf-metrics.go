@@ -73,17 +73,15 @@ func (v *ValidateWinBpfMetric) ExecCommandInWinPod(cmd string, DeamonSetName str
 	return nil, result.Output
 }
 
-func (v *ValidateWinBpfMetric) Run() error {
-	ebpfLabelSelector := fmt.Sprintf("name=%s", v.EbpfXdpDeamonSetName)
-
+func (v *ValidateWinBpfMetric) GetPromMetrics(ebpfLabelSelector string) (string, error) {
 	var promOutput string
 	numAttempts := 10
 	for promOutput == "" && numAttempts > 0 {
-		err, promOutput := v.ExecCommandInWinPod("C:\\event-writer-helper.bat GetRetinaPromMetrics", v.RetinaDaemonSetName, v.RetinaDaemonSetNamespace, "k8s-app=retina")
+		err, promOutput := v.ExecCommandInWinPod("C:\\event-writer-helper.bat GetRetinaPromMetrics", v.EbpfXdpDeamonSetName, v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
 
 		if err != nil {
 			fmt.Println(err.Error())
-			return err
+			return "", err
 		}
 		if promOutput != "" {
 			break
@@ -92,26 +90,40 @@ func (v *ValidateWinBpfMetric) Run() error {
 		time.Sleep(5 * time.Second)
 	}
 
-	if promOutput == "" {
-		return fmt.Errorf("failed to get prometheus metrics from Retina DaemonSet")
+	return promOutput, nil
+}
+
+func (v *ValidateWinBpfMetric) Run() error {
+
+	ebpfLabelSelector := fmt.Sprintf("name=%s", v.EbpfXdpDeamonSetName)
+	promOutput, err := v.GetPromMetrics(ebpfLabelSelector)
+	if err != nil {
+		return fmt.Errorf("failed to get prometheus metrics")
 	}
-	fmt.Println(promOutput)
+
 	labels := map[string]string{
 		"direction": "ingress",
 	}
-	preTestFwdBytes, err := prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_forward_bytes", labels)
-	if err != nil {
-		return fmt.Errorf("failed to get metric: %w", err)
-	}
-	fmt.Printf("Metric value %d, labels: %v\n", preTestFwdBytes, labels)
+	var preTestFwdBytes float64 = 0
+	var preTestDrpBytes float64 = 0
+	if promOutput == "" {
+		fmt.Println("PreTest no prometheus metrics found")
+	} else {
+		preTestFwdBytes, err = prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_forward_bytes", labels)
+		if err != nil {
+			return fmt.Errorf("failed to get metric: %w", err)
+		}
+		fmt.Printf("Metric value %d, labels: %v\n", preTestFwdBytes, labels)
 
-	preTestDrpBytes, err := prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_drop_bytes", labels)
-	if err != nil {
-		return fmt.Errorf("failed to get metric: %w", err)
+		preTestDrpBytes, err = prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_drop_bytes", labels)
+		if err != nil {
+			return fmt.Errorf("failed to get metric: %w", err)
+		}
+		fmt.Printf("Metric value %d, labels: %v\n", preTestDrpBytes, labels)
 	}
-	fmt.Printf("Metric value %d, labels: %v\n", preTestDrpBytes, labels)
 
 	//TRACE
+	fmt.Printf("Starting Event Writer to Produce Trace Events\n")
 	//Example.com - 23.192.228.84
 	err, _ = v.ExecCommandInWinPod("C:\\event-writer-helper.bat Start-EventWriter -event 4 -srcIP 23.192.228.84",
 		v.EbpfXdpDeamonSetName,
@@ -189,23 +201,15 @@ func (v *ValidateWinBpfMetric) Run() error {
 		return fmt.Errorf("failed to curl to example.com")
 	}
 
-	for promOutput == "" && numAttempts > 0 {
-		err, promOutput = v.ExecCommandInWinPod("C:\\event-writer-helper.bat GetRetinaPromMetrics", v.RetinaDaemonSetName, v.RetinaDaemonSetNamespace, "k8s-app=retina")
-
-		if err != nil {
-			fmt.Println(err.Error())
-			return err
-		}
-		if promOutput != "" {
-			break
-		}
-		numAttempts--
-		time.Sleep(5 * time.Second)
+	promOutput, err = v.GetPromMetrics(ebpfLabelSelector)
+	if err != nil {
+		return fmt.Errorf("failed to get prometheus metrics")
 	}
-
 	if promOutput == "" {
-		return fmt.Errorf("failed to get prometheus metrics from Retina DaemonSet")
+		return fmt.Errorf("Post test failed to get prometheus metrics")
 	}
+
+	// TBR
 	fmt.Println(promOutput)
 
 	postTestFwdBytes, err := prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_forward_bytes", labels)
@@ -219,6 +223,13 @@ func (v *ValidateWinBpfMetric) Run() error {
 		return fmt.Errorf("failed to get metric: %w", err)
 	}
 	fmt.Printf("Metric value %d, labels: %v\n", postTestDrpBytes, labels)
+
+	if postTestFwdBytes < preTestFwdBytes {
+		return fmt.Errorf("Fwd Bytes not incremented")
+	}
+	if postTestDrpBytes < preTestDrpBytes {
+		return fmt.Errorf("Drp Bytes not incremented")
+	}
 
 	return nil
 }

@@ -25,7 +25,7 @@ type TraceSockNotify struct {
 	CgroupID   uint64
 	L4Proto    uint8
 	Ipv6       bool
-	Data     [128]byte
+	Data       [128]byte
 }
 
 // NotifyCommonHdr is the common header for all notifications

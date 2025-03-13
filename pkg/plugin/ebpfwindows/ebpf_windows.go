@@ -95,7 +95,7 @@ func (p *Plugin) Name() string {
 // Start the plugin by starting a periodic timer.
 func (p *Plugin) Start(ctx context.Context) error {
 	p.l.Info("Start ebpfWindows plugin...")
-	p.pullCiliumMetricsAndEvents(ctx)
+	p.pullMetricsAndEvents(ctx)
 	p.l.Info("Complete ebpfWindows plugin...")
 	return nil
 }
@@ -156,7 +156,7 @@ func ensureRetinaEbpfApiDLLPresent() error {
 }
 
 // pullCiliumeBPFMetrics is the function that is called periodically by the timer.
-func (p *Plugin) pullCiliumMetricsAndEvents(ctx context.Context) {
+func (p *Plugin) pullMetricsAndEvents(ctx context.Context) {
 	eventsMap := NewEventsMap()
 	metricsMap := NewMetricsMap()
 
