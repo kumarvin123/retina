@@ -85,7 +85,6 @@ func InstallRetina(kubeConfigFilePath, chartPath string, enableHeartBeat bool) *
 		ChartPath:          chartPath,
 		TagEnv:             generic.DefaultTagEnv,
 		EnableHeartbeat:    enableHeartBeat,
-		EnableHeartbeat:    enableHeartBeat,
 	}, nil)
 
 	return job
