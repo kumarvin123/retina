@@ -95,7 +95,6 @@ func (v *ValidateWinBpfMetric) GetPromMetrics(ebpfLabelSelector string) (string,
 }
 
 func (v *ValidateWinBpfMetric) Run() error {
-
 	ebpfLabelSelector := fmt.Sprintf("name=%s", v.EbpfXdpDeamonSetName)
 	promOutput, err := v.GetPromMetrics(ebpfLabelSelector)
 	if err != nil {
@@ -112,14 +111,14 @@ func (v *ValidateWinBpfMetric) Run() error {
 	} else {
 		fmt.Println(promOutput)
 		preTestFwdBytes, _ = prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_forward_bytes", labels)
-		fmt.Printf("Metric value %d, labels: %v\n", preTestFwdBytes, labels)
+		fmt.Printf("Metric value %f, labels: %v\n", preTestFwdBytes, labels)
 
 		preTestDrpBytes, _ = prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_drop_bytes", labels)
-		fmt.Printf("Metric value %d, labels: %v\n", preTestDrpBytes, labels)
+		fmt.Printf("Metric value %f, labels: %v\n", preTestDrpBytes, labels)
 	}
 
 	//TRACE
-	fmt.Printf("Starting Event Writer to Produce Trace Events\n")
+	fmt.Printf("Produce Trace Events\n")
 	//Example.com - 23.192.228.84
 	err, _ = v.ExecCommandInWinPod("C:\\event-writer-helper.bat Start-EventWriter -event 4 -srcIP 23.192.228.84",
 		v.EbpfXdpDeamonSetName,
@@ -130,18 +129,6 @@ func (v *ValidateWinBpfMetric) Run() error {
 	}
 
 	time.Sleep(5 * time.Second)
-	numcurls := 10
-	for numcurls > 0 {
-		err, _ = v.ExecCommandInWinPod("C:\\event-writer-helper.bat Curl 23.192.228.84",
-			v.EbpfXdpDeamonSetName,
-			v.EbpfXdpDeamonSetNamespace,
-			ebpfLabelSelector)
-		if err != nil {
-			return err
-		}
-		numcurls--
-	}
-
 	err, output := v.ExecCommandInWinPod("C:\\event-writer-helper.bat DumpEventWriter",
 		v.EbpfXdpDeamonSetName,
 		v.EbpfXdpDeamonSetNamespace,
@@ -154,9 +141,21 @@ func (v *ValidateWinBpfMetric) Run() error {
 		return fmt.Errorf("failed to start event writer")
 	}
 
+	numcurls := 10
+	for numcurls > 0 {
+		err, _ = v.ExecCommandInWinPod("C:\\event-writer-helper.bat Curl 23.192.228.84",
+			v.EbpfXdpDeamonSetName,
+			v.EbpfXdpDeamonSetNamespace,
+			ebpfLabelSelector)
+		if err != nil {
+			return err
+		}
+		numcurls--
+	}
+
 	//DROP
 	time.Sleep(60 * time.Second)
-	fmt.Printf("Starting Event Writer to Produce Trace Events\n")
+	fmt.Printf("Produce Drop Events\n")
 	err, _ = v.ExecCommandInWinPod("C:\\event-writer-helper.bat Start-EventWriter -event 1 -srcIP 23.192.228.84",
 		v.EbpfXdpDeamonSetName,
 		v.EbpfXdpDeamonSetNamespace,
@@ -185,8 +184,7 @@ func (v *ValidateWinBpfMetric) Run() error {
 	if err != nil {
 		return err
 	}
-	fmt.Println(output)
-	if strings.Contains(output, "failed") {
+	if strings.Contains(output, "failed") || strings.Contains(output, "error") {
 		return fmt.Errorf("failed to start event writer")
 	}
 
@@ -207,25 +205,25 @@ func (v *ValidateWinBpfMetric) Run() error {
 	}
 
 	// TBR
+	time.Sleep(20 * time.Second)
 	fmt.Println(promOutput)
-
 	postTestFwdBytes, err := prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_forward_bytes", labels)
 	if err != nil {
 		return fmt.Errorf("failed to get metric: %w", err)
 	}
-	fmt.Printf("Metric value %x, labels: %v\n", postTestFwdBytes, labels)
+	fmt.Printf("Metric value %f, labels: %v\n", postTestFwdBytes, labels)
 
 	postTestDrpBytes, err := prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_drop_bytes", labels)
 	if err != nil {
 		return fmt.Errorf("failed to get metric: %w", err)
 	}
-	fmt.Printf("Metric value %x, labels: %v\n", postTestDrpBytes, labels)
+	fmt.Printf("Metric value %f, labels: %v\n", postTestDrpBytes, labels)
 
 	if postTestFwdBytes < preTestFwdBytes {
-		return fmt.Errorf("Fwd Bytes not incremented")
+		return fmt.Errorf("fwd Bytes not incremented")
 	}
 	if postTestDrpBytes < preTestDrpBytes {
-		return fmt.Errorf("Drp Bytes not incremented")
+		return fmt.Errorf("drp Bytes not incremented")
 	}
 
 	return nil
