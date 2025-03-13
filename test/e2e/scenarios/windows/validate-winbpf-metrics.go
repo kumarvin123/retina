@@ -132,7 +132,7 @@ func (v *ValidateWinBpfMetric) Run() error {
 	//TRACE
 	fmt.Printf("Produce Trace Events\n")
 	//Example.com - 23.192.228.84
-	err, _ = v.ExecCommandInWinPod("C:\\event-writer-helper.bat Start-EventWriter -event 1 -srcIP 23.192.228.84",
+	err, _ = v.ExecCommandInWinPod("C:\\event-writer-helper.bat Start-EventWriter -event 4 -srcIP 23.192.228.84",
 		v.EbpfXdpDeamonSetName,
 		v.EbpfXdpDeamonSetNamespace,
 		ebpfLabelSelector)
@@ -168,7 +168,7 @@ func (v *ValidateWinBpfMetric) Run() error {
 	//DROP
 	time.Sleep(60 * time.Second)
 	fmt.Printf("Produce Drop Events\n")
-	err, _ = v.ExecCommandInWinPod("C:\\event-writer-helper.bat Start-EventWriter -event 4 -srcIP 23.192.228.84",
+	err, _ = v.ExecCommandInWinPod("C:\\event-writer-helper.bat Start-EventWriter -event 1 -srcIP 23.192.228.84",
 		v.EbpfXdpDeamonSetName,
 		v.EbpfXdpDeamonSetNamespace,
 		ebpfLabelSelector)

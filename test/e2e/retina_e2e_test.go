@@ -12,6 +12,7 @@ import (
 	"github.com/microsoft/retina/test/e2e/framework/helpers"
 	"github.com/microsoft/retina/test/e2e/framework/types"
 	"github.com/microsoft/retina/test/e2e/infra"
+	"github.com/microsoft/retina/test/e2e/infra"
 	jobs "github.com/microsoft/retina/test/e2e/jobs"
 	"github.com/stretchr/testify/require"
 )
@@ -53,6 +54,12 @@ func TestE2ERetina(t *testing.T) {
 			common.RetinaChartPath(rootDir),
 			common.TestPodNamespace),
 	)
+	basicMetricsE2E := types.NewRunner(t,
+		jobs.InstallAndTestRetinaBasicMetrics(
+			common.KubeConfigFilePath(rootDir),
+			common.RetinaChartPath(rootDir),
+			common.TestPodNamespace),
+	)
 	basicMetricsE2E.Run(ctx)
 
 	// Upgrade and test Retina with advanced metrics
@@ -63,9 +70,22 @@ func TestE2ERetina(t *testing.T) {
 			common.RetinaAdvancedProfilePath(rootDir),
 			common.TestPodNamespace),
 	)
+	advanceMetricsE2E := types.NewRunner(t,
+		jobs.UpgradeAndTestRetinaAdvancedMetrics(
+			common.KubeConfigFilePath(rootDir),
+			common.RetinaChartPath(rootDir),
+			common.RetinaAdvancedProfilePath(rootDir),
+			common.TestPodNamespace),
+	)
 	advanceMetricsE2E.Run(ctx)
 
 	// Install and test Hubble basic metrics
+	validatehubble := types.NewRunner(t,
+		jobs.ValidateHubble(
+			common.KubeConfigFilePath(rootDir),
+			hubblechartPath,
+			common.TestPodNamespace),
+	)
 	validatehubble := types.NewRunner(t,
 		jobs.ValidateHubble(
 			common.KubeConfigFilePath(rootDir),

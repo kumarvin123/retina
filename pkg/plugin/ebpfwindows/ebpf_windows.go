@@ -14,15 +14,11 @@ import (
 	observer "github.com/cilium/cilium/pkg/hubble/observer/types"
 	hp "github.com/cilium/cilium/pkg/hubble/parser"
 	kcfg "github.com/microsoft/retina/pkg/config"
-	"github.com/microsoft/retina/pkg/utils"
-
-	//"github.com/google/uuid"
 	"github.com/microsoft/retina/pkg/enricher"
 	"github.com/microsoft/retina/pkg/log"
 	"github.com/microsoft/retina/pkg/metrics"
 	"github.com/microsoft/retina/pkg/plugin/registry"
-
-	//"github.com/microsoft/retina/pkg/utils"
+	"github.com/microsoft/retina/pkg/utils"
 	"github.com/sirupsen/logrus"
 	"go.uber.org/zap"
 )
@@ -43,7 +39,7 @@ const (
 )
 
 var (
-	ErrInvalidEventData = errors.New("The Cilium Event Data is invalid")
+	ErrInvalidEventData = errors.New("The Event Data is invalid")
 	ErrNilEnricher      = errors.New("enricher is nil")
 	retinaEbpfApi       = syscall.NewLazyDLL("retinaebpfapi.dll")
 )
@@ -70,19 +66,22 @@ func New(cfg *kcfg.Config) registry.Plugin {
 
 // Init is a no-op for the ebpfwindows plugin
 func (p *Plugin) Init() error {
-	parser, err := hp.New(logrus.WithField("cilium", "parser"),
-		nil,
-		nil,
-		nil,
-		nil,
-		nil,
-		nil,
-		nil,
+	parser, err := hp.New(logrus.WithField("windowsEbpf", "parser"),
+		// We use noop getters here since we will use our own custom parser in hubble
+		&NoopEndpointGetter,
+		&NoopIdentityGetter,
+		&NoopDNSGetter,
+		&NoopIPGetter,
+		&NoopServiceGetter,
+		&NoopLinkGetter,
+		&NoopPodMetadataGetter,
 	)
+
 	if err != nil {
 		p.l.Fatal("Failed to create parser", zap.Error(err))
 		return err
 	}
+
 	p.parser = parser
 	return nil
 }
@@ -130,8 +129,8 @@ func (p *Plugin) metricsMapIterateCallback(key *MetricsKey, value *MetricsValues
 
 // eventsMapCallback is the callback function that is called for each value  in the events map.
 func (p *Plugin) eventsMapCallback(data unsafe.Pointer, size uint32) int {
-	p.l.Debug("EventsMapCallback")
-	p.l.Debug("Size", zap.Uint32("Size", size))
+	p.l.Info("EventsMapCallback")
+	p.l.Info("Size", zap.Uint32("Size", size))
 	err := p.handleTraceEvent(data, size)
 	if err != nil {
 		p.l.Error("Error handling trace event", zap.Error(err))
@@ -194,7 +193,13 @@ func (p *Plugin) pullMetricsAndEvents(ctx context.Context) {
 				p.l.Error("Error iterating metrics map", zap.Error(err))
 			}
 		case <-ctx.Done():
-			break
+			p.l.Error("ebpfwindows plugin canceling", zap.Error(ctx.Err()))
+			err := eventsMap.UnregisterForCallback()
+
+			if err != nil {
+				p.l.Error("Error Unregistering Events Map callback", zap.Error(err))
+			}
+			return
 		}
 	}
 }
