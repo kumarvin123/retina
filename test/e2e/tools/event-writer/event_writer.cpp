@@ -86,16 +86,6 @@ load_and_pin(void) {
         goto cleanup;
     }
 
-    prg = bpf_object__find_program_by_name(obj, "event_writer");
-    if (prg == NULL) {
-        fprintf(stderr, "%s - failed to find event_writer program", __FUNCTION__);
-        goto cleanup;
-    }
-
-    if (_pin(EVENT_WRITER_PIN_PATH, bpf_program__fd(prg), false) != 0) {
-        goto cleanup;
-    }
-
     // Find the map by its name
     map_ev = bpf_object__find_map_by_name(obj, "cilium_events");
     if (map_ev == NULL) {
@@ -171,10 +161,6 @@ unload_programs_detach() {
     int fd = 0;
     int link_fd = 0;
 
-    if (bpf_object__unpin_programs(obj, EVENT_WRITER_PIN_PATH) < 0) {
-        fprintf(stderr, "Failed to unpin BPF program");
-        return 1;
-    }
     if (bpf_object__unpin_maps(obj, EVENTS_MAP_PIN_PATH) < 0) {
         fprintf(stderr, "Failed to unpin BPF program");
         return 1;
@@ -195,7 +181,7 @@ unload_programs_detach() {
     if (bpf_link__destroy(link) != 0) {
         fprintf(stderr, "%s - failed to destroy link", __FUNCTION__);
     }
-   
+
     if (obj != NULL) {
         bpf_object__close(obj);
     }
