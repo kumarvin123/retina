@@ -50,7 +50,7 @@ int _pin(const char* pin_path, int fd, bool is_map) {
 
 int
 attach_program_to_interface(int ifindx) {
-    printf("%s - Attaching program to interface with ifindex %d\n", __FUNCTION__, ifindx);
+    printf("%s - attaching program to interface with ifindex %d\n", __FUNCTION__, ifindx);
     struct bpf_program* prg = bpf_object__find_program_by_name(obj, "event_writer");
 
     if (prg == NULL) {
@@ -64,6 +64,7 @@ attach_program_to_interface(int ifindx) {
         return 1;
     }
 
+    printf("%s - program attached to interface with ifindex %d\n", __FUNCTION__, ifindx);
     return 0;
 }
 
@@ -271,6 +272,10 @@ int main(int argc, char* argv[]) {
         printf("Source Port: %u\n", flt.srcprt);
         printf("Destination Port: %u\n", flt.dstprt);
         printf("Interface Index: %d\n", ifindx);
+
+        if (load_and_pin() != 0) {
+            return 1;
+        }
 
         if (set_filter(&flt) != 0) {
             return 1;
