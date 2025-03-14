@@ -5,7 +5,7 @@
 
 #include <vector>
 #include "event_writer.h"
-#include <vector>
+#include <ebpf_api.h>
 
 int
 set_filter(struct filter* flt) {
@@ -48,26 +48,39 @@ int _pin(const char* pin_path, int fd, bool is_map) {
 int
 attach_program_to_interface(int ifindx) {
     int evt_wrt_fd = 0;
-    evt_wrt_fd = bpf_obj_get(EVENT_WRITER_PIN_PATH)
+    evt_wrt_fd = bpf_obj_get(EVENT_WRITER_PIN_PATH);
     if (evt_wrt_fd < 0) {
         fprintf(stderr, "%s - failed to lookup event_writer at %s\n", __FUNCTION__, EVENT_WRITER_PIN_PATH);
         return 1;
     }
 
-    if (bpf_prog_attach(evt_wrt_fd, ifindx, EBPF_ATTACH_TYPE_XDP, 0)) {
-		fprintf(stderr, "%s - failed to attach to interface with ifindex %d\n", __FUNCTION__, ifindx);
-        return 1;
-	}
+    // Verify there's no program attached to the specified ifindex.
+    uint32_t program_id;
+    if (bpf_xdp_query_id(ifindx, 0, &program_id) < 0) {
+        if (bpf_xdp_attach(ifindx, evt_wrt_fd, 0, nullptr) == 0) {
+            fprintf(stderr, "%s - failed to attach to interface with ifindex %d\n", __FUNCTION__, ifindx);
+            return 1;
+        }
+        printf("%s - Attached program %s to interface with ifindex %d\n", __FUNCTION__, EVENT_WRITER_PIN_PATH, ifindx);
+    } else {
+        if (program_id == evt_wrt_fd) {
+            printf("%s - program alteady attached %s to interface with ifindex %d\n", __FUNCTION__, EVENT_WRITER_PIN_PATH, ifindx);
+        } else {
+            if (bpf_xdp_attach(ifindx, evt_wrt_fd, XDP_FLAGS_REPLACE, nullptr) == 0) {
+                fprintf(stderr, "%s - failed to attach to interface with ifindex %d\n", __FUNCTION__, ifindx);
+                return 1;
+            }
+        }
+    }
 
-    printf("%s - Attached program %s to interface with ifindex %d\n", __FUNCTION__, EVENT_WRITER_PIN_PATH, ifindx);
     return 0;
 }
 
 int
-load_and_pin(void) {
+load_and_pin(bpf_object* obj) {
     struct bpf_program* prg = NULL;
     struct bpf_map *map_ev, *map_met, *map_fvt, *map_flt;
-    bpf_object* obj = NULL;
+    int prg_fd = 0;
 
     // Load the BPF object file
     obj = bpf_object__open("bpf_event_writer.sys");
@@ -87,7 +100,8 @@ load_and_pin(void) {
         fprintf(stderr, "%s - failed to find event_writer program", __FUNCTION__);
         goto cleanup;
     }
-    if (_pin(prg->fd, EVENT_WRITER_PIN_PATH, false) != 0) {
+
+    if (_pin(EVENT_WRITER_PIN_PATH, bpf_program__fd(prg), false) != 0) {
         goto cleanup;
     }
 
@@ -97,7 +111,7 @@ load_and_pin(void) {
         fprintf(stderr, "%s - failed to find cilium_events by name\n", __FUNCTION__);
         goto cleanup;
     }
-    if (pin_map(EVENTS_MAP_PIN_PATH, map_ev, true) != 0) {
+    if (_pin(EVENTS_MAP_PIN_PATH, bpf_map__fd(map_ev), true) != 0) {
         goto cleanup;
     }
 
@@ -107,7 +121,7 @@ load_and_pin(void) {
         fprintf(stderr, "%s - failed to find cilium_metrics by name\n", __FUNCTION__);
         goto cleanup;
     }
-    if (pin_map(METRICS_MAP_PIN_PATH, map_ev, true) != 0) {
+    if (_pin(METRICS_MAP_PIN_PATH, bpf_map__fd(map_ev), true) != 0) {
         goto cleanup;
     }
 
@@ -117,7 +131,7 @@ load_and_pin(void) {
         fprintf(stderr, "%s - failed to find five_tuple_map by name\n", __FUNCTION__);
         goto cleanup;
     }
-    if (pin_map(FIVE_TUPLE_MAP_PIN_PATH, map_fvt) != 0) {
+    if (_pin(FIVE_TUPLE_MAP_PIN_PATH, bpf_map__fd(map_fvt), true) != 0) {
         goto cleanup;
     }
 
@@ -127,17 +141,13 @@ load_and_pin(void) {
         fprintf(stderr, "%s - failed to lookup filter_map\n", __FUNCTION__);
         goto cleanup;
     }
-    if (pin_map(FILTER_MAP_PIN_PATH, map_flt) != 0) {
+    if (_pin(FILTER_MAP_PIN_PATH, bpf_map__fd(map_flt), true) != 0) {
         goto cleanup;
     }
 
     return 0; // Return success
 
 cleanup:
-    if (obj != NULL) {
-        bpf_object__close(obj);
-    }
-
     if (prg != NULL) {
         bpf_program__unpin(prg, EVENT_WRITER_PIN_PATH);
     }
@@ -157,37 +167,53 @@ cleanup:
     if (map_met != NULL) {
         bpf_map__unpin(map_met, METRICS_MAP_PIN_PATH);
     }
+
+    if (obj != NULL) {
+        bpf_object__close(obj);
+    }
     return 1;
 }
 
 // Function to unload programs and detach
 int
-unload_programs(void) {
+unload_programs(bpf_object *obj) {
     int fd = 0;
-    fd = bpf_obj_get(EVENT_WRITER_PIN_PATH)
-    if fd < 0 {
+    fd = bpf_obj_get(EVENT_WRITER_PIN_PATH);
+    if (fd < 0) {
         fprintf(stderr, "%s - failed to lookup event_writer at %s\n", __FUNCTION__, EVENT_WRITER_PIN_PATH);
         return 1;
     }
-    close(fd);
-    fd = bpf_obj_get(EVENTS_MAP_PIN_PATH)
-    if fd < 0 {
+    if (bpf_obj__unpin(fd, EVENT_WRITER_PIN_PATH) < 0) {
+        fprintf(stderr, "Failed to unpin BPF program");
+        return 1;
+    }
+    fd = bpf_obj_get(EVENTS_MAP_PIN_PATH);
+    if (fd < 0) {
         fprintf(stderr, "%s - failed to lookup cilium_events at %s\n", __FUNCTION__, EVENTS_MAP_PIN_PATH);
         return 1;
     }
-    close(fd);
-    fd = bpf_obj_get(METRICS_MAP_PIN_PATH)
-    if fd < 0 {
+    if (bpf_obj_unpin(fd, EVENTS_MAP_PIN_PATH) < 0) {
+        fprintf(stderr, "Failed to unpin BPF program");
+        return 1;
+    }
+    fd = bpf_obj_get(METRICS_MAP_PIN_PATH);
+    if (fd < 0) {
         fprintf(stderr, "%s - failed to lookup cilium_metrics at %s\n", __FUNCTION__, METRICS_MAP_PIN_PATH);
         return 1;
     }
-    close(fd);
-    fd = bpf_obj_get(FIVE_TUPLE_MAP_PIN_PATH)
-    if fd < 0 {
+    if (bpf_obj_unpin(fd, METRICS_MAP_PIN_PATH) < 0) {
+        fprintf(stderr, "Failed to unpin BPF program");
+        return 1;
+    }
+    fd = bpf_obj_get(FIVE_TUPLE_MAP_PIN_PATH);
+    if (fd < 0) {
         fprintf(stderr, "%s - failed to lookup five_tuple_map at %s\n", __FUNCTION__, FIVE_TUPLE_MAP_PIN_PATH);
         return 1;
     }
-    close(fd);
+    if (bpf_obj_unpin(fd, FIVE_TUPLE_MAP_PIN_PATH) < 0) {
+        fprintf(stderr, "Failed to unpin BPF program");
+        return 1;
+    }
     return 0;
 }
 
@@ -227,12 +253,15 @@ int main(int argc, char* argv[]) {
     setvbuf(stdout, NULL, _IONBF, 0);
     // Parse the command-line arguments (flags)
     if (argc < 2) {
-        fprintf(stderr, "%s - valid arguments are required. Exiting..\n");
+        fprintf(stderr, "valid arguments are required. Exiting..\n");
         return 1;
     }
 
     if (strcmp(argv[1], "-load") == 0) {
-        return load_and_pin();
+        bpf_object *obj = NULL;
+        if (load_and_pin(obj) != 0) {
+            return obj;
+        }
     } else if (strcmp(argv[1], "-filter") == 0) {
         struct filter flt;
         memset(&flt, 0, sizeof(flt));
@@ -271,7 +300,7 @@ int main(int argc, char* argv[]) {
         } else {
             printf("%s - filter updated successfully\n", __FUNCTION__);
         }
-    } elif (strcmp(argv[1], "-attach") == 0) {
+    } else if (strcmp(argv[1], "-attach") == 0) {
         int ifindx = 0;
         for (int i = 2; i < argc; i++) {
             if (strcmp(argv[i], "-ifindx") == 0) {
@@ -281,7 +310,7 @@ int main(int argc, char* argv[]) {
         }
 
         if (ifindx <= 0) {
-            fprintf(stderr, "%s - valid ifindx is required. Exiting..\n");
+            fprintf(stderr, "valid ifindx is required. Exiting..\n");
             return 1;
         }
         printf("Interface Index: %d\n", ifindx);
@@ -289,10 +318,10 @@ int main(int argc, char* argv[]) {
         if (attach_program_to_interface(ifindx) != 0) {
             return 1;
         }
-    } elif (strcmp(argv[1], "-unload") == 0) {
-        return unload_programs();
+    } else if (strcmp(argv[1], "-unload") == 0) {
+        return unload_programs(obj);
     } else {
-        fprintf(stderr, "%s - invalid arguments. Exiting..\n");
+        fprintf(stderr, "invalid arguments. Exiting..\n");
         return 1;
     }
 
