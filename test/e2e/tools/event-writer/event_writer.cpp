@@ -7,9 +7,6 @@
 #include "event_writer.h"
 #include <vector>
 
-std::vector<std::pair<int, struct bpf_link*>> link_list;
-bpf_object* obj = NULL;
-
 int
 set_filter(struct filter* flt) {
     uint8_t key = 0;
@@ -28,173 +25,173 @@ set_filter(struct filter* flt) {
     return 0;
 }
 
-int pin_map(const char* pin_path, bpf_map* map) {
-    int map_fd = 0;
-    // Attempt to open the pinned map
-    map_fd = bpf_obj_get(pin_path);
-    if (map_fd < 0) {
-        // Get the file descriptor of the map
-        map_fd = bpf_map__fd(map);
-
-        if (map_fd < 0) {
-            fprintf(stderr, "%s - failed to get map file descriptor\n", __FUNCTION__);
+int _pin(const char* pin_path, int fd, bool is_map) {
+    int pin_fd = bpf_obj_get(pin_path);
+    if (pin_fd < 0) {
+        if (bpf_obj_pin(fd, pin_path) < 0) {
+            fprintf(stderr, "%s - failed to pin %s to %s\n", __FUNCTION__,
+                    is_map ? "map" : "prog", pin_path);
             return 1;
         }
 
-        if (bpf_obj_pin(map_fd, pin_path) < 0) {
-            fprintf(stderr, "%s - failed to pin map to %s\n", __FUNCTION__, pin_path);
-            return 1;
-        }
-
-        printf("%s - map successfully pinned at %s\n", __FUNCTION__, pin_path);
+        printf("%s - %s successfully pinned at %s\n", __FUNCTION__,
+                    is_map ? "map" : "prog",
+                    pin_path);
     } else {
-        printf("%s -pinned map found %s\n", __FUNCTION__, pin_path);
+        printf("%s - pinned %s found %s\n", __FUNCTION__,
+                                            is_map ? "map" : "prog",
+                                            pin_path);
     }
     return 0;
-}
-
-int get_physical_interface_indice() {
-    // Command to extract the first Mellanox adapter ifIndex using PowerShell.
-    const char* cmd = "powershell -Command \"Get-NetAdapter | Where-Object { $_.InterfaceDescription -match 'Mellanox' } | Select-Object -First 1 | ForEach-Object { Write-Output $_.ifIndex }\"";
-
-    // Open a pipe to execute the command.
-    FILE* pipe = _popen(cmd, "r");
-    if (!pipe) {
-        fprintf(stderr, "Failed to run command\n");
-        return -1;
-    }
-
-    char buffer[128];
-    memset(buffer, '\0', sizeof(buffer));
-    std::string result;
-    // Read the output of the command.
-    while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
-        result += buffer;
-    }
-    _pclose(pipe);
-
-    // Check if result is empty.
-    if (result.empty()) {
-        fprintf(stderr, "No output received from PowerShell command; cannot extract ifIndex.\n");
-        return -1;
-    }
-
-    // Convert the output string to an integer.
-    int ifIndex = atoi(result.c_str());
-    printf("Extracted ifIndex: %d\n", ifIndex);
-    return ifIndex;
 }
 
 int
 attach_program_to_interface(int ifindx) {
-    printf("%s - Attaching program to interface with ifindex %d\n", __FUNCTION__, ifindx);
-    struct bpf_program* prg = bpf_object__find_program_by_name(obj, "event_writer");
-    bpf_link* link = NULL;
-    if (prg == NULL) {
-        fprintf(stderr, "%s - failed to find event_writer program", __FUNCTION__);
+    int evt_wrt_fd = 0;
+    evt_wrt_fd = bpf_obj_get(EVENT_WRITER_PIN_PATH)
+    if (evt_wrt_fd < 0) {
+        fprintf(stderr, "%s - failed to lookup event_writer at %s\n", __FUNCTION__, EVENT_WRITER_PIN_PATH);
         return 1;
     }
 
-    link = bpf_program__attach_xdp(prg, ifindx);
-    if (link == NULL) {
-        fprintf(stderr, "%s - failed to attach to interface with ifindex %d\n", __FUNCTION__, ifindx);
+    if (bpf_prog_attach(evt_wrt_fd, ifindx, EBPF_ATTACH_TYPE_XDP, 0)) {
+		fprintf(stderr, "%s - failed to attach to interface with ifindex %d\n", __FUNCTION__, ifindx);
         return 1;
-    }
+	}
 
-    link_list.push_back(std::pair<int, bpf_link*>{ifindx, link});
+    printf("%s - Attached program %s to interface with ifindex %d\n", __FUNCTION__, EVENT_WRITER_PIN_PATH, ifindx);
     return 0;
 }
 
 int
-pin_maps_load_programs(void) {
+load_and_pin(void) {
     struct bpf_program* prg = NULL;
     struct bpf_map *map_ev, *map_met, *map_fvt, *map_flt;
+    bpf_object* obj = NULL;
 
     // Load the BPF object file
     obj = bpf_object__open("bpf_event_writer.sys");
     if (obj == NULL) {
         fprintf(stderr, "%s - failed to open BPF object\n", __FUNCTION__);
-        return 1;
+        goto cleanup;
     }
 
     // Load cilium_events map and event_writer bpf program
     if (bpf_object__load(obj) < 0) {
         fprintf(stderr, "%s - failed to load BPF sys\n", __FUNCTION__);
-        bpf_object__close(obj);
-        return 1;
+        goto cleanup;
+    }
+
+    prg = bpf_object__find_program_by_name(obj, "event_writer");
+    if (prg == NULL) {
+        fprintf(stderr, "%s - failed to find event_writer program", __FUNCTION__);
+        goto cleanup;
+    }
+    if (_pin(prg->fd, EVENT_WRITER_PIN_PATH, false) != 0) {
+        goto cleanup;
     }
 
     // Find the map by its name
     map_ev = bpf_object__find_map_by_name(obj, "cilium_events");
     if (map_ev == NULL) {
         fprintf(stderr, "%s - failed to find cilium_events by name\n", __FUNCTION__);
-        bpf_object__close(obj);
-        return 1;
+        goto cleanup;
     }
-    if (pin_map(EVENTS_MAP_PIN_PATH, map_ev) != 0) {
-        return 1;
+    if (pin_map(EVENTS_MAP_PIN_PATH, map_ev, true) != 0) {
+        goto cleanup;
     }
 
     // Find the map by its name
     map_met = bpf_object__find_map_by_name(obj, "cilium_metrics");
     if (map_met == NULL) {
         fprintf(stderr, "%s - failed to find cilium_metrics by name\n", __FUNCTION__);
-        bpf_object__close(obj);
-        return 1;
+        goto cleanup;
     }
-    if (pin_map(METRICS_MAP_PIN_PATH, map_ev) != 0) {
-        return 1;
+    if (pin_map(METRICS_MAP_PIN_PATH, map_ev, true) != 0) {
+        goto cleanup;
     }
 
     // Find the map by its name
     map_fvt = bpf_object__find_map_by_name(obj, "five_tuple_map");
     if (map_fvt == NULL) {
         fprintf(stderr, "%s - failed to find five_tuple_map by name\n", __FUNCTION__);
-        bpf_object__close(obj);
-        return 1;
+        goto cleanup;
     }
     if (pin_map(FIVE_TUPLE_MAP_PIN_PATH, map_fvt) != 0) {
-        return 1;
+        goto cleanup;
     }
 
     // Find the map by its name
     map_flt = bpf_object__find_map_by_name(obj, "filter_map");
     if (map_flt == NULL) {
         fprintf(stderr, "%s - failed to lookup filter_map\n", __FUNCTION__);
-        return 1;
+        goto cleanup;
     }
     if (pin_map(FILTER_MAP_PIN_PATH, map_flt) != 0) {
-        return 1;
+        goto cleanup;
     }
 
     return 0; // Return success
-}
 
-// Function to unload programs and detach
-int
-unload_programs_detach() {
-
-    for (auto it = link_list.begin(); it != link_list.end(); it ++) {
-        auto ifidx = it->first;
-        auto link = it->second;
-        auto link_fd = bpf_link__fd(link);
-        if (bpf_link_detach(link_fd) != 0) {
-            fprintf(stderr, "%s - failed to detach link %d\n", __FUNCTION__, ifidx);
-        }
-        if (bpf_link__destroy(link) != 0) {
-            fprintf(stderr, "%s - failed to destroy link %d", __FUNCTION__, ifidx);
-        }
-    }
-
+cleanup:
     if (obj != NULL) {
         bpf_object__close(obj);
     }
 
-    printf("%s - unloaded successfully\n", __FUNCTION__);
+    if (prg != NULL) {
+        bpf_program__unpin(prg, EVENT_WRITER_PIN_PATH);
+    }
+
+    if (map_ev != NULL) {
+        bpf_map__unpin(map_ev, EVENTS_MAP_PIN_PATH);
+    }
+
+    if (map_flt != NULL) {
+        bpf_map__unpin(map_flt, FILTER_MAP_PIN_PATH);
+    }
+
+    if (map_fvt != NULL) {
+        bpf_map__unpin(map_fvt, FIVE_TUPLE_MAP_PIN_PATH);
+    }
+
+    if (map_met != NULL) {
+        bpf_map__unpin(map_met, METRICS_MAP_PIN_PATH);
+    }
+    return 1;
+}
+
+// Function to unload programs and detach
+int
+unload_programs(void) {
+    int fd = 0;
+    fd = bpf_obj_get(EVENT_WRITER_PIN_PATH)
+    if fd < 0 {
+        fprintf(stderr, "%s - failed to lookup event_writer at %s\n", __FUNCTION__, EVENT_WRITER_PIN_PATH);
+        return 1;
+    }
+    close(fd);
+    fd = bpf_obj_get(EVENTS_MAP_PIN_PATH)
+    if fd < 0 {
+        fprintf(stderr, "%s - failed to lookup cilium_events at %s\n", __FUNCTION__, EVENTS_MAP_PIN_PATH);
+        return 1;
+    }
+    close(fd);
+    fd = bpf_obj_get(METRICS_MAP_PIN_PATH)
+    if fd < 0 {
+        fprintf(stderr, "%s - failed to lookup cilium_metrics at %s\n", __FUNCTION__, METRICS_MAP_PIN_PATH);
+        return 1;
+    }
+    close(fd);
+    fd = bpf_obj_get(FIVE_TUPLE_MAP_PIN_PATH)
+    if fd < 0 {
+        fprintf(stderr, "%s - failed to lookup five_tuple_map at %s\n", __FUNCTION__, FIVE_TUPLE_MAP_PIN_PATH);
+        return 1;
+    }
+    close(fd);
     return 0;
 }
 
-uint32_t ipStrToUint(const char* ipStr) {
+uint32_t _ipStrToUint(const char* ipStr) {
     uint32_t ip = 0;
     int part = 0;
     int parts = 0;
@@ -227,65 +224,77 @@ uint32_t ipStrToUint(const char* ipStr) {
 }
 
 int main(int argc, char* argv[]) {
-    struct filter flt;
     setvbuf(stdout, NULL, _IONBF, 0);
-    memset(&flt, 0, sizeof(flt));
     // Parse the command-line arguments (flags)
-    for (int i = 1; i < argc; i++) {
-        if (strcmp(argv[i], "-pinmaps") == 0) {
-            return pin_maps_load_programs();
-        }
-        else if (strcmp(argv[i], "-event") == 0) {
-            if (i + 1 < argc)
-                flt.event = static_cast<uint8_t>(atoi(argv[++i]));
-        } else if (strcmp(argv[i], "-srcIP") == 0) {
-            if (i + 1 < argc)
-                flt.srcIP = ipStrToUint(argv[++i]);
-        } else if (strcmp(argv[i], "-dstIP") == 0) {
-            if (i + 1 < argc)
-                flt.dstIP = ipStrToUint(argv[++i]);
-        } else if (strcmp(argv[i], "-srcprt") == 0) {
-            if (i + 1 < argc)
-                flt.srcprt = static_cast<uint16_t>(atoi(argv[++i]));
-        } else if (strcmp(argv[i], "-dstprt") == 0) {
-            if (i + 1 < argc)
-                flt.dstprt = static_cast<uint16_t>(atoi(argv[++i]));
-        }
-    }
-    printf("Parsed Values:\n");
-    printf("Event: %d\n", flt.event);
-    printf("Source IP: %u.%u.%u.%u\n",
-           (flt.srcIP >> 24) & 0xFF, (flt.srcIP >> 16) & 0xFF,
-           (flt.srcIP >> 8) & 0xFF, flt.srcIP & 0xFF);
-    printf("Destination IP: %u.%u.%u.%u\n",
-           (flt.dstIP >> 24) & 0xFF, (flt.dstIP >> 16) & 0xFF,
-           (flt.dstIP >> 8) & 0xFF, flt.dstIP & 0xFF);
-    printf("Source Port: %u\n", flt.srcprt);
-    printf("Destination Port: %u\n", flt.dstprt);
-    printf("Starting event writer\n");
-
-    if (pin_maps_load_programs() != 0) {
+    if (argc < 2) {
+        fprintf(stderr, "%s - valid arguments are required. Exiting..\n");
         return 1;
     }
 
-    if (set_filter(&flt) != 0) {
-        return 1;
+    if (strcmp(argv[1], "-load") == 0) {
+        return load_and_pin();
+    } else if (strcmp(argv[1], "-filter") == 0) {
+        struct filter flt;
+        memset(&flt, 0, sizeof(flt));
+        int ifindx = 0;
+
+        for (int i = 2; i < argc; i++) {
+            if (strcmp(argv[i], "-event") == 0) {
+                if (i + 1 < argc)
+                    flt.event = static_cast<uint8_t>(atoi(argv[++i]));
+            } else if (strcmp(argv[i], "-srcIP") == 0) {
+                if (i + 1 < argc)
+                    flt.srcIP = _ipStrToUint(argv[++i]);
+            } else if (strcmp(argv[i], "-dstIP") == 0) {
+                if (i + 1 < argc)
+                    flt.dstIP = _ipStrToUint(argv[++i]);
+            } else if (strcmp(argv[i], "-srcprt") == 0) {
+                if (i + 1 < argc)
+                    flt.srcprt = static_cast<uint16_t>(atoi(argv[++i]));
+            } else if (strcmp(argv[i], "-dstprt") == 0) {
+                if (i + 1 < argc)
+                    flt.dstprt = static_cast<uint16_t>(atoi(argv[++i]));
+            }
+        }
+        printf("Parsed Values:\n");
+        printf("Event: %d\n", flt.event);
+        printf("Source IP: %u.%u.%u.%u\n",
+               (flt.srcIP >> 24) & 0xFF, (flt.srcIP >> 16) & 0xFF,
+               (flt.srcIP >> 8) & 0xFF, flt.srcIP & 0xFF);
+        printf("Destination IP: %u.%u.%u.%u\n",
+               (flt.dstIP >> 24) & 0xFF, (flt.dstIP >> 16) & 0xFF,
+               (flt.dstIP >> 8) & 0xFF, flt.dstIP & 0xFF);
+        printf("Source Port: %u\n", flt.srcprt);
+        printf("Destination Port: %u\n", flt.dstprt);
+        if (set_filter(&flt) != 0) {
+            return 1;
+        } else {
+            printf("%s - filter updated successfully\n", __FUNCTION__);
+        }
+    } elif (strcmp(argv[1], "-attach") == 0) {
+        int ifindx = 0;
+        for (int i = 2; i < argc; i++) {
+            if (strcmp(argv[i], "-ifindx") == 0) {
+                if (i + 1 < argc)
+                    ifindx = static_cast<uint16_t>(atoi(argv[++i]));
+            }
+        }
+
+        if (ifindx <= 0) {
+            fprintf(stderr, "%s - valid ifindx is required. Exiting..\n");
+            return 1;
+        }
+        printf("Interface Index: %d\n", ifindx);
+
+        if (attach_program_to_interface(ifindx) != 0) {
+            return 1;
+        }
+    } elif (strcmp(argv[1], "-unload") == 0) {
+        return unload_programs();
     } else {
-        printf("%s - filter updated successfully\n", __FUNCTION__);
-    }
-
-    int ifindx = get_physical_interface_indice();
-    if (ifindx == -1) {
+        fprintf(stderr, "%s - invalid arguments. Exiting..\n");
         return 1;
     }
 
-    if (attach_program_to_interface(ifindx) != 0) {
-        return 1;
-    }
-
-    //Sleep for 1 minute
-    printf("%s - holding for 1 minute!!\n", __FUNCTION__);
-    Sleep(60000);
-    unload_programs_detach();
     return 0;
 }

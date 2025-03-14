@@ -17,6 +17,9 @@
 #define FIVE_TUPLE_MAP_PIN_PATH \
     "/ebpf/global/five_tuple_map"
 
+#define EVENT_WRITER_PIN_PATH \
+    "/ebpf/global/event_writer"
+
 enum {
 	CILIUM_NOTIFY_UNSPEC = 0,
 	CILIUM_NOTIFY_DROP,
