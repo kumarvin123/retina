@@ -7,6 +7,9 @@
 #include "event_writer.h"
 #include <ebpf_api.h>
 
+bpf_object *obj = NULL;
+bpf_link* link = NULL;
+
 int
 set_filter(struct filter* flt) {
     uint8_t key = 0;
@@ -47,39 +50,27 @@ int _pin(const char* pin_path, int fd, bool is_map) {
 
 int
 attach_program_to_interface(int ifindx) {
-    int evt_wrt_fd = 0;
-    evt_wrt_fd = bpf_obj_get(EVENT_WRITER_PIN_PATH);
-    if (evt_wrt_fd < 0) {
-        fprintf(stderr, "%s - failed to lookup event_writer at %s\n", __FUNCTION__, EVENT_WRITER_PIN_PATH);
+    printf("%s - Attaching program to interface with ifindex %d\n", __FUNCTION__, ifindx);
+    struct bpf_program* prg = bpf_object__find_program_by_name(obj, "event_writer");
+
+    if (prg == NULL) {
+        fprintf(stderr, "%s - failed to find event_writer program", __FUNCTION__);
         return 1;
     }
 
-    // Verify there's no program attached to the specified ifindex.
-    uint32_t program_id;
-    if (bpf_xdp_query_id(ifindx, 0, &program_id) < 0) {
-        if (bpf_xdp_attach(ifindx, evt_wrt_fd, 0, nullptr) == 0) {
-            fprintf(stderr, "%s - failed to attach to interface with ifindex %d\n", __FUNCTION__, ifindx);
-            return 1;
-        }
-        printf("%s - Attached program %s to interface with ifindex %d\n", __FUNCTION__, EVENT_WRITER_PIN_PATH, ifindx);
-    } else {
-        if (program_id == evt_wrt_fd) {
-            printf("%s - program alteady attached %s to interface with ifindex %d\n", __FUNCTION__, EVENT_WRITER_PIN_PATH, ifindx);
-        } else {
-            if (bpf_xdp_attach(ifindx, evt_wrt_fd, XDP_FLAGS_REPLACE, nullptr) == 0) {
-                fprintf(stderr, "%s - failed to attach to interface with ifindex %d\n", __FUNCTION__, ifindx);
-                return 1;
-            }
-        }
+    link = bpf_program__attach_xdp(prg, ifindx);
+    if (link == NULL) {
+        fprintf(stderr, "%s - failed to attach to interface with ifindex %d\n", __FUNCTION__, ifindx);
+        return 1;
     }
 
     return 0;
 }
 
 int
-load_and_pin(bpf_object* obj) {
+load_and_pin(void) {
     struct bpf_program* prg = NULL;
-    struct bpf_map *map_ev, *map_met, *map_fvt, *map_flt;
+    struct bpf_map *map_ev = NULL, *map_met = NULL, *map_fvt = NULL, *map_flt = NULL;
     int prg_fd = 0;
 
     // Load the BPF object file
@@ -176,44 +167,40 @@ cleanup:
 
 // Function to unload programs and detach
 int
-unload_programs(bpf_object *obj) {
+unload_programs_detach() {
     int fd = 0;
-    fd = bpf_obj_get(EVENT_WRITER_PIN_PATH);
-    if (fd < 0) {
-        fprintf(stderr, "%s - failed to lookup event_writer at %s\n", __FUNCTION__, EVENT_WRITER_PIN_PATH);
-        return 1;
-    }
-    if (bpf_obj__unpin(fd, EVENT_WRITER_PIN_PATH) < 0) {
+    int link_fd = 0;
+
+    if (bpf_object__unpin_programs(obj, EVENT_WRITER_PIN_PATH) < 0) {
         fprintf(stderr, "Failed to unpin BPF program");
         return 1;
     }
-    fd = bpf_obj_get(EVENTS_MAP_PIN_PATH);
-    if (fd < 0) {
-        fprintf(stderr, "%s - failed to lookup cilium_events at %s\n", __FUNCTION__, EVENTS_MAP_PIN_PATH);
-        return 1;
-    }
-    if (bpf_obj_unpin(fd, EVENTS_MAP_PIN_PATH) < 0) {
+    if (bpf_object__unpin_maps(obj, EVENTS_MAP_PIN_PATH) < 0) {
         fprintf(stderr, "Failed to unpin BPF program");
         return 1;
     }
-    fd = bpf_obj_get(METRICS_MAP_PIN_PATH);
-    if (fd < 0) {
-        fprintf(stderr, "%s - failed to lookup cilium_metrics at %s\n", __FUNCTION__, METRICS_MAP_PIN_PATH);
-        return 1;
-    }
-    if (bpf_obj_unpin(fd, METRICS_MAP_PIN_PATH) < 0) {
+    if (bpf_object__unpin_maps(obj, METRICS_MAP_PIN_PATH) < 0) {
         fprintf(stderr, "Failed to unpin BPF program");
         return 1;
     }
-    fd = bpf_obj_get(FIVE_TUPLE_MAP_PIN_PATH);
-    if (fd < 0) {
-        fprintf(stderr, "%s - failed to lookup five_tuple_map at %s\n", __FUNCTION__, FIVE_TUPLE_MAP_PIN_PATH);
-        return 1;
-    }
-    if (bpf_obj_unpin(fd, FIVE_TUPLE_MAP_PIN_PATH) < 0) {
+    if (bpf_object__unpin_maps(obj, FIVE_TUPLE_MAP_PIN_PATH) < 0) {
         fprintf(stderr, "Failed to unpin BPF program");
         return 1;
     }
+
+    link_fd = bpf_link__fd(link);
+    if (bpf_link_detach(link_fd) != 0) {
+        fprintf(stderr, "%s - failed to detach link\n", __FUNCTION__);
+    }
+    if (bpf_link__destroy(link) != 0) {
+        fprintf(stderr, "%s - failed to destroy link", __FUNCTION__);
+    }
+   
+    if (obj != NULL) {
+        bpf_object__close(obj);
+    }
+
+    printf("%s - unloaded successfully\n", __FUNCTION__);
     return 0;
 }
 
@@ -257,15 +244,14 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    if (strcmp(argv[1], "-load") == 0) {
-        bpf_object *obj = NULL;
-        if (load_and_pin(obj) != 0) {
-            return obj;
+    if (strcmp(argv[1], "-pinmaps") == 0) {
+        if (load_and_pin() != 0) {
+            return 1;
         }
-    } else if (strcmp(argv[1], "-filter") == 0) {
+    } else if (strcmp(argv[1], "-start") == 0) {
         struct filter flt;
-        memset(&flt, 0, sizeof(flt));
         int ifindx = 0;
+        memset(&flt, 0, sizeof(flt));
 
         for (int i = 2; i < argc; i++) {
             if (strcmp(argv[i], "-event") == 0) {
@@ -283,6 +269,9 @@ int main(int argc, char* argv[]) {
             } else if (strcmp(argv[i], "-dstprt") == 0) {
                 if (i + 1 < argc)
                     flt.dstprt = static_cast<uint16_t>(atoi(argv[++i]));
+            } else if (strcmp(argv[i], "-ifindx") == 0) {
+                if (i + 1 < argc)
+                    ifindx = static_cast<uint16_t>(atoi(argv[++i]));
             }
         }
         printf("Parsed Values:\n");
@@ -295,31 +284,27 @@ int main(int argc, char* argv[]) {
                (flt.dstIP >> 8) & 0xFF, flt.dstIP & 0xFF);
         printf("Source Port: %u\n", flt.srcprt);
         printf("Destination Port: %u\n", flt.dstprt);
+        printf("Interface Index: %d\n", ifindx);
+
         if (set_filter(&flt) != 0) {
             return 1;
         } else {
             printf("%s - filter updated successfully\n", __FUNCTION__);
-        }
-    } else if (strcmp(argv[1], "-attach") == 0) {
-        int ifindx = 0;
-        for (int i = 2; i < argc; i++) {
-            if (strcmp(argv[i], "-ifindx") == 0) {
-                if (i + 1 < argc)
-                    ifindx = static_cast<uint16_t>(atoi(argv[++i]));
-            }
         }
 
         if (ifindx <= 0) {
             fprintf(stderr, "valid ifindx is required. Exiting..\n");
             return 1;
         }
-        printf("Interface Index: %d\n", ifindx);
 
         if (attach_program_to_interface(ifindx) != 0) {
             return 1;
         }
-    } else if (strcmp(argv[1], "-unload") == 0) {
-        return unload_programs(obj);
+
+        //Sleep for 1 minute
+        printf("%s - holding for 1 minute!!\n", __FUNCTION__);
+        Sleep(60000);
+        unload_programs_detach();
     } else {
         fprintf(stderr, "invalid arguments. Exiting..\n");
         return 1;
