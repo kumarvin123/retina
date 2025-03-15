@@ -102,21 +102,36 @@ func (v *ValidateWinBpfMetric) Run() error {
 	}
 	fmt.Println("Non HPC Interface Index: ", nonHpcIfIndex)
 
-	//TRACE
-	fmt.Printf("Produce Trace Events\n")
-	//Example.com - 23.192.228.84
-	cmd := fmt.Sprintf("C:\\event-writer-helper.bat EventWriter-SetFilter -event 4 -srcIP 23.192.228.84 -ifIndx %s", nonHpcIfIndex)
-	_, err = k8s.ExecCommandInWinPod(
+	//Attach to the non HPC pod
+	output, err := k8s.ExecCommandInWinPod(
 		v.KubeConfigFilePath,
-		cmd,
+		fmt.Sprintf("C:\\event-writer-helper.bat EventWriter-Attach %s", nonHpcIfIndex),
 		v.EbpfXdpDeamonSetNamespace,
 		ebpfLabelSelector)
 	if err != nil {
 		return err
 	}
+	if strings.Contains(output, "failed") || strings.Contains(output, "error") {
+		return fmt.Errorf("failed to attach to non HPC pod interface %s", output)
+	}
+
+	//TRACE
+	fmt.Printf("Produce Trace Events\n")
+	//Example.com - 23.192.228.84
+	_, err = k8s.ExecCommandInWinPod(
+		v.KubeConfigFilePath,
+		fmt.Sprintf("C:\\event-writer-helper.bat EventWriter-SetFilter -event 4 -srcIP 23.192.228.84 -ifIndx %s", nonHpcIfIndex),
+		v.EbpfXdpDeamonSetNamespace,
+		ebpfLabelSelector)
+	if err != nil {
+		return err
+	}
+	if strings.Contains(output, "failed") || strings.Contains(output, "error") {
+		return fmt.Errorf("failed to set filter %s", output)
+	}
 
 	time.Sleep(5 * time.Second)
-	output, err := k8s.ExecCommandInWinPod(
+	output, err = k8s.ExecCommandInWinPod(
 		v.KubeConfigFilePath,
 		"C:\\event-writer-helper.bat EventWriter-Dump",
 		v.EbpfXdpDeamonSetNamespace,
@@ -145,10 +160,9 @@ func (v *ValidateWinBpfMetric) Run() error {
 	//DROP
 	time.Sleep(60 * time.Second)
 	fmt.Printf("Produce Drop Events\n")
-	cmd = fmt.Sprintf("C:\\event-writer-helper.bat EventWriter-SetFilter -event 4 -srcIP 23.192.228.84 -ifindx %s", nonHpcIfIndex)
 	_, err = k8s.ExecCommandInWinPod(
 		v.KubeConfigFilePath,
-		cmd,
+		fmt.Sprintf("C:\\event-writer-helper.bat EventWriter-SetFilter -event 1 -srcIP 23.192.228.84 -ifindx %s", nonHpcIfIndex),
 		v.EbpfXdpDeamonSetNamespace,
 		ebpfLabelSelector)
 	if err != nil {

@@ -8,6 +8,7 @@ if "%1"=="EventWriter-Dump" goto EventWriter-Dump
 if "%1"=="EventWriter-CurlOut" goto EventWriter-CurlOut
 if "%1"=="EventWriter-LoadAndPinPrgAndMaps" goto EventWriter-LoadAndPinPrgAndMaps
 if "%1"=="EventWriter-UnPinPrgAndMaps" goto EventWriter-UnPinPrgAndMaps
+if "%1"=="EventWriter-Attach" goto EventWriter-Attach
 goto :EOF
 
 :EventWriter-Setup
@@ -19,6 +20,13 @@ goto :EOF
    set PREV_DIR=%CD%
    cd C:\
    start /B cmd /c ".\event_writer.exe -set-filter -event %3 -srcIP %5 -ifindx %7 > C:\event_writer.out 2>&1"
+   cd /d %PREV_DIR%
+   goto :EOF
+
+:EventWriter-Attach
+   set PREV_DIR=%CD%
+   cd C:\
+   start /B cmd /c ".\event_writer.exe -attach %2 > C:\event_writer.out 2>&1"
    cd /d %PREV_DIR%
    goto :EOF
 
