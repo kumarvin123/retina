@@ -42,7 +42,7 @@ func TestE2ERetina(t *testing.T) {
 
 	time.Sleep(10 * time.Minute)
 
-	// Load BPF Maps
+	// Load and pin BPF Maps
 	loadWinBPFMapsJob := types.NewRunner(t, jobs.LoadWinBPFMapsJob(common.KubeConfigFilePath(rootDir)))
 	loadWinBPFMapsJob.Run(ctx)
 
@@ -65,7 +65,7 @@ func TestE2ERetina(t *testing.T) {
 	)
 	advanceMetricsE2E.Run(ctx)
 
-	// Load BPF Maps
+	// unpin BPF Maps
 	unloadWinBPFMapsJob := types.NewRunner(t, jobs.UnLoadWinBPFMapsJob(common.KubeConfigFilePath(rootDir)))
 	unloadWinBPFMapsJob.Run(ctx)
 
