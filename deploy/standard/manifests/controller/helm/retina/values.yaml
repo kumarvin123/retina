@@ -10,8 +10,8 @@ os:
 operator:
   name: retina-operator
   enabled: false
-  repository: ghcr.io/microsoft/retina/retina-operator
-  tag: "v0.0.2"
+  repository: demoebpfregistry.azurecr.io/vpidatala94/retina/retina-operator
+  tag: "4c3d745"
   installCRDs: true
   enableRetinaEndpoint: false
   resources:
@@ -30,16 +30,16 @@ operator:
   telemetryInterval: "5m"
 
 image:
-  repository: ghcr.io/microsoft/retina/retina-agent
-  initRepository: ghcr.io/microsoft/retina/retina-init
+  repository: demoebpfregistry.azurecr.io/vpidatala94/retina/retina-agent
+  initRepository: demoebpfregistry.azurecr.io/vpidatala94/retina/retina-init
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "v0.0.2"
+  tag: "4c3d745"
 
 enableConntrackMetrics: false
-enablePodLevel: false
+enablePodLevel: true
 remoteContext: false
-enableAnnotations: false
+enableAnnotations: true
 bypassLookupIPOfInterest: false
 dataAggregationLevel: "low"
 
@@ -65,7 +65,7 @@ apiServer:
 logLevel: debug
 
 enabledPlugin_linux: '["dropreason","packetforward","linuxutil","dns"]'
-enabledPlugin_win: '["hnsstats"]'
+enabledPlugin_win: '["hnsstats", "ebpfwindows"]'
 
 enableTelemetry: false
 
@@ -270,7 +270,7 @@ metrics:
     tlsConfig: {}
     ## @param metrics.serviceMonitor.relabelings [array] Prometheus relabeling rules to apply to samples before scraping
     ##
-    relabelings: 
+    relabelings:
       - sourceLabels:
           [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
         separator: ":"

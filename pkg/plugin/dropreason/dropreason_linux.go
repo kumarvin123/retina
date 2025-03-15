@@ -378,7 +378,7 @@ func (dr *dropReason) processRecord(ctx context.Context, id int) {
 
 			// Add drop reason to the flow's metadata.
 			utils.AddDropReason(fl, meta, bpfEvent.DropType)
-
+			utils.AddDropReason(fl, meta, 181)
 			// Add packet size to the flow's metadata.
 			utils.AddPacketSize(meta, bpfEvent.SkbLen)
 

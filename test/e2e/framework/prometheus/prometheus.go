@@ -58,6 +58,35 @@ func CheckMetric(promAddress, metricName string, validMetric map[string]string) 
 	return nil
 }
 
+func GetMetricGuageValueFromBuffer(prometheusMetricData []byte, metricName string, expectedLabels map[string]string) (float64, error) {
+	metrics, err := getAllPrometheusMetricsFromBuffer(prometheusMetricData)
+	if err != nil {
+		return 0, fmt.Errorf("failed to parse prometheus metrics: %w", err)
+	}
+
+	log.Printf("Looking for %s\n", metricName)
+	for _, metric := range metrics {
+		if metric.GetName() == metricName {
+			for _, metric := range metric.GetMetric() {
+				log.Printf("Current Metric %s\n", metric)
+				// get all labels and values on the metric
+				metricLabels := map[string]string{}
+				for _, label := range metric.GetLabel() {
+					metricLabels[label.GetName()] = label.GetValue()
+				}
+				log.Printf("metricLabels: %v\n", metricLabels)
+
+				if reflect.DeepEqual(metricLabels, expectedLabels) {
+					return *metric.GetGauge().Value, nil
+				}
+
+			}
+		}
+	}
+
+	return 0, fmt.Errorf("metric not found %s", metricName)
+}
+
 func CheckMetricFromBuffer(prometheusMetricData []byte, metricName string, validMetric map[string]string) error {
 	metrics, err := getAllPrometheusMetricsFromBuffer(prometheusMetricData)
 	if err != nil {
