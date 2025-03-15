@@ -43,8 +43,8 @@ func TestE2ERetina(t *testing.T) {
 	time.Sleep(10 * time.Minute)
 
 	// Load and pin BPF Maps
-	loadWinBPFMapsJob := types.NewRunner(t, jobs.LoadWinBPFMapsJob(common.KubeConfigFilePath(rootDir)))
-	loadWinBPFMapsJob.Run(ctx)
+	loadAndPinWinBPFJob := types.NewRunner(t, jobs.LoadAndPinWinBPFJob(common.KubeConfigFilePath(rootDir)))
+	loadAndPinWinBPFJob.Run(ctx)
 
 	// Install and test Retina basic metrics
 	basicMetricsE2E := types.NewRunner(t,
@@ -66,8 +66,8 @@ func TestE2ERetina(t *testing.T) {
 	advanceMetricsE2E.Run(ctx)
 
 	// unpin BPF Maps
-	unloadWinBPFMapsJob := types.NewRunner(t, jobs.UnLoadWinBPFMapsJob(common.KubeConfigFilePath(rootDir)))
-	unloadWinBPFMapsJob.Run(ctx)
+	unloadAndPinWinBPFJob := types.NewRunner(t, jobs.UnLoadAndPinWinBPFJob(common.KubeConfigFilePath(rootDir)))
+	unloadAndPinWinBPFJob.Run(ctx)
 
 	// Install and test Hubble basic metrics
 	validatehubble := types.NewRunner(t,
