@@ -249,6 +249,9 @@ func UpgradeAndTestRetinaAdvancedMetrics(kubeConfigFilePath, chartPath, valuesFi
 		}
 	*/
 	// Validate Windows BPF Metrics
+	job.AddStep(&kubernetes.ApplyYamlConfig{
+		YamlFilePath: "yaml/windows/non-hpc-pod.yaml",
+	}, nil)
 	job.AddScenario(windows.ValidateWinBpfMetricScenario())
 
 	//job.AddScenario(latency.ValidateLatencyMetric(testPodNamespace))
@@ -298,12 +301,24 @@ func LoadGenericFlags() *types.Job {
 	return job
 }
 
-func LoadWinBPFMapsJob(kubeConfigFilePath string) *types.Job {
+func LoadAndPinWinBPFJob(kubeConfigFilePath string) *types.Job {
 	job := types.NewJob("Load Windows BPF Maps")
-	job.AddStep(&kubernetes.LoadWinBPFMaps{
-		KubeConfigFilePath:               kubeConfigFilePath,
-		LoadWinBPFMapsDeamonSetNamespace: "install-ebpf-xdp",
-		LoadWinBPFMapsDeamonSetName:      "install-ebpf-xdp",
+	job.AddStep(&kubernetes.LoadAndPinWinBPF{
+		KubeConfigFilePath:                 kubeConfigFilePath,
+		LoadAndPinWinBPFDeamonSetNamespace: "install-ebpf-xdp",
+		LoadAndPinWinBPFDeamonSetName:      "install-ebpf-xdp",
+	}, nil)
+
+	return job
+}
+
+
+func UnLoadAndPinWinBPFJob(kubeConfigFilePath string) *types.Job {
+	job := types.NewJob("Load Windows BPF Maps")
+	job.AddStep(&kubernetes.UnLoadAndPinWinBPF{
+		KubeConfigFilePath:                 kubeConfigFilePath,
+		LoadAndPinWinBPFDeamonSetNamespace: "install-ebpf-xdp",
+		LoadAndPinWinBPFDeamonSetName:      "install-ebpf-xdp",
 	}, nil)
 
 	return job

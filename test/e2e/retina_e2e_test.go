@@ -65,6 +65,10 @@ func TestE2ERetina(t *testing.T) {
 	)
 	advanceMetricsE2E.Run(ctx)
 
+	// Load BPF Maps
+	unloadWinBPFMapsJob := types.NewRunner(t, jobs.UnLoadWinBPFMapsJob(common.KubeConfigFilePath(rootDir)))
+	unloadWinBPFMapsJob.Run(ctx)
+
 	// Install and test Hubble basic metrics
 	validatehubble := types.NewRunner(t,
 		jobs.ValidateHubble(

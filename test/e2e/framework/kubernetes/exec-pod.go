@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -100,4 +101,55 @@ func ExecPod(ctx context.Context, clientset *kubernetes.Clientset, config *rest.
 
 	res := buf.Bytes()
 	return res, nil
+}
+
+type CommandResult struct {
+	Output string
+}
+
+func ExecCommandInWinPod(KubeConfigFilePath string, cmd string, DaemonSetNamespace string, LabelSelector string) (string, error) {
+	config, err := clientcmd.BuildConfigFromFlags("", KubeConfigFilePath)
+	if err != nil {
+		return "", fmt.Errorf("error building kubeconfig: %w", err)
+	}
+
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return "", fmt.Errorf("error creating Kubernetes client: %w", err)
+	}
+
+	pods, err := clientset.CoreV1().Pods(DaemonSetNamespace).List(context.TODO(), metav1.ListOptions{
+		LabelSelector: LabelSelector,
+	})
+	if err != nil {
+		panic(err.Error())
+	}
+
+	var windowsPod *v1.Pod
+	for pod := range pods.Items {
+		if pods.Items[pod].Spec.NodeSelector["kubernetes.io/os"] == "windows" {
+			windowsPod = &pods.Items[pod]
+		}
+	}
+
+	if windowsPod == nil {
+		return "", fmt.Errorf("no Windows Pod found in label %s", LabelSelector)
+	}
+
+	result := &CommandResult{}
+	err = defaultRetrier.Do(context.TODO(), func() error {
+		outputBytes, err := ExecPod(context.TODO(), clientset, config, windowsPod.Namespace, windowsPod.Name, cmd)
+		if err != nil {
+			fmt.Errorf("error executing command in windows pod: %w", err)
+			return fmt.Errorf("error executing command in windows pod: %w", err)
+		}
+
+		result.Output = string(outputBytes)
+		return nil
+	})
+	if err != nil {
+		return "", err
+	}
+
+	return result.Output, nil
 }

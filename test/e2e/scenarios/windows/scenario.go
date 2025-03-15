@@ -15,6 +15,9 @@ func ValidateWinBpfMetricScenario() *types.Scenario {
 				RetinaDaemonSetName:       "retina-agent-win",
 				EbpfXdpDeamonSetNamespace: "install-ebpf-xdp",
 				EbpfXdpDeamonSetName:      "install-ebpf-xdp",
+				NonHpcAppNamespace:        "default",
+				NonHpcAppName:             "non-hpc",
+				NonHpcPodName:             "non-hpc-pod",
 			},
 		},
 	}

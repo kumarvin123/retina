@@ -1,48 +1,53 @@
 @echo off
 REM Add logic to call a specific function based on the argument
-if "%1"=="Setup-EventWriter" goto Setup-EventWriter
-if "%1"=="Start-EventWriter" goto Start-EventWriter
-if "%1"=="GetRetinaPromMetrics" goto GetRetinaPromMetrics
-if "%1"=="Curl" goto Curl
-if "%1"=="DumpEventWriter" goto DumpEventWriter
-if "%1"=="DumpCurl" goto DumpCurl
-if "%1"=="PinMaps" goto Pin-Maps
+if "%1"=="EventWriter-Setup" goto EventWriter-Setup
+if "%1"=="EventWriter-SetFilter" goto EventWriter-SetFilter
+if "%1"=="EventWriter-GetRetinaPromMetrics" goto EventWriter-GetRetinaPromMetrics
+if "%1"=="EventWriter-Curl" goto EventWriter-Curl
+if "%1"=="EventWriter-Dump" goto EventWriter-Dump
+if "%1"=="EventWriter-CurlOut" goto EventWriter-CurlOut
+if "%1"=="EventWriter-LoadAndPinPrgAndMaps" goto EventWriter-LoadAndPinPrgAndMaps
+if "%1"=="EventWriter-UnPinPrgAndMaps" goto EventWriter-UnPinPrgAndMaps
 goto :EOF
 
-REM Define the Setup-EventWriter function
-:Setup-EventWriter
+:EventWriter-Setup
    copy .\event_writer.exe C:\event_writer.exe
    copy .\bpf_event_writer.sys C:\bpf_event_writer.sys
    goto :EOF
 
-REM Define the Start-EventWriter function .\event_writer.exe -event %3 -srcIP %5
-:Start-EventWriter
+:EventWriter-SetFilter
+   set PREV_DIR=%CD%
    cd C:\
-   start /B cmd /c ".\event_writer.exe -event %3 -srcIP %5 > C:\event_writer.out 2>&1"
+   start /B cmd /c ".\event_writer.exe -set-filter -event %3 -srcIP %5 -ifindx %7 > C:\event_writer.out 2>&1"
+   cd /d %PREV_DIR%
    goto :EOF
 
-REM Define the Pin-Maps
-:PinMaps
+:EventWriter-LoadAndPinPrgAndMaps
+   set PREV_DIR=%CD%
    cd C:\
-   start /B cmd /c ".\event_writer.exe -pinmaps > C:\event_writer.out 2>&1"
+   start /B cmd /c ".\event_writer.exe -load-pin > C:\event_writer.out 2>&1"
+   cd /d %PREV_DIR%
    goto :EOF
 
-REM Define the GetPromMetrics function
-:GetRetinaPromMetrics
+:EventWriter-UnPinPrgAndMaps
+   set PREV_DIR=%CD%
+   cd C:\
+   start /B cmd /c ".\event_writer.exe -unpin > C:\event_writer.out 2>&1"
+   cd /d %PREV_DIR%
+   goto :EOF
+
+:EventWriter-GetRetinaPromMetrics
    curl http://localhost:10093/metrics
    goto :EOF
 
-REM Curl
-:Curl
+:EventWriter-Curl
    start /B cmd /c "curl http://%2 >> C:\curl.out 2>&1 & timeout /t 1 >nul)"
    goto :EOF
 
-REM Dump Event Writer output
-:DumpEventWriter
+:EventWriter-Dump
    type C:\event_writer.out
    goto :EOF
 
-REM Dump Curl Output
-:DumpCurl
+:EventWriter-CurlOut
    type C:\curl.out
    goto :EOF
