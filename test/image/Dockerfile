@@ -2,7 +2,8 @@
 # mcr.microsoft.com/oss/go/microsoft/golang:1.23.5-cbl-mariner2.0
 FROM mcr.microsoft.com/oss/go/microsoft/golang@sha256:ef39e430a97a61bec3395adb673a7c5611d2212f14abe40da21cbfd11a9d6e9d AS builder
 ENV CGO_ENABLED=0
-COPY . /go/src/github.com/microsoft/retina 
+COPY . /go/src/github.com/microsoft/retina
+RUN dir /go/src/github.com/microsoft/retina/pkg/plugin/ebpfwindows
 WORKDIR /go/src/github.com/microsoft/retina
 RUN tdnf install -y clang16 lld16 bpftool libbpf-devel make git jq
 RUN go generate /go/src/github.com/microsoft/retina/pkg/plugin/...

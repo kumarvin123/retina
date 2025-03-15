@@ -13,17 +13,21 @@ import (
 	"time"
 
 	"github.com/microsoft/retina/test/e2e/framework/params"
+	"github.com/microsoft/retina/test/retry"
 	"github.com/stretchr/testify/require"
 )
 
 const (
 	RetinaPort int = 10093
 	// netObsRGtag is used to tag resources created by this test suite
-	NetObsRGtag            = "-e2e-netobs-"
-	KubeSystemNamespace    = "kube-system"
-	TestPodNamespace       = "kube-system-test"
-	AzureAppInsightsKeyEnv = "AZURE_APP_INSIGHTS_KEY"
-	OutputFilePathEnv      = "OUTPUT_FILEPATH"
+	NetObsRGtag              = "-e2e-netobs-"
+	KubeSystemNamespace      = "kube-system"
+	TestPodNamespace         = "kube-system-test"
+	AzureAppInsightsKeyEnv   = "AZURE_APP_INSIGHTS_KEY"
+	OutputFilePathEnv        = "OUTPUT_FILEPATH"
+	defaultRetryDelay        = 5 * time.Second
+	defaultRetryAttempts     = 5
+	defaultHTTPClientTimeout = 2 * time.Second
 )
 
 var (
@@ -41,7 +45,8 @@ var (
 
 	// kubeconfig: path to kubeconfig file, in not provided,
 	// a new k8s cluster will be created
-	KubeConfig = flag.String("kubeConfig", "", "Path to kubeconfig file")
+	KubeConfig     = flag.String("kubeConfig", "", "Path to kubeconfig file")
+	defaultRetrier = retry.Retrier{Attempts: defaultRetryAttempts, Delay: defaultRetryDelay}
 )
 
 var (
