@@ -84,7 +84,7 @@ func (v *ValidateWinBpfMetric) Run() error {
 
 	nonHpcIpAddr, err := k8s.ExecCommandInWinPod(
 		v.KubeConfigFilePath,
-		"powershell -command \"Get-NetIPAddress | Where-Object {$_.AddressFamily -eq 'IPv4' -and $_.IPAddress -ne '127.0.0.1'} | Select-Object -ExpandProperty IPAddress\"",
+		".\\event-writer-helper.bat EventWriter-GetIPAddr",
 		v.NonHpcAppNamespace,
 		nonHpcLabelSelector)
 	if err != nil || nonHpcIpAddr == "" {
@@ -94,7 +94,7 @@ func (v *ValidateWinBpfMetric) Run() error {
 
 	nonHpcIfIndex, err := k8s.ExecCommandInWinPod(
 		v.KubeConfigFilePath,
-		"powershell -command \"Get-NetAdapter | Where-Object { $_.InterfaceDescription -like '*Hyper-V Virtual Ethernet Container*' } | ForEach-Object { Write-Output $_.ifIndex }\"",
+		".\\event-writer-helper.bat EventWriter-GetIfIndex",
 		v.NonHpcAppNamespace,
 		nonHpcLabelSelector)
 	if err != nil || nonHpcIfIndex == "0" || nonHpcIfIndex == "" {

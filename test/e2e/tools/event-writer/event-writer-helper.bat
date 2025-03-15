@@ -9,6 +9,9 @@ if "%1"=="EventWriter-CurlOut" goto EventWriter-CurlOut
 if "%1"=="EventWriter-LoadAndPinPrgAndMaps" goto EventWriter-LoadAndPinPrgAndMaps
 if "%1"=="EventWriter-UnPinPrgAndMaps" goto EventWriter-UnPinPrgAndMaps
 if "%1"=="EventWriter-Attach" goto EventWriter-Attach
+if "%1"=="EventWriter-GetRetinaPromMetrics" goto EventWriter-GetPodIpAddress
+if "%1"=="EventWriter-GetPodIpAddress" goto EventWriter-GetPodIpAddress
+if "%1"=="EventWriter-GetPodIfIndex" goto EventWriter-GetPodIfIndex
 goto :EOF
 
 :EventWriter-Setup
@@ -58,4 +61,12 @@ goto :EOF
 
 :EventWriter-CurlOut
    type C:\curl.out
+   goto :EOF
+
+:EventWriter-GetPodIpAddress
+   powershell -command "Get-NetIPAddress | Where-Object {$_.AddressFamily -eq 'IPv4' -and $_.IPAddress -ne '127.0.0.1'} | Select-Object -ExpandProperty IPAddress"
+   goto :EOF
+
+:EventWriter-GetPodIfIndex
+   powershell -command "Get-NetAdapter | Where-Object { $_.InterfaceDescription -like '*Hyper-V Virtual Ethernet Container*' } | ForEach-Object { Write-Output $_.ifIndex }"
    goto :EOF

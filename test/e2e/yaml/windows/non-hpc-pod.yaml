@@ -9,5 +9,5 @@ spec:
     "kubernetes.io/os": windows
   containers:
   - name: non-hpc-container
-    image: mcr.microsoft.com/windows/servercore:ltsc2022
+    image: demoebpfregistry.azurecr.io/vpidatala94/retina/e2e-test-event-writer:latest
     command: ["powershell", "-Command", "while ($true) { Start-Sleep -Seconds 3600 }"]
