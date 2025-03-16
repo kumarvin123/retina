@@ -21,6 +21,10 @@ import (
 
 const ExecSubResources = "exec"
 
+type CommandResult struct {
+	Output string
+}
+
 type ExecInPod struct {
 	PodNamespace       string
 	KubeConfigFilePath string

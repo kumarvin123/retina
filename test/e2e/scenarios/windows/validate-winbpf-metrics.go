@@ -20,10 +20,6 @@ type ValidateWinBpfMetric struct {
 	NonHpcPodName             string
 }
 
-type CommandResult struct {
-	Output string
-}
-
 func (v *ValidateWinBpfMetric) GetPromMetrics(ebpfLabelSelector string) (string, error) {
 	var promOutput string = ""
 	numAttempts := 10
