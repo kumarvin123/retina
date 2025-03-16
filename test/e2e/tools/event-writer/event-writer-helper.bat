@@ -22,28 +22,28 @@ goto :EOF
 :EventWriter-SetFilter
    set PREV_DIR=%CD%
    cd C:\
-   start /B cmd /c ".\event_writer.exe -set-filter -event %3 -srcIP %5 -ifindx %7 > C:\event_writer.out 2>&1"
+   start cmd /c ".\event_writer.exe -set-filter -event %3 -srcIP %5 -ifindx %7 > C:\event_writer.out 2>&1"
    cd /d %PREV_DIR%
    goto :EOF
 
 :EventWriter-Attach
    set PREV_DIR=%CD%
    cd C:\
-   start /B cmd /c ".\event_writer.exe -attach %2 > C:\event_writer.out 2>&1"
+   start cmd /c ".\event_writer.exe -attach -ifindx %2 > C:\event_writer.out 2>&1"
    cd /d %PREV_DIR%
    goto :EOF
 
 :EventWriter-LoadAndPinPrgAndMaps
    set PREV_DIR=%CD%
    cd C:\
-   start /B cmd /c ".\event_writer.exe -load-pin > C:\event_writer.out 2>&1"
+   start cmd /c ".\event_writer.exe -load-pin > C:\event_writer.out 2>&1"
    cd /d %PREV_DIR%
    goto :EOF
 
 :EventWriter-UnPinPrgAndMaps
    set PREV_DIR=%CD%
    cd C:\
-   start /B cmd /c ".\event_writer.exe -unpin > C:\event_writer.out 2>&1"
+   start cmd /c ".\event_writer.exe -unpin > C:\event_writer.out 2>&1"
    cd /d %PREV_DIR%
    goto :EOF
 
@@ -64,7 +64,7 @@ goto :EOF
    goto :EOF
 
 :EventWriter-GetPodIpAddress
-   powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "Get-NetIPAddress | Where-Object {$_.AddressFamily -eq 'IPv4' -and $_.IPAddress -ne '127.0.0.1'} | Select-Object -ExpandProperty IPAddress; exit $LASTEXITCODE"
+   powershell -command "Get-NetIPAddress | Where-Object {$_.AddressFamily -eq 'IPv4' -and $_.IPAddress -ne '127.0.0.1'} | Select-Object -ExpandProperty IPAddress"
    goto :EOF
 
 :EventWriter-GetPodIfIndex

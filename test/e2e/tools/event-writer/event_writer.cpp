@@ -80,7 +80,7 @@ attach_program_to_interface(int ifindx) {
 }
 
 int
-pin(void) {
+load_pin(void) {
     struct bpf_program* prg = NULL;
     struct bpf_map *map_ev = NULL, *map_met = NULL, *map_fvt = NULL, *map_flt = NULL;
     int prg_fd = 0;
@@ -249,7 +249,7 @@ int main(int argc, char* argv[]) {
     }
 
     if (strcmp(argv[1], "-load-pin") == 0) {
-        if (pin() != 0) {
+        if (load_pin() != 0) {
             return 1;
         }
     } else if (strcmp(argv[1], "-set-filter") == 0) {
@@ -288,7 +288,7 @@ int main(int argc, char* argv[]) {
         if (set_filter(&flt) != 0) {
             return 1;
         } else {
-            printf("%s - filter updated successfully\n", __FUNCTION__);
+            printf("filter updated successfully\n");
         }
 
     } else if (strcmp(argv[1], "-attach")) {

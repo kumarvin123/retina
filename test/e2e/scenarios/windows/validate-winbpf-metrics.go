@@ -116,7 +116,7 @@ func (v *ValidateWinBpfMetric) Run() error {
 		return err
 	}
 	fmt.Println(output)
-	if strings.Contains(output, "failed") || strings.Contains(output, "error") {
+	if strings.Contains(output, "failed") || strings.Contains(output, "error") || strings.Contains(output, "exiting") {
 		return fmt.Errorf("failed to attach to non HPC pod interface %s", output)
 	}
 
@@ -142,7 +142,7 @@ func (v *ValidateWinBpfMetric) Run() error {
 		return err
 	}
 	fmt.Println(output)
-	if strings.Contains(output, "failed") || strings.Contains(output, "error") {
+	if strings.Contains(output, "failed") || strings.Contains(output, "error") || strings.Contains(output, "exiting") {
 		return fmt.Errorf("failed to set filter for event writer")
 	}
 
@@ -181,7 +181,7 @@ func (v *ValidateWinBpfMetric) Run() error {
 		return err
 	}
 	fmt.Println(output)
-	if strings.Contains(output, "failed") || strings.Contains(output, "error") {
+	if strings.Contains(output, "failed") || strings.Contains(output, "error") || strings.Contains(output, "exiting") {
 		return fmt.Errorf("failed to start event writer")
 	}
 

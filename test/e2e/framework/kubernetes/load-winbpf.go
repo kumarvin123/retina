@@ -38,7 +38,7 @@ func (a *LoadAndPinWinBPF) Run() error {
 	}
 
 	fmt.Println(output)
-	if strings.Contains(output, "error") || strings.Contains(output, "failed") {
+	if strings.Contains(output, "error") || strings.Contains(output, "failed") || strings.Contains(output, "existing") {
 		return fmt.Errorf("error in loading and pinning BPF maps and program: %s", output)
 	}
 	return nil
