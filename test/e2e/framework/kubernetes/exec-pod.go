@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -68,6 +69,8 @@ func (e *ExecInPod) Stop() error {
 
 func ExecPod(ctx context.Context, clientset *kubernetes.Clientset, config *rest.Config, namespace, podName, command string) ([]byte, error) {
 	log.Printf("executing command \"%s\" on pod \"%s\" in namespace \"%s\"...", command, podName, namespace)
+	execCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
+	defer cancel()
 	req := clientset.CoreV1().RESTClient().Post().Resource("pods").Name(podName).
 		Namespace(namespace).SubResource(ExecSubResources)
 	option := &v1.PodExecOptions{
@@ -89,7 +92,7 @@ func ExecPod(ctx context.Context, clientset *kubernetes.Clientset, config *rest.
 		return buf.Bytes(), fmt.Errorf("error creating executor: %w", err)
 	}
 
-	err = exec.StreamWithContext(ctx, remotecommand.StreamOptions{
+	err = exec.StreamWithContext(execCtx, remotecommand.StreamOptions{
 		Stdin:  os.Stdin,
 		Stdout: &buf,
 		Stderr: &buf,
@@ -136,7 +139,7 @@ func ExecCommandInWinPod(KubeConfigFilePath string, cmd string, DaemonSetNamespa
 		return "", fmt.Errorf("no Windows Pod found in label %s", LabelSelector)
 	}
 
-	result := &CommandResult{}
+	result := &CommandReslt{}
 	err = defaultRetrier.Do(context.TODO(), func() error {
 		outputBytes, err := ExecPod(context.TODO(), clientset, config, windowsPod.Namespace, windowsPod.Name, cmd)
 		if err != nil {

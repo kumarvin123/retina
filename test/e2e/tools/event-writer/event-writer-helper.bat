@@ -64,7 +64,7 @@ goto :EOF
    goto :EOF
 
 :EventWriter-GetPodIpAddress
-   powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "Get-NetIPAddress | Where-Object {$_.AddressFamily -eq 'IPv4' -and $_.IPAddress -ne '127.0.0.1'} | Select-Object -ExpandProperty IPAddress; exit $LASTEXITCODE"
+   powershell -command "Get-NetIPAddress | Where-Object {$_.AddressFamily -eq 'IPv4' -and $_.IPAddress -ne '127.0.0.1'} | Select-Object -ExpandProperty IPAddress"
    goto :EOF
 
 :EventWriter-GetPodIfIndex
