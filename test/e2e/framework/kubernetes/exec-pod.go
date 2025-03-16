@@ -98,7 +98,7 @@ func ExecPod(ctx context.Context, clientset *kubernetes.Clientset, config *rest.
 		Stdin:  os.Stdin,
 		Stdout: &buf,
 		Stderr: &buf,
-		Tty:    true,
+		Tty:    false,
 	})
 	if err != nil {
 		return buf.Bytes(), fmt.Errorf("error executing command: %w", err)
