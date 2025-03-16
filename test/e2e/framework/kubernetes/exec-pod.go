@@ -110,10 +110,6 @@ func ExecPod(ctx context.Context, clientset *kubernetes.Clientset, config *rest.
 	return res, nil
 }
 
-type CommandResult struct {
-	Output string
-}
-
 func ExecCommandInWinPod(KubeConfigFilePath string, cmd string, DaemonSetNamespace string, LabelSelector string) (string, error) {
 	config, err := clientcmd.BuildConfigFromFlags("", KubeConfigFilePath)
 	if err != nil {
