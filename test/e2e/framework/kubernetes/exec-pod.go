@@ -73,8 +73,6 @@ func (e *ExecInPod) Stop() error {
 
 func ExecPod(ctx context.Context, clientset *kubernetes.Clientset, config *rest.Config, namespace, podName, command string) ([]byte, error) {
 	log.Printf("executing command \"%s\" on pod \"%s\" in namespace \"%s\"...", command, podName, namespace)
-	execCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
-	defer cancel()
 	req := clientset.CoreV1().RESTClient().Post().Resource("pods").Name(podName).
 		Namespace(namespace).SubResource(ExecSubResources)
 	option := &v1.PodExecOptions{
@@ -96,7 +94,7 @@ func ExecPod(ctx context.Context, clientset *kubernetes.Clientset, config *rest.
 		return buf.Bytes(), fmt.Errorf("error creating executor: %w", err)
 	}
 
-	err = exec.StreamWithContext(execCtx, remotecommand.StreamOptions{
+	err = exec.StreamWithContext(ctx, remotecommand.StreamOptions{
 		Stdin:  os.Stdin,
 		Stdout: &buf,
 		Stderr: &buf,
@@ -116,12 +114,14 @@ func ExecCommandInWinPod(KubeConfigFilePath string, cmd string, DaemonSetNamespa
 		return "", fmt.Errorf("error building kubeconfig: %w", err)
 	}
 
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cancel()
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		return "", fmt.Errorf("error creating Kubernetes client: %w", err)
 	}
 
-	pods, err := clientset.CoreV1().Pods(DaemonSetNamespace).List(context.TODO(), metav1.ListOptions{
+	pods, err := clientset.CoreV1().Pods(DaemonSetNamespace).List(ctx, metav1.ListOptions{
 		LabelSelector: LabelSelector,
 	})
 	if err != nil {
@@ -140,8 +140,8 @@ func ExecCommandInWinPod(KubeConfigFilePath string, cmd string, DaemonSetNamespa
 	}
 
 	result := &CommandResult{}
-	err = defaultRetrier.Do(context.TODO(), func() error {
-		outputBytes, err := ExecPod(context.TODO(), clientset, config, windowsPod.Namespace, windowsPod.Name, cmd)
+	err = defaultRetrier.Do(ctx, func() error {
+		outputBytes, err := ExecPod(ctx, clientset, config, windowsPod.Namespace, windowsPod.Name, cmd)
 		if err != nil {
 			fmt.Errorf("error executing command in windows pod: %w", err)
 			return fmt.Errorf("error executing command in windows pod: %w", err)
