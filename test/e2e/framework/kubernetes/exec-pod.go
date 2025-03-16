@@ -139,7 +139,7 @@ func ExecCommandInWinPod(KubeConfigFilePath string, cmd string, DaemonSetNamespa
 		return "", fmt.Errorf("no Windows Pod found in label %s", LabelSelector)
 	}
 
-	result := &CommandReslt{}
+	result := &CommandResult{}
 	err = defaultRetrier.Do(context.TODO(), func() error {
 		outputBytes, err := ExecPod(context.TODO(), clientset, config, windowsPod.Namespace, windowsPod.Name, cmd)
 		if err != nil {
