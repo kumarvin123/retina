@@ -80,7 +80,7 @@ func (v *ValidateWinBpfMetric) Run() error {
 
 	nonHpcIpAddr, err := k8s.ExecCommandInWinPod(
 		v.KubeConfigFilePath,
-		".\\event-writer-helper.bat EventWriter-GetPodIpAddress",
+		"C:\\event-writer-helper.bat EventWriter-GetPodIpAddress",
 		v.NonHpcAppNamespace,
 		nonHpcLabelSelector)
 	if err != nil || nonHpcIpAddr == "" {
@@ -90,7 +90,7 @@ func (v *ValidateWinBpfMetric) Run() error {
 
 	nonHpcIfIndex, err := k8s.ExecCommandInWinPod(
 		v.KubeConfigFilePath,
-		".\\event-writer-helper.bat EventWriter-GetPodIfIndex",
+		"C:\\event-writer-helper.bat EventWriter-GetPodIfIndex",
 		v.NonHpcAppNamespace,
 		nonHpcLabelSelector)
 	if err != nil || nonHpcIfIndex == "0" || nonHpcIfIndex == "" {
