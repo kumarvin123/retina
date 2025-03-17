@@ -64,9 +64,9 @@ goto :EOF
    goto :EOF
 
 :EventWriter-GetPodIpAddress
-   start /B cmd /c "powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command \"Get-NetIPAddress | Where-Object {$_.AddressFamily -eq 'IPv4' -and $_.IPAddress -ne '127.0.0.1'} | Select-Object -ExpandProperty IPAddress\" > C:\event_writer.out 2>&1"
+   start /B powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "Get-NetIPAddress | Where-Object {$_.AddressFamily -eq 'IPv4' -and $_.IPAddress -ne '127.0.0.1'} | Select-Object -ExpandProperty IPAddress > C:\event_writer.out 2>&1"
    goto :EOF
 
 :EventWriter-GetPodIfIndex
-   start /B cmd /c "powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command \"Get-NetAdapter | Where-Object { $_.InterfaceDescription -like '*Hyper-V Virtual Ethernet Container*' } | ForEach-Object { Write-Output $_.ifIndex }\" > C:\event_writer.out 2>&1"
+   start /B cmd /c powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "Get-NetAdapter | Where-Object { $_.InterfaceDescription -like '*Hyper-V Virtual Ethernet Container*' } | ForEach-Object { Write-Output $_.ifIndex } > C:\event_writer.out 2>&1"
    goto :EOF
