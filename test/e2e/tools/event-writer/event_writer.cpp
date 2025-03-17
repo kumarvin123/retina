@@ -149,6 +149,7 @@ load_pin(void) {
         goto fail;
     }
 
+    printf("%s - event-writer loaded successfully\n", __FUNCTION__);
     bpf_object__close(obj);
     return 0; // Return success
 
@@ -186,6 +187,12 @@ unpin(void) {
     } else {
         ebpf_object_unpin(EVENT_WRITER_PIN_PATH);
     }
+
+    if (bpf_obj_get(FILTER_MAP_PIN_PATH) < 0) {
+        fprintf(stderr, "%s - failed to lookup filter_map at %s\n", __FUNCTION__, FILTER_MAP_PIN_PATH);
+   } else {
+       ebpf_object_unpin(FILTER_MAP_PIN_PATH);
+   }
 
     if (bpf_obj_get(EVENTS_MAP_PIN_PATH) < 0) {
          fprintf(stderr, "%s - failed to lookup cilium_events at %s\n", __FUNCTION__, EVENTS_MAP_PIN_PATH);

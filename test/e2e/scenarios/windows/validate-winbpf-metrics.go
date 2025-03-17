@@ -125,7 +125,7 @@ func (v *ValidateWinBpfMetric) Run() error {
 	//Example.com - 23.192.228.84
 	_, err = k8s.ExecCommandInWinPod(
 		v.KubeConfigFilePath,
-		fmt.Sprintf("C:\\event-writer-helper.bat EventWriter-SetFilter -event 4 -srcIP 23.192.228.84 -ifIndx %s", nonHpcIfIndex),
+		fmt.Sprintf("C:\\event-writer-helper.bat EventWriter-SetFilter -event 4 -srcIP 23.192.228.84"),
 		v.EbpfXdpDeamonSetNamespace,
 		ebpfLabelSelector)
 	if err != nil {
@@ -164,7 +164,7 @@ func (v *ValidateWinBpfMetric) Run() error {
 	fmt.Printf("Produce Drop Events\n")
 	_, err = k8s.ExecCommandInWinPod(
 		v.KubeConfigFilePath,
-		fmt.Sprintf("C:\\event-writer-helper.bat EventWriter-SetFilter -event 1 -srcIP 23.192.228.84 -ifindx %s", nonHpcIfIndex),
+		fmt.Sprintf("C:\\event-writer-helper.bat EventWriter-SetFilter -event 1 -srcIP 23.192.228.84"),
 		v.EbpfXdpDeamonSetNamespace,
 		ebpfLabelSelector)
 	if err != nil {
@@ -209,22 +209,22 @@ func (v *ValidateWinBpfMetric) Run() error {
 	}
 	fmt.Println(promOutput)
 	postTestFwdCount, _ := prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_forward_count", fwd_labels)
-	fmt.Printf("Metric value %f, labels: %v\n", preTestFwdBytes, fwd_labels)
+	fmt.Printf("networkobservability_forward_count value %f, labels: %v\n", preTestFwdBytes, fwd_labels)
 
 	postTestFwdBytes, err := prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_forward_bytes", fwd_labels)
 	if err != nil {
 		return fmt.Errorf("failed to get metric: %w", err)
 	}
-	fmt.Printf("Metric value %f, labels: %v\n", postTestFwdBytes, fwd_labels)
+	fmt.Printf("networkobservability_forward_bytes value %f, labels: %v\n", postTestFwdBytes, fwd_labels)
 
 	postTestDrpBytes, err := prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_drop_bytes", drp_labels)
 	if err != nil {
 		return fmt.Errorf("failed to get metric: %w", err)
 	}
-	fmt.Printf("Metric value %f, labels: %v\n", postTestDrpBytes, drp_labels)
+	fmt.Printf("networkobservability_drop_bytes value %f, labels: %v\n", postTestDrpBytes, drp_labels)
 
 	postTestDrpCount, _ := prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_drop_count", drp_labels)
-	fmt.Printf("Metric value %f, labels: %v\n", preTestDrpBytes, drp_labels)
+	fmt.Printf("networkobservability_drop_count value %f, labels: %v\n", preTestDrpBytes, drp_labels)
 
 	if postTestFwdBytes < preTestFwdBytes {
 		return fmt.Errorf("fwd Bytes not incremented")
@@ -342,7 +342,7 @@ func (v *ValidateWinBpfMetric) Run() error {
 	}
 	err = prom.CheckMetricFromBuffer([]byte(promOutput), "networkobservability_adv_drop_bytes", adv_drop_byte_labels)
 	if err != nil {
-		return fmt.Errorf("failed to find networkobservability_adv_drop_bytes")
+		return fmt.Errorf("failed to find networkobservability_adv_drop_bytes with ingress label")
 	}
 
 	adv_drop_count_labels = map[string]string{
@@ -356,7 +356,7 @@ func (v *ValidateWinBpfMetric) Run() error {
 	}
 	err = prom.CheckMetricFromBuffer([]byte(promOutput), "networkobservability_adv_drop_count", adv_drop_count_labels)
 	if err != nil {
-		return fmt.Errorf("failed to find networkobservability_adv_drop_count")
+		return fmt.Errorf("failed to find networkobservability_adv_drop_count with ingress label")
 	}
 
 	return nil

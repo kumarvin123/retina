@@ -313,7 +313,7 @@ func LoadAndPinWinBPFJob(kubeConfigFilePath string) *types.Job {
 }
 
 func UnLoadAndPinWinBPFJob(kubeConfigFilePath string) *types.Job {
-	job := types.NewJob("Load Windows BPF Maps")
+	job := types.NewJob("Unload Windows BPF Maps")
 	job.AddStep(&kubernetes.UnLoadAndPinWinBPF{
 		KubeConfigFilePath:                   kubeConfigFilePath,
 		UnLoadAndPinWinBPFDeamonSetNamespace: "install-ebpf-xdp",
