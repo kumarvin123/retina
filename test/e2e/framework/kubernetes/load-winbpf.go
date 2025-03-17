@@ -3,9 +3,11 @@ package kubernetes
 import (
 	"context"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
+	retry "github.com/microsoft/retina/test/retry"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -28,7 +30,7 @@ func ExecCommandInWinPod(KubeConfigFilePath string, cmd string, DaemonSetNamespa
 		return "", fmt.Errorf("error building kubeconfig: %w", err)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeoutSeconds*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
@@ -54,7 +56,9 @@ func ExecCommandInWinPod(KubeConfigFilePath string, cmd string, DaemonSetNamespa
 	}
 
 	result := &CommandResult{}
+	defaultRetrier = retry.Retrier{Attempts: 10, Delay: 10.0 * time.Second, ExpBackoff: true}
 	err = defaultRetrier.Do(ctx, func() error {
+		log.Printf("Executing command: %s", cmd)
 		outputBytes, err := ExecPod(ctx, clientset, config, windowsPod.Namespace, windowsPod.Name, cmd)
 		if err != nil {
 			return fmt.Errorf("error executing command in windows pod: %w", err)
