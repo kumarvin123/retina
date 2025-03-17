@@ -291,7 +291,7 @@ int main(int argc, char* argv[]) {
             printf("filter updated successfully\n");
         }
 
-    } else if (strcmp(argv[1], "-attach")) {
+    } else if (strcmp(argv[1], "-attach") == 0) {
         int ifindx = 0;
         for (int i = 2; i < argc; i++) {
             if (strcmp(argv[i], "-ifindx") == 0) {
