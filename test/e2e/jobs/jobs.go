@@ -254,7 +254,7 @@ func UpgradeAndTestRetinaAdvancedMetrics(kubeConfigFilePath, chartPath, valuesFi
 	job.AddStep(&kubernetes.ApplyYamlConfig{
 		YamlFilePath: "yaml/windows/non-hpc-pod.yaml",
 	}, nil)
-	time.Sleep(30 * time.Second)
+	time.Sleep(2 * time.Minute)
 	job.AddScenario(windows.ValidateWinBpfMetricScenario())
 
 	//job.AddScenario(latency.ValidateLatencyMetric(testPodNamespace))
