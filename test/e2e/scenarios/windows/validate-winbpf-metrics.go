@@ -21,24 +21,26 @@ type ValidateWinBpfMetric struct {
 }
 
 func (v *ValidateWinBpfMetric) GetPromMetrics(ebpfLabelSelector string) (string, error) {
-	var promOutput string = ""
-	numAttempts := 10
-	for promOutput == "" && numAttempts > 0 {
-		newPromOutput, err := kubernetes.ExecCommandInWinPod(v.KubeConfigFilePath,
-			"C:\\event-writer-helper.bat EventWriter-GetRetinaPromMetrics",
-			v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
-		if err != nil {
-			return "", err
-		}
-		promOutput = newPromOutput
-
-		if promOutput != "" {
-			break
-		}
-		numAttempts--
-		time.Sleep(5 * time.Second)
+	_, err := kubernetes.ExecCommandInWinPod(v.KubeConfigFilePath,
+		"C:\\event-writer-helper.bat EventWriter-GetRetinaPromMetrics",
+		v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
+	if err != nil {
+		return "", err
 	}
 
+	promOutput, err := kubernetes.ExecCommandInWinPod(
+		v.KubeConfigFilePath,
+		"C:\\event-writer-helper.bat EventWriter-CurlOut",
+		v.EbpfXdpDeamonSetNamespace,
+		ebpfLabelSelector)
+
+	if err != nil {
+		fmt.Errorf("failed to get prometheus metrics")
+	}
+
+	if promOutput == "" {
+		return "", fmt.Errorf("prometheus metrics is empty")
+	}
 	return promOutput, nil
 }
 
@@ -46,7 +48,7 @@ func (v *ValidateWinBpfMetric) Run() error {
 	ebpfLabelSelector := fmt.Sprintf("name=%s", v.EbpfXdpDeamonSetName)
 	promOutput, err := v.GetPromMetrics(ebpfLabelSelector)
 	if err != nil {
-		return fmt.Errorf("failed to get prometheus metrics")
+		return err
 	}
 
 	fmt.Println(promOutput)
@@ -67,36 +69,60 @@ func (v *ValidateWinBpfMetric) Run() error {
 		fmt.Println("PreTest - no prometheus metrics found")
 	} else {
 		preTestFwdBytes, _ = prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_forward_bytes", fwd_labels)
-		fmt.Printf("Metric value %f, labels: %v\n", preTestFwdBytes, fwd_labels)
+		fmt.Printf("networkobservability_forward_bytes value %f, labels: %v\n", preTestFwdBytes, fwd_labels)
 
 		preTestFwdCount, _ = prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_forward_count", fwd_labels)
-		fmt.Printf("Metric value %f, labels: %v\n", preTestFwdBytes, fwd_labels)
+		fmt.Printf("networkobservability_forward_count value %f, labels: %v\n", preTestFwdBytes, fwd_labels)
 
 		preTestDrpBytes, _ = prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_drop_bytes", drp_labels)
-		fmt.Printf("Metric value %f, labels: %v\n", preTestDrpBytes, drp_labels)
+		fmt.Printf("networkobservability_drop_bytes value %f, labels: %v\n", preTestDrpBytes, drp_labels)
 
 		preTestDrpCount, _ = prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_drop_count", drp_labels)
-		fmt.Printf("Metric value %f, labels: %v\n", preTestDrpBytes, drp_labels)
+		fmt.Printf("networkobservability_drop_count value %f, labels: %v\n", preTestDrpBytes, drp_labels)
 	}
 
 	nonHpcLabelSelector := fmt.Sprintf("app=%s", v.NonHpcAppName)
-	nonHpcIpAddr, err := kubernetes.ExecCommandInWinPod(
+	_, err = kubernetes.ExecCommandInWinPod(
 		v.KubeConfigFilePath,
 		"C:\\event-writer-helper.bat EventWriter-GetPodIpAddress",
 		v.NonHpcAppNamespace,
 		nonHpcLabelSelector)
-	if err != nil || nonHpcIpAddr == "" {
+	if err != nil {
 		return err
+	}
+	time.Sleep(10 * time.Second)
+	nonHpcIpAddr, err := kubernetes.ExecCommandInWinPod(
+		v.KubeConfigFilePath,
+		"C:\\event-writer-helper.bat EventWriter-Dump",
+		v.EbpfXdpDeamonSetNamespace,
+		ebpfLabelSelector)
+	if err != nil {
+		return err
+	}
+	if strings.Contains(nonHpcIpAddr, "failed") || strings.Contains(nonHpcIpAddr, "error") {
+		return fmt.Errorf("failed to get nonHpcIpAddr")
 	}
 	fmt.Println("Non HPC IP Addr: ", nonHpcIpAddr)
 
-	nonHpcIfIndex, err := kubernetes.ExecCommandInWinPod(
+	_, err = kubernetes.ExecCommandInWinPod(
 		v.KubeConfigFilePath,
 		"C:\\event-writer-helper.bat EventWriter-GetPodIfIndex",
 		v.NonHpcAppNamespace,
 		nonHpcLabelSelector)
-	if err != nil || nonHpcIfIndex == "0" || nonHpcIfIndex == "" {
+	if err != nil {
 		return err
+	}
+	time.Sleep(10 * time.Second)
+	nonHpcIfIndex, err := kubernetes.ExecCommandInWinPod(
+		v.KubeConfigFilePath,
+		"C:\\event-writer-helper.bat EventWriter-Dump",
+		v.EbpfXdpDeamonSetNamespace,
+		ebpfLabelSelector)
+	if err != nil {
+		return err
+	}
+	if strings.Contains(nonHpcIfIndex, "failed") || strings.Contains(nonHpcIfIndex, "error") {
+		return fmt.Errorf("failed to get nonHpcIfIndex")
 	}
 	fmt.Println("Non HPC Interface Index: ", nonHpcIfIndex)
 
@@ -204,10 +230,7 @@ func (v *ValidateWinBpfMetric) Run() error {
 	time.Sleep(60 * time.Second)
 	promOutput, err = v.GetPromMetrics(ebpfLabelSelector)
 	if err != nil {
-		return fmt.Errorf("failed to get prometheus metrics")
-	}
-	if promOutput == "" {
-		return fmt.Errorf("post test - failed to get prometheus metrics")
+		return err
 	}
 	fmt.Println(promOutput)
 	postTestFwdCount, _ := prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_forward_count", fwd_labels)
@@ -229,18 +252,18 @@ func (v *ValidateWinBpfMetric) Run() error {
 	fmt.Printf("networkobservability_drop_count value %f, labels: %v\n", preTestDrpBytes, drp_labels)
 
 	if postTestFwdBytes < preTestFwdBytes {
-		return fmt.Errorf("fwd Bytes not incremented")
+		return fmt.Errorf("networkobservability_forward_bytes not incremented")
 	}
 
 	if postTestDrpBytes < preTestDrpBytes {
-		return fmt.Errorf("drp Bytes not incremented")
+		return fmt.Errorf("networkobservability_drop_bytes not incremented")
 	}
 
 	if postTestFwdCount < preTestFwdCount {
-		return fmt.Errorf("fwd count not incremented")
+		return fmt.Errorf("networkobservability_forward_count not incremented")
 	}
 	if postTestDrpCount < preTestDrpCount {
-		return fmt.Errorf("drp count not incremnted")
+		return fmt.Errorf("networkobservability_drop_count not incremnted")
 	}
 
 	// Advanced Metrics

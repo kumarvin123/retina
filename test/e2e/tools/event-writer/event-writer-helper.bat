@@ -48,7 +48,7 @@ goto :EOF
    goto :EOF
 
 :EventWriter-GetRetinaPromMetrics
-   curl http://localhost:10093/metrics
+   start /B cmd /c "curl http://localhost:10093/metrics > C:\curl.out 2>&1 & timeout /t 1 >nul)"
    goto :EOF
 
 :EventWriter-Curl
@@ -64,9 +64,9 @@ goto :EOF
    goto :EOF
 
 :EventWriter-GetPodIpAddress
-   powershell -command "Get-NetIPAddress | Where-Object {$_.AddressFamily -eq 'IPv4' -and $_.IPAddress -ne '127.0.0.1'} | Select-Object -ExpandProperty IPAddress"
+   start /B cmd /c "powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command \"Get-NetIPAddress | Where-Object {$_.AddressFamily -eq 'IPv4' -and $_.IPAddress -ne '127.0.0.1'} | Select-Object -ExpandProperty IPAddress\" > C:\event_writer.out 2>&1"
    goto :EOF
 
 :EventWriter-GetPodIfIndex
-   powershell -command "Get-NetAdapter | Where-Object { $_.InterfaceDescription -like '*Hyper-V Virtual Ethernet Container*' } | ForEach-Object { Write-Output $_.ifIndex }"
+   start /B cmd /c "powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command \"Get-NetAdapter | Where-Object { $_.InterfaceDescription -like '*Hyper-V Virtual Ethernet Container*' } | ForEach-Object { Write-Output $_.ifIndex }\" > C:\event_writer.out 2>&1"
    goto :EOF
