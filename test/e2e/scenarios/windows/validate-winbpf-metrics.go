@@ -28,6 +28,7 @@ func (v *ValidateWinBpfMetric) GetPromMetrics(ebpfLabelSelector string) (string,
 		return "", err
 	}
 
+	time.Sleep(10 * time.Second)
 	promOutput, err := kubernetes.ExecCommandInWinPod(
 		v.KubeConfigFilePath,
 		"C:\\event-writer-helper.bat EventWriter-CurlOut",
