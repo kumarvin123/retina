@@ -28,7 +28,7 @@ func ExecCommandInWinPod(KubeConfigFilePath string, cmd string, DaemonSetNamespa
 		return "", fmt.Errorf("error building kubeconfig: %w", err)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeoutSeconds*time.Second)
 	defer cancel()
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
@@ -57,7 +57,6 @@ func ExecCommandInWinPod(KubeConfigFilePath string, cmd string, DaemonSetNamespa
 	err = defaultRetrier.Do(ctx, func() error {
 		outputBytes, err := ExecPod(ctx, clientset, config, windowsPod.Namespace, windowsPod.Name, cmd)
 		if err != nil {
-			fmt.Errorf("error executing command in windows pod: %w", err)
 			return fmt.Errorf("error executing command in windows pod: %w", err)
 		}
 
