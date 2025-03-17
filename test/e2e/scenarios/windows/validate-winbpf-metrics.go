@@ -96,7 +96,7 @@ func (v *ValidateWinBpfMetric) Run() error {
 	if err != nil {
 		return err
 	}
-	output, err := k8s.ExecCommandInWinPod(
+	output, err = k8s.ExecCommandInWinPod(
 		v.KubeConfigFilePath,
 		"C:\\event-writer-helper.bat EventWriter-Dump",
 		v.EbpfXdpDeamonSetNamespace,

@@ -77,4 +77,5 @@ func TestE2ERetina(t *testing.T) {
 			common.TestPodNamespace),
 	)
 	validatehubble.Run(ctx)
+
 }
