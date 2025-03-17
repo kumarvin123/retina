@@ -36,7 +36,7 @@ func (v *ValidateWinBpfMetric) GetPromMetrics(ebpfLabelSelector string) (string,
 		ebpfLabelSelector)
 
 	if err != nil {
-		fmt.Errorf("failed to get prometheus metrics")
+		return "", err
 	}
 
 	if promOutput == "" {
