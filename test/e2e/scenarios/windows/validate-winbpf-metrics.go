@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	k8s "github.com/microsoft/retina/test/e2e/framework/kubernetes"
+	kubernetes "github.com/microsoft/retina/test/e2e/framework/kubernetes"
 	prom "github.com/microsoft/retina/test/e2e/framework/prometheus"
 )
 
@@ -24,7 +24,7 @@ func (v *ValidateWinBpfMetric) GetPromMetrics(ebpfLabelSelector string) (string,
 	var promOutput string = ""
 	numAttempts := 10
 	for promOutput == "" && numAttempts > 0 {
-		newPromOutput, err := k8s.ExecCommandInWinPod(v.KubeConfigFilePath,
+		newPromOutput, err := kubernetes.ExecCommandInWinPod(v.KubeConfigFilePath,
 			"C:\\event-writer-helper.bat EventWriter-GetRetinaPromMetrics",
 			v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
 		if err != nil {
@@ -80,7 +80,7 @@ func (v *ValidateWinBpfMetric) Run() error {
 	}
 
 	nonHpcLabelSelector := fmt.Sprintf("app=%s", v.NonHpcAppName)
-	nonHpcIpAddr, err := k8s.ExecCommandInWinPod(
+	nonHpcIpAddr, err := kubernetes.ExecCommandInWinPod(
 		v.KubeConfigFilePath,
 		"C:\\event-writer-helper.bat EventWriter-GetPodIpAddress",
 		v.NonHpcAppNamespace,
@@ -90,7 +90,7 @@ func (v *ValidateWinBpfMetric) Run() error {
 	}
 	fmt.Println("Non HPC IP Addr: ", nonHpcIpAddr)
 
-	nonHpcIfIndex, err := k8s.ExecCommandInWinPod(
+	nonHpcIfIndex, err := kubernetes.ExecCommandInWinPod(
 		v.KubeConfigFilePath,
 		"C:\\event-writer-helper.bat EventWriter-GetPodIfIndex",
 		v.NonHpcAppNamespace,
@@ -101,7 +101,7 @@ func (v *ValidateWinBpfMetric) Run() error {
 	fmt.Println("Non HPC Interface Index: ", nonHpcIfIndex)
 
 	//Attach to the non HPC pod
-	_, err = k8s.ExecCommandInWinPod(
+	_, err = kubernetes.ExecCommandInWinPod(
 		v.KubeConfigFilePath,
 		fmt.Sprintf("C:\\event-writer-helper.bat EventWriter-Attach %s", nonHpcIfIndex),
 		v.EbpfXdpDeamonSetNamespace,
@@ -109,7 +109,7 @@ func (v *ValidateWinBpfMetric) Run() error {
 	if err != nil {
 		return err
 	}
-	output, err := k8s.ExecCommandInWinPod(
+	output, err := kubernetes.ExecCommandInWinPod(
 		v.KubeConfigFilePath,
 		"C:\\event-writer-helper.bat EventWriter-Dump",
 		v.EbpfXdpDeamonSetNamespace,
@@ -125,7 +125,7 @@ func (v *ValidateWinBpfMetric) Run() error {
 	//TRACE
 	fmt.Printf("Produce Trace Events\n")
 	//Example.com - 23.192.228.84
-	_, err = k8s.ExecCommandInWinPod(
+	_, err = kubernetes.ExecCommandInWinPod(
 		v.KubeConfigFilePath,
 		"C:\\event-writer-helper.bat EventWriter-SetFilter -event 4 -srcIP 23.192.228.84",
 		v.EbpfXdpDeamonSetNamespace,
@@ -135,7 +135,7 @@ func (v *ValidateWinBpfMetric) Run() error {
 	}
 
 	time.Sleep(5 * time.Second)
-	output, err = k8s.ExecCommandInWinPod(
+	output, err = kubernetes.ExecCommandInWinPod(
 		v.KubeConfigFilePath,
 		"C:\\event-writer-helper.bat EventWriter-Dump",
 		v.EbpfXdpDeamonSetNamespace,
@@ -150,7 +150,7 @@ func (v *ValidateWinBpfMetric) Run() error {
 
 	numcurls := 10
 	for numcurls > 0 {
-		_, err = k8s.ExecCommandInWinPod(
+		_, err = kubernetes.ExecCommandInWinPod(
 			v.KubeConfigFilePath,
 			"C:\\event-writer-helper.bat EventWriter-Curl 23.192.228.84",
 			v.NonHpcAppNamespace,
@@ -164,7 +164,7 @@ func (v *ValidateWinBpfMetric) Run() error {
 	//DROP
 	time.Sleep(60 * time.Second)
 	fmt.Printf("Produce Drop Events\n")
-	_, err = k8s.ExecCommandInWinPod(
+	_, err = kubernetes.ExecCommandInWinPod(
 		v.KubeConfigFilePath,
 		"C:\\event-writer-helper.bat EventWriter-SetFilter -event 1 -srcIP 23.192.228.84",
 		v.EbpfXdpDeamonSetNamespace,
@@ -174,7 +174,7 @@ func (v *ValidateWinBpfMetric) Run() error {
 	}
 
 	time.Sleep(5 * time.Second)
-	output, err = k8s.ExecCommandInWinPod(
+	output, err = kubernetes.ExecCommandInWinPod(
 		v.KubeConfigFilePath,
 		"C:\\event-writer-helper.bat EventWriter-Dump",
 		v.EbpfXdpDeamonSetNamespace,
@@ -189,7 +189,7 @@ func (v *ValidateWinBpfMetric) Run() error {
 
 	numcurls = 10
 	for numcurls > 0 {
-		_, err = k8s.ExecCommandInWinPod(
+		_, err = kubernetes.ExecCommandInWinPod(
 			v.KubeConfigFilePath,
 			"C:\\event-writer-helper.bat EventWriter-Curl 23.192.228.84",
 			v.NonHpcAppNamespace,
