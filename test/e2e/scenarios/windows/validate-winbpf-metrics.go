@@ -69,6 +69,27 @@ func (v *ValidateWinBpfMetric) Run() error {
 	//Attach to the non HPC pod
 	_, err = k8s.ExecCommandInWinPod(
 		v.KubeConfigFilePath,
+		fmt.Sprintf("C:\\event-writer-helper.bat EventWriter-LoadAndPinPrgAndMaps"),
+		v.EbpfXdpDeamonSetNamespace,
+		ebpfLabelSelector)
+	if err != nil {
+		return err
+	}
+	output, err := k8s.ExecCommandInWinPod(
+		v.KubeConfigFilePath,
+		"C:\\event-writer-helper.bat EventWriter-Dump",
+		v.EbpfXdpDeamonSetNamespace,
+		ebpfLabelSelector)
+	if err != nil {
+		return err
+	}
+	fmt.Println(output)
+	if strings.Contains(output, "failed") || strings.Contains(output, "error") || strings.Contains(output, "exiting") {
+		return fmt.Errorf("failed to attach to non HPC pod interface %s", output)
+	}
+
+	_, err = k8s.ExecCommandInWinPod(
+		v.KubeConfigFilePath,
 		fmt.Sprintf("C:\\event-writer-helper.bat EventWriter-Attach %s", nonHpcIfIndex),
 		v.EbpfXdpDeamonSetNamespace,
 		ebpfLabelSelector)
