@@ -49,6 +49,8 @@ func (v *ValidateWinBpfMetric) Run() error {
 		return fmt.Errorf("failed to get prometheus metrics")
 	}
 
+	fmt.Println(promOutput)
+
 	fwd_labels := map[string]string{
 		"direction": "ingress",
 	}
@@ -125,7 +127,7 @@ func (v *ValidateWinBpfMetric) Run() error {
 	//Example.com - 23.192.228.84
 	_, err = k8s.ExecCommandInWinPod(
 		v.KubeConfigFilePath,
-		fmt.Sprintf("C:\\event-writer-helper.bat EventWriter-SetFilter -event 4 -srcIP 23.192.228.84"),
+		"C:\\event-writer-helper.bat EventWriter-SetFilter -event 4 -srcIP 23.192.228.84",
 		v.EbpfXdpDeamonSetNamespace,
 		ebpfLabelSelector)
 	if err != nil {
@@ -164,7 +166,7 @@ func (v *ValidateWinBpfMetric) Run() error {
 	fmt.Printf("Produce Drop Events\n")
 	_, err = k8s.ExecCommandInWinPod(
 		v.KubeConfigFilePath,
-		fmt.Sprintf("C:\\event-writer-helper.bat EventWriter-SetFilter -event 1 -srcIP 23.192.228.84"),
+		"C:\\event-writer-helper.bat EventWriter-SetFilter -event 1 -srcIP 23.192.228.84",
 		v.EbpfXdpDeamonSetNamespace,
 		ebpfLabelSelector)
 	if err != nil {
