@@ -43,41 +43,9 @@ func (v *ValidateWinBpfMetric) GetPromMetrics(ebpfLabelSelector string) (string,
 }
 
 func (v *ValidateWinBpfMetric) Run() error {
+
 	ebpfLabelSelector := fmt.Sprintf("name=%s", v.EbpfXdpDeamonSetName)
 	nonHpcLabelSelector := fmt.Sprintf("app=%s", v.NonHpcAppName)
-	promOutput, err := v.GetPromMetrics(ebpfLabelSelector)
-	if err != nil {
-		return fmt.Errorf("failed to get prometheus metrics")
-	}
-
-	fwd_labels := map[string]string{
-		"direction": "ingress",
-	}
-	drp_labels := map[string]string{
-		"direction": "ingress",
-		"reason":    "130, 0",
-	}
-
-	var preTestFwdBytes float64 = 0
-	var preTestDrpBytes float64 = 0
-	var preTestFwdCount float64 = 0
-	var preTestDrpCount float64 = 0
-	if promOutput == "" {
-		fmt.Println("PreTest - no prometheus metrics found")
-	} else {
-		preTestFwdBytes, _ = prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_forward_bytes", fwd_labels)
-		fmt.Printf("Metric value %f, labels: %v\n", preTestFwdBytes, fwd_labels)
-
-		preTestFwdCount, _ = prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_forward_count", fwd_labels)
-		fmt.Printf("Metric value %f, labels: %v\n", preTestFwdBytes, fwd_labels)
-
-		preTestDrpBytes, _ = prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_drop_bytes", drp_labels)
-		fmt.Printf("Metric value %f, labels: %v\n", preTestDrpBytes, drp_labels)
-
-		preTestDrpCount, _ = prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_drop_count", drp_labels)
-		fmt.Printf("Metric value %f, labels: %v\n", preTestDrpBytes, drp_labels)
-	}
-
 	nonHpcIpAddr, err := k8s.ExecCommandInWinPod(
 		v.KubeConfigFilePath,
 		"C:\\event-writer-helper.bat EventWriter-GetPodIpAddress",
@@ -118,6 +86,39 @@ func (v *ValidateWinBpfMetric) Run() error {
 	fmt.Println(output)
 	if strings.Contains(output, "failed") || strings.Contains(output, "error") || strings.Contains(output, "exiting") {
 		return fmt.Errorf("failed to attach to non HPC pod interface %s", output)
+	}
+
+	promOutput, err := v.GetPromMetrics(ebpfLabelSelector)
+	if err != nil {
+		return fmt.Errorf("failed to get prometheus metrics")
+	}
+
+	fwd_labels := map[string]string{
+		"direction": "ingress",
+	}
+	drp_labels := map[string]string{
+		"direction": "ingress",
+		"reason":    "130, 0",
+	}
+
+	var preTestFwdBytes float64 = 0
+	var preTestDrpBytes float64 = 0
+	var preTestFwdCount float64 = 0
+	var preTestDrpCount float64 = 0
+	if promOutput == "" {
+		fmt.Println("PreTest - no prometheus metrics found")
+	} else {
+		preTestFwdBytes, _ = prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_forward_bytes", fwd_labels)
+		fmt.Printf("Metric value %f, labels: %v\n", preTestFwdBytes, fwd_labels)
+
+		preTestFwdCount, _ = prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_forward_count", fwd_labels)
+		fmt.Printf("Metric value %f, labels: %v\n", preTestFwdBytes, fwd_labels)
+
+		preTestDrpBytes, _ = prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_drop_bytes", drp_labels)
+		fmt.Printf("Metric value %f, labels: %v\n", preTestDrpBytes, drp_labels)
+
+		preTestDrpCount, _ = prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_drop_count", drp_labels)
+		fmt.Printf("Metric value %f, labels: %v\n", preTestDrpBytes, drp_labels)
 	}
 
 	//TRACE
