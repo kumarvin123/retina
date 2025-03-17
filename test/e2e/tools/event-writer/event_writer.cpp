@@ -59,7 +59,7 @@ attach_program_to_interface(int ifindx) {
     // Verify there's no program attached to the specified ifindex.
     uint32_t program_id;
     if (bpf_xdp_query_id(ifindx, 0, &program_id) < 0) {
-        if (bpf_xdp_attach(ifindx, evt_wrt_fd, 0, nullptr) == 0) {
+        if (bpf_xdp_attach(ifindx, evt_wrt_fd, 0, nullptr) != 0) {
             fprintf(stderr, "%s - failed to attach to interface with ifindex %d\n", __FUNCTION__, ifindx);
             return 1;
         }
@@ -68,7 +68,7 @@ attach_program_to_interface(int ifindx) {
         if (program_id == evt_wrt_fd) {
             printf("%s - program alteady attached %s to interface with ifindex %d\n", __FUNCTION__, EVENT_WRITER_PIN_PATH, ifindx);
         } else {
-            if (bpf_xdp_attach(ifindx, evt_wrt_fd, XDP_FLAGS_REPLACE, nullptr) == 0) {
+            if (bpf_xdp_attach(ifindx, evt_wrt_fd, XDP_FLAGS_REPLACE, nullptr) != 0) {
                 fprintf(stderr, "%s - failed to attach to interface with ifindex %d\n", __FUNCTION__, ifindx);
                 return 1;
             }
