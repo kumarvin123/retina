@@ -20,12 +20,13 @@ type ValidateWinBpfMetric struct {
 	NonHpcPodName             string
 }
 
-func (v *ValidateWinBpfMetric) GetPromMetrics(ebpfLabelSelector string) (string, error) {
+func (v *ValidateWinBpfMetric) GetPromMetrics() (string, error) {
 	var promOutput string = ""
 	numAttempts := 10
+	retinaLabelSelector := "k8s-app=retina"
 	for promOutput == "" && numAttempts > 0 {
-		newPromOutput, err := kubernetes.ExecCommandInWinPod(v.KubeConfigFilePath, "C:\\event-writer-helper.bat EventWriter-GetRetinaPromMetrics",
-			v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
+		newPromOutput, err := kubernetes.ExecCommandInWinPod(v.KubeConfigFilePath, "curl http://localhost:10093/metrics",
+			v.RetinaDaemonSetNamespace, retinaLabelSelector)
 		if err != nil {
 			return "", err
 		}
@@ -43,7 +44,7 @@ func (v *ValidateWinBpfMetric) GetPromMetrics(ebpfLabelSelector string) (string,
 
 func (v *ValidateWinBpfMetric) Run() error {
 	ebpfLabelSelector := fmt.Sprintf("name=%s", v.EbpfXdpDeamonSetName)
-	promOutput, err := v.GetPromMetrics(ebpfLabelSelector)
+	promOutput, err := v.GetPromMetrics()
 	if err != nil {
 		return err
 	}
@@ -63,6 +64,7 @@ func (v *ValidateWinBpfMetric) Run() error {
 	if promOutput == "" {
 		fmt.Println("Pre test - no prometheus metrics found")
 	} else {
+		fmt.Print(promOutput)
 		preTestFwdBytes, err = prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_forward_bytes", fwd_labels)
 		if err != nil && strings.Contains(err.Error(), "failed to parse prometheus metrics") {
 			return err
@@ -235,7 +237,7 @@ func (v *ValidateWinBpfMetric) Run() error {
 
 	fmt.Println("Waiting for basic metrics to be updated as part of next polling cycle")
 	time.Sleep(60 * time.Second)
-	promOutput, err = v.GetPromMetrics(ebpfLabelSelector)
+	promOutput, err = v.GetPromMetrics()
 	if err != nil {
 		return err
 	}

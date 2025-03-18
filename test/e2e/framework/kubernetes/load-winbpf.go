@@ -13,10 +13,6 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
-type CommandResult struct {
-	Output string
-}
-
 type LoadAndPinWinBPF struct {
 	KubeConfigFilePath                 string
 	LoadAndPinWinBPFDeamonSetNamespace string
@@ -52,22 +48,21 @@ func ExecCommandInWinPod(KubeConfigFilePath string, cmd string, DaemonSetNamespa
 		return "", fmt.Errorf("no Windows Pod found in label %s", LabelSelector)
 	}
 
-	result := &CommandResult{}
+	var outputBytes []byte
 	err = defaultRetrier.Do(context.TODO(), func() error {
 		log.Printf("Executing command: %s", cmd)
-		outputBytes, err := ExecPod(context.TODO(), clientset, config, windowsPod.Namespace, windowsPod.Name, cmd)
+		outputBytes, err = ExecPod(context.TODO(), clientset, config, windowsPod.Namespace, windowsPod.Name, cmd)
 		if err != nil {
 			return fmt.Errorf("error executing command in windows pod: %w", err)
 		}
 
-		result.Output = string(outputBytes)
 		return nil
 	})
 	if err != nil {
 		return "", err
 	}
 
-	return result.Output, nil
+	return string(outputBytes), nil
 }
 
 func (a *LoadAndPinWinBPF) Run() error {
