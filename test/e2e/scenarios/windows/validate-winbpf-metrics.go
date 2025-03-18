@@ -48,11 +48,10 @@ func (v *ValidateWinBpfMetric) GetPromMetrics(ebpfLabelSelector string) (string,
 func (v *ValidateWinBpfMetric) Run() error {
 	ebpfLabelSelector := fmt.Sprintf("name=%s", v.EbpfXdpDeamonSetName)
 	promOutput, err := v.GetPromMetrics(ebpfLabelSelector)
+	promOutput = prom.stripExecGarbage(promOutput)
 	if err != nil {
 		return err
 	}
-
-	fmt.Println(promOutput)
 
 	fwd_labels := map[string]string{
 		"direction": "ingress",
@@ -67,19 +66,31 @@ func (v *ValidateWinBpfMetric) Run() error {
 	var preTestFwdCount float64 = 0
 	var preTestDrpCount float64 = 0
 	if promOutput == "" {
-		fmt.Println("PreTest - no prometheus metrics found")
+		fmt.Println("Pre test - no prometheus metrics found")
 	} else {
-		preTestFwdBytes, _ = prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_forward_bytes", fwd_labels)
-		fmt.Printf("networkobservability_forward_bytes value %f, labels: %v\n", preTestFwdBytes, fwd_labels)
+		preTestFwdBytes, err = prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_forward_bytes", fwd_labels)
+		if err != nil && strings.Contains(err.Error(), "failed to parse prometheus metrics") {
+			return err
+		}
+		fmt.Printf("Pre test - networkobservability_forward_bytes value %f, labels: %v\n", preTestFwdBytes, fwd_labels)
 
-		preTestFwdCount, _ = prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_forward_count", fwd_labels)
-		fmt.Printf("networkobservability_forward_count value %f, labels: %v\n", preTestFwdBytes, fwd_labels)
+		preTestFwdCount, err = prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_forward_count", fwd_labels)
+		if err != nil && strings.Contains(err.Error(), "failed to parse prometheus metrics") {
+			return err
+		}
+		fmt.Printf("Pre test - networkobservability_forward_count value %f, labels: %v\n", preTestFwdBytes, fwd_labels)
 
-		preTestDrpBytes, _ = prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_drop_bytes", drp_labels)
-		fmt.Printf("networkobservability_drop_bytes value %f, labels: %v\n", preTestDrpBytes, drp_labels)
+		preTestDrpBytes, err = prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_drop_bytes", drp_labels)
+		if err != nil && strings.Contains(err.Error(), "failed to parse prometheus metrics") {
+			return err
+		}
+		fmt.Printf("Pre test - networkobservability_drop_bytes value %f, labels: %v\n", preTestDrpBytes, drp_labels)
 
-		preTestDrpCount, _ = prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_drop_count", drp_labels)
-		fmt.Printf("networkobservability_drop_count value %f, labels: %v\n", preTestDrpBytes, drp_labels)
+		preTestDrpCount, err = prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_drop_count", drp_labels)
+		if err != nil && strings.Contains(err.Error(), "failed to parse prometheus metrics") {
+			return err
+		}
+		fmt.Printf("Pre test - networkobservability_drop_count value %f, labels: %v\n", preTestDrpBytes, drp_labels)
 	}
 
 	nonHpcLabelSelector := fmt.Sprintf("app=%s", v.NonHpcAppName)
@@ -95,8 +106,8 @@ func (v *ValidateWinBpfMetric) Run() error {
 	nonHpcIpAddr, err := kubernetes.ExecCommandInWinPod(
 		v.KubeConfigFilePath,
 		"C:\\event-writer-helper.bat EventWriter-Dump",
-		v.EbpfXdpDeamonSetNamespace,
-		ebpfLabelSelector)
+		v.NonHpcAppNamespace,
+		nonHpcLabelSelector)
 	if err != nil {
 		return err
 	}
@@ -117,8 +128,8 @@ func (v *ValidateWinBpfMetric) Run() error {
 	nonHpcIfIndex, err := kubernetes.ExecCommandInWinPod(
 		v.KubeConfigFilePath,
 		"C:\\event-writer-helper.bat EventWriter-Dump",
-		v.EbpfXdpDeamonSetNamespace,
-		ebpfLabelSelector)
+		v.NonHpcAppNamespace,
+		nonHpcLabelSelector)
 	if err != nil {
 		return err
 	}
@@ -230,27 +241,36 @@ func (v *ValidateWinBpfMetric) Run() error {
 	fmt.Println("Waiting for basic metrics to be updated as part of next polling cycle")
 	time.Sleep(60 * time.Second)
 	promOutput, err = v.GetPromMetrics(ebpfLabelSelector)
+	promOutput = prom.stripExecGarbage(promOutput)
 	if err != nil {
 		return err
 	}
+	//TBR
 	fmt.Println(promOutput)
-	postTestFwdCount, _ := prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_forward_count", fwd_labels)
-	fmt.Printf("networkobservability_forward_count value %f, labels: %v\n", preTestFwdBytes, fwd_labels)
+
+	postTestFwdCount, err := prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_forward_count", fwd_labels)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Post test - networkobservability_forward_count value %f, labels: %v\n", preTestFwdBytes, fwd_labels)
 
 	postTestFwdBytes, err := prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_forward_bytes", fwd_labels)
 	if err != nil {
-		return fmt.Errorf("failed to get metric: %w", err)
+		return err
 	}
-	fmt.Printf("networkobservability_forward_bytes value %f, labels: %v\n", postTestFwdBytes, fwd_labels)
+	fmt.Printf("Post test - networkobservability_forward_bytes value %f, labels: %v\n", postTestFwdBytes, fwd_labels)
 
 	postTestDrpBytes, err := prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_drop_bytes", drp_labels)
 	if err != nil {
-		return fmt.Errorf("failed to get metric: %w", err)
+		return err
 	}
-	fmt.Printf("networkobservability_drop_bytes value %f, labels: %v\n", postTestDrpBytes, drp_labels)
+	fmt.Printf("Post test - networkobservability_drop_bytes value %f, labels: %v\n", postTestDrpBytes, drp_labels)
 
-	postTestDrpCount, _ := prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_drop_count", drp_labels)
-	fmt.Printf("networkobservability_drop_count value %f, labels: %v\n", preTestDrpBytes, drp_labels)
+	postTestDrpCount, err := prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_drop_count", drp_labels)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Post test - networkobservability_drop_count value %f, labels: %v\n", preTestDrpBytes, drp_labels)
 
 	if postTestFwdBytes < preTestFwdBytes {
 		return fmt.Errorf("networkobservability_forward_bytes not incremented")
