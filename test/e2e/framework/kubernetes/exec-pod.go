@@ -74,7 +74,7 @@ func ExecPod(ctx context.Context, clientset *kubernetes.Clientset, config *rest.
 		Stdin:   true,
 		Stdout:  true,
 		Stderr:  true,
-		TTY:     true,
+		TTY:     false,
 	}
 
 	req.VersionedParams(
