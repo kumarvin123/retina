@@ -48,7 +48,7 @@ goto :EOF
    goto :EOF
 
 :EventWriter-GetRetinaPromMetrics
-   start /B cmd /c "curl http://localhost:10093/metrics > C:\curl.out 2>&1 & timeout /t 1 >nul"
+   curl http://localhost:10093/metrics
    goto :EOF
 
 :EventWriter-Curl

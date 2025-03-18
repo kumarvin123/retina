@@ -11,6 +11,7 @@ import (
 	"github.com/microsoft/retina/test/e2e/hubble"
 	"github.com/microsoft/retina/test/e2e/scenarios/dns"
 	"github.com/microsoft/retina/test/e2e/scenarios/drop"
+	latency "github.com/microsoft/retina/test/e2e/scenarios/latency"
 	tcp "github.com/microsoft/retina/test/e2e/scenarios/tcp"
 	"github.com/microsoft/retina/test/e2e/scenarios/windows"
 )
@@ -257,8 +258,7 @@ func UpgradeAndTestRetinaAdvancedMetrics(kubeConfigFilePath, chartPath, valuesFi
 	}, nil)
 	time.Sleep(2 * time.Minute)
 	job.AddScenario(windows.ValidateWinBpfMetricScenario())
-
-	//job.AddScenario(latency.ValidateLatencyMetric(testPodNamespace))
+	job.AddScenario(latency.ValidateLatencyMetric(testPodNamespace))
 
 	job.AddStep(&kubernetes.EnsureStableComponent{
 		PodNamespace:           common.KubeSystemNamespace,

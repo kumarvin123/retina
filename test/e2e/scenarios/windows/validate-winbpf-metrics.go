@@ -21,27 +21,23 @@ type ValidateWinBpfMetric struct {
 }
 
 func (v *ValidateWinBpfMetric) GetPromMetrics(ebpfLabelSelector string) (string, error) {
-	_, err := kubernetes.ExecCommandInWinPod(v.KubeConfigFilePath,
-		"C:\\event-writer-helper.bat EventWriter-GetRetinaPromMetrics",
-		v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
-	if err != nil {
-		return "", err
+	var promOutput string = ""
+	numAttempts := 10
+	for promOutput == "" && numAttempts > 0 {
+		newPromOutput, err := kubernetes.ExecCommandInWinPod(v.KubeConfigFilePath, "C:\\event-writer-helper.bat EventWriter-GetRetinaPromMetrics",
+			v.EbpfXdpDeamonSetNamespace, ebpfLabelSelector)
+		if err != nil {
+			return "", err
+		}
+		promOutput = newPromOutput
+
+		if promOutput != "" {
+			break
+		}
+		numAttempts--
+		time.Sleep(5 * time.Second)
 	}
 
-	time.Sleep(10 * time.Second)
-	promOutput, err := kubernetes.ExecCommandInWinPod(
-		v.KubeConfigFilePath,
-		"C:\\event-writer-helper.bat EventWriter-CurlOut",
-		v.EbpfXdpDeamonSetNamespace,
-		ebpfLabelSelector)
-
-	if err != nil {
-		return "", err
-	}
-
-	if promOutput == "" {
-		return "", fmt.Errorf("prometheus metrics is empty")
-	}
 	return promOutput, nil
 }
 
@@ -51,7 +47,6 @@ func (v *ValidateWinBpfMetric) Run() error {
 	if err != nil {
 		return err
 	}
-	promOutput = prom.StripExecGarbage(promOutput)
 
 	fwd_labels := map[string]string{
 		"direction": "ingress",
@@ -244,7 +239,6 @@ func (v *ValidateWinBpfMetric) Run() error {
 	if err != nil {
 		return err
 	}
-	promOutput = prom.StripExecGarbage(promOutput)
 
 	//TBR
 	fmt.Println(promOutput)
