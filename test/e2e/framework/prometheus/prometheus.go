@@ -161,7 +161,7 @@ func ParseReaderPrometheusMetrics(input io.Reader) (map[string]*promclient.Metri
 
 // When capturing promethus output via curl and exect, there's a lot
 // of garbage at the front
-func stripExecGarbage(s string) string {
+func StripExecGarbage(s string) string {
 	index := strings.Index(s, "#")
 	if index == -1 {
 		// If there's no `#`, return the original string

@@ -48,10 +48,10 @@ func (v *ValidateWinBpfMetric) GetPromMetrics(ebpfLabelSelector string) (string,
 func (v *ValidateWinBpfMetric) Run() error {
 	ebpfLabelSelector := fmt.Sprintf("name=%s", v.EbpfXdpDeamonSetName)
 	promOutput, err := v.GetPromMetrics(ebpfLabelSelector)
-	promOutput = prom.stripExecGarbage(promOutput)
 	if err != nil {
 		return err
 	}
+	promOutput = prom.StripExecGarbage(promOutput)
 
 	fwd_labels := map[string]string{
 		"direction": "ingress",
@@ -241,10 +241,11 @@ func (v *ValidateWinBpfMetric) Run() error {
 	fmt.Println("Waiting for basic metrics to be updated as part of next polling cycle")
 	time.Sleep(60 * time.Second)
 	promOutput, err = v.GetPromMetrics(ebpfLabelSelector)
-	promOutput = prom.stripExecGarbage(promOutput)
 	if err != nil {
 		return err
 	}
+	promOutput = prom.StripExecGarbage(promOutput)
+
 	//TBR
 	fmt.Println(promOutput)
 
