@@ -52,7 +52,7 @@ goto :EOF
    goto :EOF
 
 :EventWriter-Curl
-   start /B cmd /c "curl http://%2 >> C:\curl.out 2>&1 & timeout /t 1 >nul"
+   start /B cmd /c "curl http://%2 > C:\curl.out 2>&1 & timeout /t 1 >nul"
    goto :EOF
 
 :EventWriter-Dump

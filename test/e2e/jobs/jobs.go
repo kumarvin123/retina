@@ -9,6 +9,8 @@ import (
 	"github.com/microsoft/retina/test/e2e/framework/kubernetes"
 	"github.com/microsoft/retina/test/e2e/framework/types"
 	"github.com/microsoft/retina/test/e2e/hubble"
+	"github.com/microsoft/retina/test/e2e/scenarios/dns"
+	"github.com/microsoft/retina/test/e2e/scenarios/drop"
 	"github.com/microsoft/retina/test/e2e/scenarios/windows"
 )
 
@@ -127,58 +129,57 @@ func InstallAndTestRetinaBasicMetrics(kubeConfigFilePath, chartPath string, test
 		TagEnv:             generic.DefaultTagEnv,
 	}, nil)
 
-	/*
-		dnsScenarios := []struct {
-			name string
-			req  *dns.RequestValidationParams
-			resp *dns.ResponseValidationParams
-		}{
-			{
-				name: "Validate basic DNS request and response metrics for a valid domain",
-				req: &dns.RequestValidationParams{
-					NumResponse: "0",
-					Query:       "kubernetes.default.svc.cluster.local.",
-					QueryType:   "A",
-					Command:     "nslookup kubernetes.default",
-					ExpectError: false,
-				},
-				resp: &dns.ResponseValidationParams{
-					NumResponse: "1",
-					Query:       "kubernetes.default.svc.cluster.local.",
-					QueryType:   "A",
-					ReturnCode:  "No Error",
-					Response:    "10.0.0.1",
-				},
+	dnsScenarios := []struct {
+		name string
+		req  *dns.RequestValidationParams
+		resp *dns.ResponseValidationParams
+	}{
+		{
+			name: "Validate basic DNS request and response metrics for a valid domain",
+			req: &dns.RequestValidationParams{
+				NumResponse: "0",
+				Query:       "kubernetes.default.svc.cluster.local.",
+				QueryType:   "A",
+				Command:     "nslookup kubernetes.default",
+				ExpectError: false,
 			},
-			{
-				name: "Validate basic DNS request and response metrics for a non-existent domain",
-				req: &dns.RequestValidationParams{
-					NumResponse: "0",
-					Query:       "some.non.existent.domain.",
-					QueryType:   "A",
-					Command:     "nslookup some.non.existent.domain",
-					ExpectError: true,
-				},
-				resp: &dns.ResponseValidationParams{
-					NumResponse: "0",
-					Query:       "some.non.existent.domain.",
-					QueryType:   "A",
-					Response:    dns.EmptyResponse, // hacky way to bypass the framework for now
-					ReturnCode:  "Non-Existent Domain",
-				},
+			resp: &dns.ResponseValidationParams{
+				NumResponse: "1",
+				Query:       "kubernetes.default.svc.cluster.local.",
+				QueryType:   "A",
+				ReturnCode:  "No Error",
+				Response:    "10.0.0.1",
 			},
-		}
+		},
+		{
+			name: "Validate basic DNS request and response metrics for a non-existent domain",
+			req: &dns.RequestValidationParams{
+				NumResponse: "0",
+				Query:       "some.non.existent.domain.",
+				QueryType:   "A",
+				Command:     "nslookup some.non.existent.domain",
+				ExpectError: true,
+			},
+			resp: &dns.ResponseValidationParams{
+				NumResponse: "0",
+				Query:       "some.non.existent.domain.",
+				QueryType:   "A",
+				Response:    dns.EmptyResponse, // hacky way to bypass the framework for now
+				ReturnCode:  "Non-Existent Domain",
+			},
+		},
+	}
 
-		for _, arch := range common.Architectures {
-			job.AddScenario(drop.ValidateDropMetric(testPodNamespace, arch))
-			job.AddScenario(tcp.ValidateTCPMetrics(testPodNamespace, arch))
+	for _, arch := range common.Architectures {
+		job.AddScenario(drop.ValidateDropMetric(testPodNamespace, arch))
+		job.AddScenario(tcp.ValidateTCPMetrics(testPodNamespace, arch))
 
-			for _, scenario := range dnsScenarios {
-				name := scenario.name + " - Arch: " + arch
-				job.AddScenario(dns.ValidateBasicDNSMetrics(name, scenario.req, scenario.resp, testPodNamespace, arch))
-			}
+		for _, scenario := range dnsScenarios {
+			name := scenario.name + " - Arch: " + arch
+			job.AddScenario(dns.ValidateBasicDNSMetrics(name, scenario.req, scenario.resp, testPodNamespace, arch))
 		}
-	*/
+	}
+
 	job.AddStep(&kubernetes.EnsureStableComponent{
 		PodNamespace:           common.KubeSystemNamespace,
 		LabelSelector:          "k8s-app=retina",
@@ -200,56 +201,55 @@ func UpgradeAndTestRetinaAdvancedMetrics(kubeConfigFilePath, chartPath, valuesFi
 		ValuesFile:         valuesFilePath,
 	}, nil)
 
-	/*
-		dnsScenarios := []struct {
-			name string
-			req  *dns.RequestValidationParams
-			resp *dns.ResponseValidationParams
-		}{
-			{
-				name: "Validate advanced DNS request and response metrics for a valid domain",
-				req: &dns.RequestValidationParams{
-					NumResponse: "0",
-					Query:       "kubernetes.default.svc.cluster.local.",
-					QueryType:   "A",
-					Command:     "nslookup kubernetes.default",
-					ExpectError: false,
-				},
-				resp: &dns.ResponseValidationParams{
-					NumResponse: "1",
-					Query:       "kubernetes.default.svc.cluster.local.",
-					QueryType:   "A",
-					ReturnCode:  "NOERROR",
-					Response:    "10.0.0.1",
-				},
+	dnsScenarios := []struct {
+		name string
+		req  *dns.RequestValidationParams
+		resp *dns.ResponseValidationParams
+	}{
+		{
+			name: "Validate advanced DNS request and response metrics for a valid domain",
+			req: &dns.RequestValidationParams{
+				NumResponse: "0",
+				Query:       "kubernetes.default.svc.cluster.local.",
+				QueryType:   "A",
+				Command:     "nslookup kubernetes.default",
+				ExpectError: false,
 			},
-			{
-				name: "Validate advanced DNS request and response metrics for a non-existent domain",
-				req: &dns.RequestValidationParams{
-					NumResponse: "0",
-					Query:       "some.non.existent.domain.",
-					QueryType:   "A",
-					Command:     "nslookup some.non.existent.domain.",
-					ExpectError: true,
-				},
-				resp: &dns.ResponseValidationParams{
-					NumResponse: "0",
-					Query:       "some.non.existent.domain.",
-					QueryType:   "A",
-					Response:    dns.EmptyResponse, // hacky way to bypass the framework for now
-					ReturnCode:  "NXDOMAIN",
-				},
+			resp: &dns.ResponseValidationParams{
+				NumResponse: "1",
+				Query:       "kubernetes.default.svc.cluster.local.",
+				QueryType:   "A",
+				ReturnCode:  "NOERROR",
+				Response:    "10.0.0.1",
 			},
-		}
+		},
+		{
+			name: "Validate advanced DNS request and response metrics for a non-existent domain",
+			req: &dns.RequestValidationParams{
+				NumResponse: "0",
+				Query:       "some.non.existent.domain.",
+				QueryType:   "A",
+				Command:     "nslookup some.non.existent.domain.",
+				ExpectError: true,
+			},
+			resp: &dns.ResponseValidationParams{
+				NumResponse: "0",
+				Query:       "some.non.existent.domain.",
+				QueryType:   "A",
+				Response:    dns.EmptyResponse, // hacky way to bypass the framework for now
+				ReturnCode:  "NXDOMAIN",
+			},
+		},
+	}
 
-		for _, arch := range common.Architectures {
-			for _, scenario := range dnsScenarios {
-				name := scenario.name + " - Arch: " + arch
-				job.AddScenario(dns.ValidateAdvancedDNSMetrics(name, scenario.req, scenario.resp, kubeConfigFilePath, testPodNamespace, arch))
-				job.AddScenario(windows.ValidateWindowsBasicMetric())
-			}
+	for _, arch := range common.Architectures {
+		for _, scenario := range dnsScenarios {
+			name := scenario.name + " - Arch: " + arch
+			job.AddScenario(dns.ValidateAdvancedDNSMetrics(name, scenario.req, scenario.resp, kubeConfigFilePath, testPodNamespace, arch))
+			job.AddScenario(windows.ValidateWindowsBasicMetric())
 		}
-	*/
+	}
+
 	// Validate Windows BPF Metrics
 	job.AddStep(&kubernetes.ApplyYamlConfig{
 		YamlFilePath: "yaml/windows/non-hpc-pod.yaml",
