@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	retry "github.com/microsoft/retina/test/retry"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -30,14 +29,12 @@ func ExecCommandInWinPod(KubeConfigFilePath string, cmd string, DaemonSetNamespa
 		return "", fmt.Errorf("error building kubeconfig: %w", err)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
-	defer cancel()
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		return "", fmt.Errorf("error creating Kubernetes client: %w", err)
 	}
 
-	pods, err := clientset.CoreV1().Pods(DaemonSetNamespace).List(ctx, metav1.ListOptions{
+	pods, err := clientset.CoreV1().Pods(DaemonSetNamespace).List(context.TODO(), metav1.ListOptions{
 		LabelSelector: LabelSelector,
 	})
 	if err != nil {
@@ -56,10 +53,9 @@ func ExecCommandInWinPod(KubeConfigFilePath string, cmd string, DaemonSetNamespa
 	}
 
 	result := &CommandResult{}
-	defaultRetrier = retry.Retrier{Attempts: 10, Delay: 10.0 * time.Second, ExpBackoff: true}
-	err = defaultRetrier.Do(ctx, func() error {
+	err = defaultRetrier.Do(context.TODO(), func() error {
 		log.Printf("Executing command: %s", cmd)
-		outputBytes, err := ExecPod(ctx, clientset, config, windowsPod.Namespace, windowsPod.Name, cmd)
+		outputBytes, err := ExecPod(context.TODO(), clientset, config, windowsPod.Namespace, windowsPod.Name, cmd)
 		if err != nil {
 			return fmt.Errorf("error executing command in windows pod: %w", err)
 		}
