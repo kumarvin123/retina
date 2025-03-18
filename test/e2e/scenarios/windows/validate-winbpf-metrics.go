@@ -25,7 +25,7 @@ func (v *ValidateWinBpfMetric) GetPromMetrics() (string, error) {
 	numAttempts := 10
 	retinaLabelSelector := "k8s-app=retina"
 	for promOutput == "" && numAttempts > 0 {
-		newPromOutput, err := kubernetes.ExecCommandInWinPod(v.KubeConfigFilePath, "curl http://localhost:10093/metrics",
+		newPromOutput, err := kubernetes.ExecCommandInWinPod(v.KubeConfigFilePath, "curl 'http://localhost:10093/metrics'",
 			v.RetinaDaemonSetNamespace, retinaLabelSelector)
 		if err != nil {
 			return "", err
