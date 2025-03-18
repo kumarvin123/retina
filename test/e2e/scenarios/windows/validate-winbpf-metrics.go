@@ -21,25 +21,13 @@ type ValidateWinBpfMetric struct {
 }
 
 func (v *ValidateWinBpfMetric) GetPromMetrics() (string, error) {
-	var promOutput string = ""
-	numAttempts := 10
 	retinaLabelSelector := "k8s-app=retina"
-	for promOutput == "" && numAttempts > 0 {
-		newPromOutput, err := kubernetes.ExecCommandInWinPod(v.KubeConfigFilePath, "curl 'http://localhost:10093/metrics'",
-			v.RetinaDaemonSetNamespace, retinaLabelSelector)
-		if err != nil {
-			return "", err
-		}
-		promOutput = newPromOutput
-
-		if promOutput != "" {
-			break
-		}
-		numAttempts--
-		time.Sleep(5 * time.Second)
+	promOutput, err := kubernetes.ExecCommandInWinPod(v.KubeConfigFilePath, "curl http://localhost:10093/metrics",
+		v.RetinaDaemonSetNamespace, retinaLabelSelector)
+	if err != nil {
+		return "", err
 	}
-
-	return promOutput, nil
+	return prom.StripExecGarbage(promOutput), nil
 }
 
 func (v *ValidateWinBpfMetric) Run() error {

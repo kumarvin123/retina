@@ -56,8 +56,13 @@ func ExecCommandInWinPod(KubeConfigFilePath string, cmd string, DaemonSetNamespa
 			return fmt.Errorf("error executing command in windows pod: %w", err)
 		}
 
+		if len(outputBytes) == 0 {
+			return fmt.Errorf("no output from command")
+		}
+		fmt.Printf("Output from retreiver: %s\n", string(outputBytes))
 		return nil
 	})
+
 	if err != nil {
 		return "", err
 	}

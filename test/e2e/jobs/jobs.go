@@ -244,19 +244,20 @@ func UpgradeAndTestRetinaAdvancedMetrics(kubeConfigFilePath, chartPath, valuesFi
 		},
 	}
 
-	for _, arch := range common.Architectures {
-		for _, scenario := range dnsScenarios {
-			name := scenario.name + " - Arch: " + arch
-			job.AddScenario(dns.ValidateAdvancedDNSMetrics(name, scenario.req, scenario.resp, kubeConfigFilePath, testPodNamespace, arch))
-			job.AddScenario(windows.ValidateWindowsBasicMetric())
-		}
-	}
-
 	// Validate Windows BPF Metrics
 	job.AddStep(&kubernetes.ApplyYamlConfig{
 		YamlFilePath: "yaml/windows/non-hpc-pod.yaml",
 	}, nil)
 	time.Sleep(2 * time.Minute)
+
+	for _, arch := range common.Architectures {
+		for _, scenario := range dnsScenarios {
+			name := scenario.name + " - Arch: " + arch
+			job.AddScenario(dns.ValidateAdvancedDNSMetrics(name, scenario.req, scenario.resp, kubeConfigFilePath, testPodNamespace, arch))
+		}
+	}
+
+	job.AddScenario(windows.ValidateWindowsBasicMetric())
 	job.AddScenario(windows.ValidateWinBpfMetricScenario())
 	job.AddScenario(latency.ValidateLatencyMetric(testPodNamespace))
 
