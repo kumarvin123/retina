@@ -11,6 +11,7 @@ import (
 	"github.com/microsoft/retina/test/e2e/hubble"
 	"github.com/microsoft/retina/test/e2e/scenarios/dns"
 	"github.com/microsoft/retina/test/e2e/scenarios/drop"
+	tcp "github.com/microsoft/retina/test/e2e/scenarios/tcp"
 	"github.com/microsoft/retina/test/e2e/scenarios/windows"
 )
 
