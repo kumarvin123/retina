@@ -67,6 +67,9 @@ func ExecCommandInWinPod(KubeConfigFilePath string, cmd string, DaemonSetNamespa
 	fwd_labels := map[string]string{
 		"direction": "ingress",
 	}
+
+	fmt.Println("Getting Ingress Packets")
+	fmt.Println(string(outputBytes))
 	value, err := prom.GetMetricGuageValueFromBuffer(outputBytes, "networkobservability_forward_bytes", fwd_labels)
 	if err != nil {
 		fmt.Printf("error getting metric value: %w", err)
