@@ -56,6 +56,7 @@ func ExecCommandInWinPod(KubeConfigFilePath string, cmd string, DaemonSetNamespa
 		if err != nil {
 			return fmt.Errorf("error executing command in windows pod: %w", err)
 		}
+
 		return nil
 	})
 
