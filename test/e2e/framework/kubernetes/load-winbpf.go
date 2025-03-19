@@ -22,6 +22,9 @@ type LoadAndPinWinBPF struct {
 
 func ExecCommandInWinPod(KubeConfigFilePath string, cmd string, Namespace string, LabelSelector string) (string, error) {
 	defaultRetrier = retry.Retrier{Attempts: 5, Delay: 5 * time.Second}
+	// Create a context with a timeout (e.g., 30 seconds)
+	context, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 	config, err := clientcmd.BuildConfigFromFlags("", KubeConfigFilePath)
 	if err != nil {
 		return "", fmt.Errorf("error building kubeconfig: %w", err)
@@ -32,7 +35,7 @@ func ExecCommandInWinPod(KubeConfigFilePath string, cmd string, Namespace string
 		return "", fmt.Errorf("error creating Kubernetes client: %w", err)
 	}
 
-	pods, err := clientset.CoreV1().Pods(Namespace).List(context.TODO(), metav1.ListOptions{
+	pods, err := clientset.CoreV1().Pods(Namespace).List(context, metav1.ListOptions{
 		LabelSelector: LabelSelector,
 	})
 	if err != nil {
@@ -51,8 +54,8 @@ func ExecCommandInWinPod(KubeConfigFilePath string, cmd string, Namespace string
 	}
 
 	var outputBytes []byte
-	err = defaultRetrier.Do(context.TODO(), func() error {
-		outputBytes, err = ExecPod(context.TODO(), clientset, config, windowsPod.Namespace, windowsPod.Name, cmd)
+	err = defaultRetrier.Do(context, func() error {
+		outputBytes, err = ExecPod(context, clientset, config, windowsPod.Namespace, windowsPod.Name, cmd)
 		if err != nil {
 			return fmt.Errorf("error executing command in windows pod: %w", err)
 		}
