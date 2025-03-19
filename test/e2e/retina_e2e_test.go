@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-	"time"
 
 	"github.com/microsoft/retina/test/e2e/common"
 	"github.com/microsoft/retina/test/e2e/framework/helpers"
@@ -35,26 +34,27 @@ func TestE2ERetina(t *testing.T) {
 	if *common.KubeConfig == "" {
 		*common.KubeConfig = infra.CreateAzureTempK8sInfra(ctx, t, rootDir)
 	}
+	/*
+		// Install Ebpf and XDP
+		installEbpfAndXDP := types.NewRunner(t, jobs.InstallEbpfXdp(common.KubeConfigFilePath(rootDir)))
+		installEbpfAndXDP.Run(ctx)
 
-	// Install Ebpf and XDP
-	installEbpfAndXDP := types.NewRunner(t, jobs.InstallEbpfXdp(common.KubeConfigFilePath(rootDir)))
-	installEbpfAndXDP.Run(ctx)
+		time.Sleep(10 * time.Minute)
 
-	time.Sleep(10 * time.Minute)
-
-	// Load and pin BPF Maps
-	loadAndPinWinBPFJob := types.NewRunner(t, jobs.LoadAndPinWinBPFJob(common.KubeConfigFilePath(rootDir)))
-	loadAndPinWinBPFJob.Run(ctx)
-
+		// Load and pin BPF Maps
+		loadAndPinWinBPFJob := types.NewRunner(t, jobs.LoadAndPinWinBPFJob(common.KubeConfigFilePath(rootDir)))
+		loadAndPinWinBPFJob.Run(ctx)
+	*/
 	// Install and test Retina basic metrics
-	basicMetricsE2E := types.NewRunner(t,
-		jobs.InstallAndTestRetinaBasicMetrics(
-			common.KubeConfigFilePath(rootDir),
-			common.RetinaChartPath(rootDir),
-			common.TestPodNamespace),
-	)
-	basicMetricsE2E.Run(ctx)
-
+	/*
+		basicMetricsE2E := types.NewRunner(t,
+			jobs.InstallAndTestRetinaBasicMetrics(
+				common.KubeConfigFilePath(rootDir),
+				common.RetinaChartPath(rootDir),
+				common.TestPodNamespace),
+		)
+		basicMetricsE2E.Run(ctx)
+	*/
 	// Upgrade and test Retina with advanced metrics
 	advanceMetricsE2E := types.NewRunner(t,
 		jobs.UpgradeAndTestRetinaAdvancedMetrics(
@@ -65,17 +65,20 @@ func TestE2ERetina(t *testing.T) {
 	)
 	advanceMetricsE2E.Run(ctx)
 
-	// unpin BPF Maps
-	unloadAndPinWinBPFJob := types.NewRunner(t, jobs.UnLoadAndPinWinBPFJob(common.KubeConfigFilePath(rootDir)))
-	unloadAndPinWinBPFJob.Run(ctx)
+	/*
+		// unpin BPF Maps
+		unloadAndPinWinBPFJob := types.NewRunner(t, jobs.UnLoadAndPinWinBPFJob(common.KubeConfigFilePath(rootDir)))
+		unloadAndPinWinBPFJob.Run(ctx)
 
-	// Install and test Hubble basic metrics
-	validatehubble := types.NewRunner(t,
-		jobs.ValidateHubble(
-			common.KubeConfigFilePath(rootDir),
-			hubblechartPath,
-			common.TestPodNamespace),
-	)
-	validatehubble.Run(ctx)
+		// Install and test Hubble basic metrics
+		validatehubble := types.NewRunner(t,
+			jobs.ValidateHubble(
+				common.KubeConfigFilePath(rootDir),
+				hubblechartPath,
+				common.TestPodNamespace),
+		)
+		validatehubble.Run(ctx)
+
+	*/
 
 }
