@@ -22,8 +22,23 @@ type ValidateWinBpfMetric struct {
 
 func (v *ValidateWinBpfMetric) GetPromMetrics() (string, error) {
 	retinaLabelSelector := "k8s-app=retina"
-	promOutput, err := kubernetes.ExecCommandInWinPod(v.KubeConfigFilePath, "C:\\event-writer-helper.bat EventWriter-GetRetinaPromMetrics",
-		v.RetinaDaemonSetNamespace, retinaLabelSelector)
+	var promOutput string
+	var err error
+	attempts := 10
+
+	for i := 0; i < attempts; i++ {
+		promOutput, err = kubernetes.ExecCommandInWinPod(
+			v.KubeConfigFilePath,
+			"C:\\event-writer-helper.bat EventWriter-GetRetinaPromMetrics",
+			v.RetinaDaemonSetNamespace,
+			retinaLabelSelector,
+		)
+		if err == nil && promOutput != "" {
+			break
+		}
+		time.Sleep(3 * time.Second)
+	}
+
 	if err != nil {
 		return "", err
 	}
