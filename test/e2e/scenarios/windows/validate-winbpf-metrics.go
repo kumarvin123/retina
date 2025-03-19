@@ -6,6 +6,7 @@ import (
 	"time"
 
 	kubernetes "github.com/microsoft/retina/test/e2e/framework/kubernetes"
+	prom "github.com/microsoft/retina/test/e2e/framework/prometheus"
 )
 
 type ValidateWinBpfMetric struct {
