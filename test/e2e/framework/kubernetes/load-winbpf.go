@@ -6,9 +6,11 @@ import (
 	"strings"
 	"time"
 
+	prom "github.com/microsoft/retina/test/e2e/framework/prometheus"
 	retry "github.com/microsoft/retina/test/retry"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 )
@@ -54,6 +56,14 @@ func ExecCommandInWinPod(KubeConfigFilePath string, cmd string, DaemonSetNamespa
 		outputBytes, err = ExecPod(context.TODO(), clientset, config, windowsPod.Namespace, windowsPod.Name, cmd)
 		if err != nil {
 			return fmt.Errorf("error executing command in windows pod: %w", err)
+		}
+
+		fwd_labels := map[string]string{
+			"direction": "ingress",
+		}
+		err = prom.CheckMetricFromBuffer(outputBytes, "networkobservability_forward_bytes", fwd_labels)
+		if err != nil {
+			return fmt.Errorf("failed to verify prometheus metrics: %w", err)
 		}
 
 		return nil
