@@ -27,7 +27,7 @@ func (v *ValidateWinBpfMetric) GetPromMetrics() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return prom.StripExecGarbage(promOutput), nil
+	return promOutput, nil
 }
 
 func (v *ValidateWinBpfMetric) Run() error {
@@ -52,7 +52,12 @@ func (v *ValidateWinBpfMetric) Run() error {
 	if promOutput == "" {
 		fmt.Println("Pre test - no prometheus metrics found")
 	} else {
-		fmt.Print(promOutput)
+		fmt.Println(promOutput)
+		err = prom.CheckMetricFromBuffer([]byte(promOutput), "networkobservability_forward_bytes", fwd_labels)
+		if err != nil {
+			return fmt.Errorf("failed to verify prometheus metrics: %w", err)
+		}
+
 		preTestFwdBytes, err = prom.GetMetricGuageValueFromBuffer([]byte(promOutput), "networkobservability_forward_bytes", fwd_labels)
 		if err != nil && strings.Contains(err.Error(), "failed to parse prometheus metrics") {
 			return err
