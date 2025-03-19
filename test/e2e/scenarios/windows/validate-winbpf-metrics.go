@@ -33,6 +33,8 @@ func (v *ValidateWinBpfMetric) GetPromMetrics() (string, error) {
 			v.RetinaDaemonSetNamespace,
 			retinaLabelSelector,
 		)
+
+		promOutput = prom.StripExecGarbage(promOutput)
 		if err == nil && promOutput != "" {
 			break
 		}

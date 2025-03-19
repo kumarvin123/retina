@@ -20,7 +20,7 @@ type LoadAndPinWinBPF struct {
 	LoadAndPinWinBPFDeamonSetName      string
 }
 
-func ExecCommandInWinPod(KubeConfigFilePath string, cmd string, DaemonSetNamespace string, LabelSelector string) (string, error) {
+func ExecCommandInWinPod(KubeConfigFilePath string, cmd string, Namespace string, LabelSelector string) (string, error) {
 	defaultRetrier = retry.Retrier{Attempts: 5, Delay: 5 * time.Second}
 	config, err := clientcmd.BuildConfigFromFlags("", KubeConfigFilePath)
 	if err != nil {
@@ -32,7 +32,7 @@ func ExecCommandInWinPod(KubeConfigFilePath string, cmd string, DaemonSetNamespa
 		return "", fmt.Errorf("error creating Kubernetes client: %w", err)
 	}
 
-	pods, err := clientset.CoreV1().Pods(DaemonSetNamespace).List(context.TODO(), metav1.ListOptions{
+	pods, err := clientset.CoreV1().Pods(Namespace).List(context.TODO(), metav1.ListOptions{
 		LabelSelector: LabelSelector,
 	})
 	if err != nil {

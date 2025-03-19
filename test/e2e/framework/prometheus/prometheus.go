@@ -160,9 +160,7 @@ func ParseReaderPrometheusMetrics(input io.Reader) (map[string]*promclient.Metri
 func StripExecGarbage(s string) string {
 	index := strings.Index(s, "#")
 	if index == -1 {
-		// If there's no `#`, return the original string
 		return s
 	}
-	// Slice the string up to the character before the first `#`
 	return s[index:]
 }
