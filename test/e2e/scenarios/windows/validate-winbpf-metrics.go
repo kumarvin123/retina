@@ -100,18 +100,9 @@ func (v *ValidateWinBpfMetric) Run() error {
 	}
 
 	nonHpcLabelSelector := fmt.Sprintf("app=%s", v.NonHpcAppName)
-	_, err = kubernetes.ExecCommandInWinPod(
-		v.KubeConfigFilePath,
-		"C:\\event-writer-helper.bat EventWriter-GetPodIpAddress",
-		v.NonHpcAppNamespace,
-		nonHpcLabelSelector)
-	if err != nil {
-		return err
-	}
-	time.Sleep(30 * time.Second)
 	nonHpcIpAddr, err := kubernetes.ExecCommandInWinPod(
 		v.KubeConfigFilePath,
-		"C:\\event-writer-helper.bat EventWriter-Dump",
+		"C:\\event-writer-helper.bat EventWriter-GetPodIpAddress",
 		v.NonHpcAppNamespace,
 		nonHpcLabelSelector)
 	if err != nil {
@@ -122,18 +113,9 @@ func (v *ValidateWinBpfMetric) Run() error {
 	}
 	fmt.Println("Non HPC IP Addr: ", nonHpcIpAddr)
 
-	_, err = kubernetes.ExecCommandInWinPod(
-		v.KubeConfigFilePath,
-		"C:\\event-writer-helper.bat EventWriter-GetPodIfIndex",
-		v.NonHpcAppNamespace,
-		nonHpcLabelSelector)
-	if err != nil {
-		return err
-	}
-	time.Sleep(30 * time.Second)
 	nonHpcIfIndex, err := kubernetes.ExecCommandInWinPod(
 		v.KubeConfigFilePath,
-		"C:\\event-writer-helper.bat EventWriter-Dump",
+		"C:\\event-writer-helper.bat EventWriter-GetPodIfIndex",
 		v.NonHpcAppNamespace,
 		nonHpcLabelSelector)
 	if err != nil {
