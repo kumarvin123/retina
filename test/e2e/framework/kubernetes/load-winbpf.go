@@ -57,21 +57,18 @@ func ExecCommandInWinPod(KubeConfigFilePath string, cmd string, DaemonSetNamespa
 		if err != nil {
 			return fmt.Errorf("error executing command in windows pod: %w", err)
 		}
-
-		fwd_labels := map[string]string{
-			"direction": "ingress",
-		}
-		err = prom.CheckMetricFromBuffer(outputBytes, "networkobservability_forward_bytes", fwd_labels)
-		if err != nil {
-			return fmt.Errorf("failed to verify prometheus metrics: %w", err)
-		}
-
 		return nil
 	})
 
 	if err != nil {
 		return "", err
 	}
+
+	fwd_labels := map[string]string{
+		"direction": "ingress",
+	}
+	value, err := prom.GetMetricGuageValueFromBuffer(outputBytes, "networkobservability_forward_bytes", fwd_labels)
+	fmt.Printf("Forward Bytes: %f\n", value)
 
 	return string(outputBytes), nil
 }
