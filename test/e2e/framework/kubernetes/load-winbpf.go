@@ -21,7 +21,7 @@ type LoadAndPinWinBPF struct {
 }
 
 func ExecCommandInWinPod(KubeConfigFilePath string, cmd string, Namespace string, LabelSelector string) (string, error) {
-	defaultRetrier = retry.Retrier{Attempts: 5, Delay: 5 * time.Second}
+	defaultRetrier = retry.Retrier{Attempts: 15, Delay: 5 * time.Second}
 	// Create a context with a timeout (e.g., 30 seconds)
 	context, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
