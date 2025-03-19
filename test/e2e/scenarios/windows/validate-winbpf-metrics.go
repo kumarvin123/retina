@@ -52,7 +52,7 @@ func (v *ValidateWinBpfMetric) Run() error {
 	if promOutput == "" {
 		fmt.Println("Pre test - no prometheus metrics found")
 	} else {
-		fmt.Println(promOutput)
+		fmt.Printf("hello %s", promOutput)
 		err = prom.CheckMetricFromBuffer([]byte(promOutput), "networkobservability_forward_bytes", fwd_labels)
 		if err != nil {
 			return fmt.Errorf("failed to verify prometheus metrics: %w", err)
