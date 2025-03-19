@@ -27,7 +27,7 @@ func (v *ValidateWinBpfMetric) GetPromMetrics() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return prom.StripExecGarbage(promOutput), nil
+	return promOutput, nil
 }
 
 func (v *ValidateWinBpfMetric) Run() error {

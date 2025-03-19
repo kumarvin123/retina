@@ -168,5 +168,5 @@ func StripExecGarbage(s string) string {
 		return s
 	}
 	// Slice the string up to the character before the first `#`
-	return s[:index]
+	return s[index:]
 }
