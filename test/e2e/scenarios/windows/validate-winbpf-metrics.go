@@ -1,6 +1,9 @@
 package windows
 
 import (
+	"fmt"
+
+	"github.com/microsoft/retina/test/e2e/common"
 	kubernetes "github.com/microsoft/retina/test/e2e/framework/kubernetes"
 )
 
@@ -17,7 +20,7 @@ type ValidateWinBpfMetric struct {
 
 func (v *ValidateWinBpfMetric) GetPromMetrics() (string, error) {
 	retinaLabelSelector := "k8s-app=retina"
-	promOutput, err := kubernetes.ExecCommandInWinPod(v.KubeConfigFilePath, "curl http://localhost:10093/metrics",
+	promOutput, err := kubernetes.ExecCommandInWinPod(v.KubeConfigFilePath, fmt.Sprintf("curl 'http://localhost:%d/metrics'", common.RetinaPort),
 		v.RetinaDaemonSetNamespace, retinaLabelSelector)
 	if err != nil {
 		return "", err
