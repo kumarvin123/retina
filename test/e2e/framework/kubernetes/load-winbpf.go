@@ -54,12 +54,15 @@ func ExecCommandInWinPod(KubeConfigFilePath string, cmd string, Namespace string
 	}
 
 	var outputBytes []byte
+	attempt := 0
 	err = defaultRetrier.Do(context, func() error {
 		outputBytes, err = ExecPod(context, clientset, config, windowsPod.Namespace, windowsPod.Name, cmd)
 		if err != nil {
 			return fmt.Errorf("error executing command in windows pod: %w", err)
 		}
 
+		fmt.Printf("Attempt %d: %s\n", attempt, string(outputBytes))
+		attempt++
 		return nil
 	})
 
