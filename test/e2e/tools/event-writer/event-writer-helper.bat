@@ -47,6 +47,10 @@ goto :EOF
    cd /d %PREV_DIR%
    goto :EOF
 
+:EventWriter-GetRetinaPromMetrics
+   curl http://localhost:10093/metrics
+   goto :EOF
+
 :EventWriter-Curl
    start /B cmd /c "curl http://%2 > C:\curl.out 2>&1 & timeout /t 1 >nul"
    goto :EOF
