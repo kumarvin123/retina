@@ -64,18 +64,14 @@ func GetMetricGuageValueFromBuffer(prometheusMetricData []byte, metricName strin
 		return 0, fmt.Errorf("failed to parse prometheus metrics: %w", err)
 	}
 
-	fmt.Printf("Looking for %s\n", metricName)
 	for _, metric := range metrics {
 		if metric.GetName() == metricName {
 			for _, metric := range metric.GetMetric() {
-				fmt.Printf("Current Metric %s\n", metric)
 				// get all labels and values on the metric
 				metricLabels := map[string]string{}
 				for _, label := range metric.GetLabel() {
 					metricLabels[label.GetName()] = label.GetValue()
 				}
-				fmt.Printf("metricLabels: %v\n", metricLabels)
-
 				if reflect.DeepEqual(metricLabels, expectedLabels) {
 					return *metric.GetGauge().Value, nil
 				}

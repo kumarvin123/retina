@@ -92,7 +92,7 @@ func (v *ValidateWinBpfMetric) Run() error {
 	if err != nil {
 		return err
 	}
-	time.Sleep(10 * time.Second)
+	time.Sleep(20 * time.Second)
 	nonHpcIpAddr, err := kubernetes.ExecCommandInWinPod(
 		v.KubeConfigFilePath,
 		"C:\\event-writer-helper.bat EventWriter-Dump",
@@ -114,7 +114,7 @@ func (v *ValidateWinBpfMetric) Run() error {
 	if err != nil {
 		return err
 	}
-	time.Sleep(10 * time.Second)
+	time.Sleep(20 * time.Second)
 	nonHpcIfIndex, err := kubernetes.ExecCommandInWinPod(
 		v.KubeConfigFilePath,
 		"C:\\event-writer-helper.bat EventWriter-Dump",
