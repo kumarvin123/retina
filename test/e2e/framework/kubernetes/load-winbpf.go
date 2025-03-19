@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	prom "github.com/microsoft/retina/test/e2e/framework/prometheus"
 	retry "github.com/microsoft/retina/test/retry"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -64,7 +63,6 @@ func ExecCommandInWinPod(KubeConfigFilePath string, cmd string, DaemonSetNamespa
 		return "", err
 	}
 
-	outputBytes = []byte(prom.StripExecGarbage(string(outputBytes)))
 	return string(outputBytes), nil
 }
 

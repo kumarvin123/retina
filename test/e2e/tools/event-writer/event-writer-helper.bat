@@ -48,7 +48,7 @@ goto :EOF
    goto :EOF
 
 :EventWriter-GetRetinaPromMetrics
-   curl http://localhost:10093/metrics
+   curl -s http://localhost:10093/metrics
    goto :EOF
 
 :EventWriter-Curl
