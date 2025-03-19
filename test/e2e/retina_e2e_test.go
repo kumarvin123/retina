@@ -26,7 +26,7 @@ func TestE2ERetina(t *testing.T) {
 	// Get to root of the repo by going up two directories
 	rootDir := filepath.Dir(filepath.Dir(cwd))
 
-	hubblechartPath := filepath.Join(rootDir, "deploy", "hubble", "manifests", "controller", "helm", "retina")
+	//hubblechartPath := filepath.Join(rootDir, "deploy", "hubble", "manifests", "controller", "helm", "retina")
 
 	err = jobs.LoadGenericFlags().Run()
 	require.NoError(t, err, "failed to load generic flags")
