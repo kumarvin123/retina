@@ -233,18 +233,18 @@ func (v *ValidateWinBpfMetric) Run() error {
 	}
 	fmt.Printf("Post test - networkobservability_drop_count value %f, labels: %v\n", preTestDrpBytes, drp_labels)
 
-	if postTestFwdBytes < preTestFwdBytes {
+	if postTestFwdBytes <= preTestFwdBytes {
 		return fmt.Errorf("networkobservability_forward_bytes not incremented")
 	}
 
-	if postTestDrpBytes < preTestDrpBytes {
+	if postTestDrpBytes <= preTestDrpBytes {
 		return fmt.Errorf("networkobservability_drop_bytes not incremented")
 	}
 
-	if postTestFwdCount < preTestFwdCount {
+	if postTestFwdCount <= preTestFwdCount {
 		return fmt.Errorf("networkobservability_forward_count not incremented")
 	}
-	if postTestDrpCount < preTestDrpCount {
+	if postTestDrpCount <= preTestDrpCount {
 		return fmt.Errorf("networkobservability_drop_count not incremnted")
 	}
 
@@ -310,9 +310,9 @@ func (v *ValidateWinBpfMetric) Run() error {
 
 	adv_fwd_count_labels = map[string]string{
 		"direction":     "ingress",
-		"ip":            nonHpcIpAddr,
-		"namespace":     v.NonHpcAppNamespace,
-		"podname":       v.NonHpcPodName,
+		"ip":            fmt.Sprint("%s", nonHpcIpAddr),
+		"namespace":     fmt.Sprint("%s", v.NonHpcAppNamespace),
+		"podname":       fmt.Sprint("%s", v.NonHpcPodName),
 		"workload_kind": "unknown",
 		"workload_name": "unknown",
 	}
@@ -324,9 +324,9 @@ func (v *ValidateWinBpfMetric) Run() error {
 	for _, flag := range tcpFlags {
 		tcpFlagLabels := map[string]string{
 			"flag":          flag,
-			"ip":            nonHpcIpAddr,
-			"namespace":     v.NonHpcAppNamespace,
-			"podname":       v.NonHpcPodName,
+			"ip":            fmt.Sprint("%s", nonHpcIpAddr),
+			"namespace":     fmt.Sprint("%s", v.NonHpcAppNamespace),
+			"podname":       fmt.Sprint("%s", v.NonHpcPodName),
 			"workload_kind": "unknown",
 			"workload_name": "unknown",
 		}
@@ -340,9 +340,9 @@ func (v *ValidateWinBpfMetric) Run() error {
 
 	adv_drop_byte_labels = map[string]string{
 		"direction":     "ingress",
-		"ip":            nonHpcIpAddr,
-		"namespace":     v.NonHpcAppNamespace,
-		"podname":       v.NonHpcPodName,
+		"ip":            fmt.Sprint("%s", nonHpcIpAddr),
+		"namespace":     fmt.Sprint("%s", v.NonHpcAppNamespace),
+		"podname":       fmt.Sprint("%s", v.NonHpcPodName),
 		"reason":        "Drop_NotAccepted",
 		"workload_kind": "unknown",
 		"workload_name": "unknown",
@@ -354,9 +354,9 @@ func (v *ValidateWinBpfMetric) Run() error {
 
 	adv_drop_count_labels = map[string]string{
 		"direction":     "ingress",
-		"ip":            nonHpcIpAddr,
-		"namespace":     v.NonHpcAppNamespace,
-		"podname":       v.NonHpcPodName,
+		"ip":            fmt.Sprint("%s", nonHpcIpAddr),
+		"namespace":     fmt.Sprint("%s", v.NonHpcAppNamespace),
+		"podname":       fmt.Sprint("%s", v.NonHpcPodName),
 		"reason":        "Drop_NotAccepted",
 		"workload_kind": "unknown",
 		"workload_name": "unknown",
