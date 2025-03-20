@@ -61,6 +61,10 @@ func ExecCommandInWinPod(KubeConfigFilePath string, cmd string, Namespace string
 			return fmt.Errorf("error executing command in windows pod: %w", err)
 		}
 
+		if len(outputBytes) == 0 {
+			return fmt.Errorf("no output from command")
+		}
+
 		fmt.Printf("Attempt %d: %s\n", attempt, string(outputBytes))
 		attempt++
 		return nil
@@ -87,17 +91,12 @@ func (a *LoadAndPinWinBPF) Run() error {
 	}
 
 	// pin maps
-	_, err = ExecCommandInWinPod(a.KubeConfigFilePath, "C:\\event-writer-helper.bat EventWriter-LoadAndPinPrgAndMaps", a.LoadAndPinWinBPFDeamonSetNamespace, LoadAndPinWinBPFDLabelSelector)
+	output, err := ExecCommandInWinPod(a.KubeConfigFilePath, "C:\\event-writer-helper.bat EventWriter-LoadAndPinPrgAndMaps", a.LoadAndPinWinBPFDeamonSetNamespace, LoadAndPinWinBPFDLabelSelector)
 	if err != nil {
 		return err
 	}
 
 	time.Sleep(5 * time.Second)
-	output, err := ExecCommandInWinPod(a.KubeConfigFilePath, "C:\\event-writer-helper.bat EventWriter-Dump", a.LoadAndPinWinBPFDeamonSetNamespace, LoadAndPinWinBPFDLabelSelector)
-	if err != nil {
-		return err
-	}
-
 	fmt.Println(output)
 	if strings.Contains(output, "error") || strings.Contains(output, "failed") || strings.Contains(output, "existing") {
 		return fmt.Errorf("error in loading and pinning BPF maps and program: %s", output)

@@ -22,28 +22,28 @@ goto :EOF
 :EventWriter-SetFilter
    set PREV_DIR=%CD%
    cd C:\
-   start /B cmd /c ".\event_writer.exe -set-filter -event %3 -srcIP %5 -ifindx %7 > C:\event_writer.out 2>&1"
+   .\event_writer.exe -set-filter -event %3 -srcIP %5 -ifindx %7
    cd /d %PREV_DIR%
    goto :EOF
 
 :EventWriter-Attach
    set PREV_DIR=%CD%
    cd C:\
-   start /B cmd /c ".\event_writer.exe -attach -ifindx %2 > C:\event_writer.out 2>&1"
+   .\event_writer.exe -attach -ifindx %2
    cd /d %PREV_DIR%
    goto :EOF
 
 :EventWriter-LoadAndPinPrgAndMaps
    set PREV_DIR=%CD%
    cd C:\
-   start /B cmd /c ".\event_writer.exe -load-pin > C:\event_writer.out 2>&1"
+   .\event_writer.exe -load-pin
    cd /d %PREV_DIR%
    goto :EOF
 
 :EventWriter-UnPinPrgAndMaps
    set PREV_DIR=%CD%
    cd C:\
-   start /B cmd /c ".\event_writer.exe -unpin > C:\event_writer.out 2>&1"
+   .\event_writer.exe -unpin
    cd /d %PREV_DIR%
    goto :EOF
 
@@ -52,7 +52,7 @@ goto :EOF
    goto :EOF
 
 :EventWriter-Curl
-   start /B cmd /c "curl http://%2 > C:\curl.out 2>&1 & timeout /t 1 >nul"
+   curl http://%2
    goto :EOF
 
 :EventWriter-Dump

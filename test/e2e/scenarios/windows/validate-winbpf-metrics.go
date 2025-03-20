@@ -127,17 +127,9 @@ func (v *ValidateWinBpfMetric) Run() error {
 	fmt.Println("Non HPC Interface Index: ", nonHpcIfIndex)
 
 	//Attach to the non HPC pod
-	_, err = kubernetes.ExecCommandInWinPod(
-		v.KubeConfigFilePath,
-		fmt.Sprintf("C:\\event-writer-helper.bat EventWriter-Attach %s", nonHpcIfIndex),
-		v.EbpfXdpDeamonSetNamespace,
-		ebpfLabelSelector)
-	if err != nil {
-		return err
-	}
 	output, err := kubernetes.ExecCommandInWinPod(
 		v.KubeConfigFilePath,
-		"C:\\event-writer-helper.bat EventWriter-Dump",
+		fmt.Sprintf("C:\\event-writer-helper.bat EventWriter-Attach %s", nonHpcIfIndex),
 		v.EbpfXdpDeamonSetNamespace,
 		ebpfLabelSelector)
 	if err != nil {
@@ -151,7 +143,7 @@ func (v *ValidateWinBpfMetric) Run() error {
 	//TRACE
 	fmt.Printf("Produce Trace Events\n")
 	//Example.com - 23.192.228.84
-	_, err = kubernetes.ExecCommandInWinPod(
+	output, err = kubernetes.ExecCommandInWinPod(
 		v.KubeConfigFilePath,
 		"C:\\event-writer-helper.bat EventWriter-SetFilter -event 4 -srcIP 23.192.228.84",
 		v.EbpfXdpDeamonSetNamespace,
@@ -160,15 +152,6 @@ func (v *ValidateWinBpfMetric) Run() error {
 		return err
 	}
 
-	time.Sleep(5 * time.Second)
-	output, err = kubernetes.ExecCommandInWinPod(
-		v.KubeConfigFilePath,
-		"C:\\event-writer-helper.bat EventWriter-Dump",
-		v.EbpfXdpDeamonSetNamespace,
-		ebpfLabelSelector)
-	if err != nil {
-		return err
-	}
 	fmt.Println(output)
 	if strings.Contains(output, "failed") || strings.Contains(output, "error") || strings.Contains(output, "exiting") {
 		return fmt.Errorf("failed to set filter for event writer")
@@ -188,9 +171,9 @@ func (v *ValidateWinBpfMetric) Run() error {
 	}
 
 	//DROP
-	time.Sleep(60 * time.Second)
+	time.Sleep(20 * time.Second)
 	fmt.Printf("Produce Drop Events\n")
-	_, err = kubernetes.ExecCommandInWinPod(
+	output, err = kubernetes.ExecCommandInWinPod(
 		v.KubeConfigFilePath,
 		"C:\\event-writer-helper.bat EventWriter-SetFilter -event 1 -srcIP 23.192.228.84",
 		v.EbpfXdpDeamonSetNamespace,
@@ -199,16 +182,6 @@ func (v *ValidateWinBpfMetric) Run() error {
 		return err
 	}
 
-	time.Sleep(5 * time.Second)
-	output, err = kubernetes.ExecCommandInWinPod(
-		v.KubeConfigFilePath,
-		"C:\\event-writer-helper.bat EventWriter-Dump",
-		v.EbpfXdpDeamonSetNamespace,
-		ebpfLabelSelector)
-	if err != nil {
-		return err
-	}
-	fmt.Println(output)
 	if strings.Contains(output, "failed") || strings.Contains(output, "error") || strings.Contains(output, "exiting") {
 		return fmt.Errorf("failed to start event writer")
 	}
