@@ -108,6 +108,8 @@ func (v *ValidateWinBpfMetric) Run() error {
 	if err != nil {
 		return err
 	}
+	nonHpcIpAddr = strings.TrimSpace(nonHpcIpAddr)
+
 	if strings.Contains(nonHpcIpAddr, "failed") || strings.Contains(nonHpcIpAddr, "error") {
 		return fmt.Errorf("failed to get nonHpcIpAddr")
 	}
