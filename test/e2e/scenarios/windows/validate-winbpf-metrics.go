@@ -310,9 +310,9 @@ func (v *ValidateWinBpfMetric) Run() error {
 
 	adv_fwd_count_labels = map[string]string{
 		"direction":     "ingress",
-		"ip":            fmt.Sprint("%s", nonHpcIpAddr),
-		"namespace":     fmt.Sprint("%s", v.NonHpcAppNamespace),
-		"podname":       fmt.Sprint("%s", v.NonHpcPodName),
+		"ip":            fmt.Sprintf("%s", nonHpcIpAddr),
+		"namespace":     fmt.Sprintf("%s", v.NonHpcAppNamespace),
+		"podname":       fmt.Sprintf("%s", v.NonHpcPodName),
 		"workload_kind": "unknown",
 		"workload_name": "unknown",
 	}
@@ -324,9 +324,9 @@ func (v *ValidateWinBpfMetric) Run() error {
 	for _, flag := range tcpFlags {
 		tcpFlagLabels := map[string]string{
 			"flag":          flag,
-			"ip":            fmt.Sprint("%s", nonHpcIpAddr),
-			"namespace":     fmt.Sprint("%s", v.NonHpcAppNamespace),
-			"podname":       fmt.Sprint("%s", v.NonHpcPodName),
+			"ip":            fmt.Sprintf("%s", nonHpcIpAddr),
+			"namespace":     fmt.Sprintf("%s", v.NonHpcAppNamespace),
+			"podname":       fmt.Sprintf("%s", v.NonHpcPodName),
 			"workload_kind": "unknown",
 			"workload_name": "unknown",
 		}
@@ -340,9 +340,9 @@ func (v *ValidateWinBpfMetric) Run() error {
 
 	adv_drop_byte_labels = map[string]string{
 		"direction":     "ingress",
-		"ip":            fmt.Sprint("%s", nonHpcIpAddr),
-		"namespace":     fmt.Sprint("%s", v.NonHpcAppNamespace),
-		"podname":       fmt.Sprint("%s", v.NonHpcPodName),
+		"ip":            fmt.Sprintf("%s", nonHpcIpAddr),
+		"namespace":     fmt.Sprintf("%s", v.NonHpcAppNamespace),
+		"podname":       fmt.Sprintf("%s", v.NonHpcPodName),
 		"reason":        "Drop_NotAccepted",
 		"workload_kind": "unknown",
 		"workload_name": "unknown",
@@ -354,9 +354,9 @@ func (v *ValidateWinBpfMetric) Run() error {
 
 	adv_drop_count_labels = map[string]string{
 		"direction":     "ingress",
-		"ip":            fmt.Sprint("%s", nonHpcIpAddr),
-		"namespace":     fmt.Sprint("%s", v.NonHpcAppNamespace),
-		"podname":       fmt.Sprint("%s", v.NonHpcPodName),
+		"ip":            fmt.Sprintf("%s", nonHpcIpAddr),
+		"namespace":     fmt.Sprintf("%s", v.NonHpcAppNamespace),
+		"podname":       fmt.Sprintf("%s", v.NonHpcPodName),
 		"reason":        "Drop_NotAccepted",
 		"workload_kind": "unknown",
 		"workload_name": "unknown",
