@@ -310,9 +310,9 @@ func (v *ValidateWinBpfMetric) Run() error {
 
 	adv_fwd_count_labels = map[string]string{
 		"direction":     "ingress",
-		"ip":            nonHpcIpAddr,
-		"namespace":     v.NonHpcAppNamespace,
-		"podname":       v.NonHpcPodName,
+		"ip":            fmt.Sprintf("\"%s\"", nonHpcIpAddr),
+		"namespace":     fmt.Sprintf("\"%s\"", v.NonHpcAppNamespace),
+		"podname":       fmt.Sprintf("\"%s\"", v.NonHpcPodName),
 		"workload_kind": "unknown",
 		"workload_name": "unknown",
 	}
