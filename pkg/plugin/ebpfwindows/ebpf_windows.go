@@ -3,50 +3,50 @@ package ebpfwindows
 import (
 	"context"
 	"errors"
-	"fmt"
-	"log/slog"
-	"os"
-	"strings"
+	"net"
 	"time"
 	"unsafe"
 
+	"github.com/cilium/cilium/api/v1/flow"
 	v1 "github.com/cilium/cilium/pkg/hubble/api/v1"
-	observer "github.com/cilium/cilium/pkg/hubble/observer/types"
-	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
+	hp "github.com/cilium/cilium/pkg/hubble/parser"
 	kcfg "github.com/microsoft/retina/pkg/config"
 	"github.com/microsoft/retina/pkg/enricher"
 	"github.com/microsoft/retina/pkg/log"
-	metrics "github.com/microsoft/retina/pkg/metrics"
+	"github.com/microsoft/retina/pkg/metrics"
 	"github.com/microsoft/retina/pkg/plugin/registry"
 	"github.com/microsoft/retina/pkg/utils"
+	"github.com/sirupsen/logrus"
 	"go.uber.org/zap"
 )
 
 const (
 	// name of the ebpfwindows plugin
-	name string = "ebpfwindows"
+	name string = "windowseBPF"
+	// name of the metrics
+	packetsReceived        string = "win_packets_recv_count"
+	packetsSent            string = "win_packets_sent_count"
+	bytesSent              string = "win_bytes_sent_count"
+	bytesReceived          string = "win_bytes_recv_count"
+	droppedPacketsIncoming string = "win_packets_recv_drop_count"
+	droppedPacketsOutgoing string = "win_packets_sent_drop_count"
 	// metrics direction
 	ingressLabel = "ingress"
 	egressLabel  = "egress"
 )
 
 var (
-	errInvalidSize             = errors.New("invalid size")
-	errNilHandleTraceEventData = errors.New("handleTraceEvent data received is nil")
-	errNilDropNotifyFlow       = errors.New("dropnotify flow object is nil")
-	errNilDropNotifyEvent      = errors.New("dropnotify event type is nil")
-	errInvalidDropNotifySize   = errors.New("invalid size for DropNotify")
-	errInvalidTraceNotifySize  = errors.New("invalid size for TraceNotify")
-	errNilTraceNotifyFlow      = errors.New("tracenotify flow object is nil")
+	ErrInvalidEventData = errors.New("The Event Data is invalid")
+	ErrNilEnricher      = errors.New("enricher is nil")
 )
 
 // Plugin is the ebpfwindows plugin
 type Plugin struct {
 	l               *log.ZapLogger
 	cfg             *kcfg.Config
-	enricher        enricher.EnricherInterface
+	enricher        *enricher.Enricher
 	externalChannel chan *v1.Event
-	parser          *Parser
+	parser          *hp.Parser
 }
 
 func init() {
@@ -62,10 +62,21 @@ func New(cfg *kcfg.Config) registry.Plugin {
 
 // Init is a no-op for the ebpfwindows plugin
 func (p *Plugin) Init() error {
-	parser, err := NewParser(slog.Default().With("WindowsEbpf", "parser"))
+
+	parser, err := hp.New(logrus.WithField("windowsEbpf", "parser"),
+		// We use noop getters here since we will use our own custom parser in hubble
+		&NoopEndpointGetter,
+		&NoopIdentityGetter,
+		&NoopDNSGetter,
+		&NoopIPGetter,
+		&NoopServiceGetter,
+		&NoopLinkGetter,
+		&NoopPodMetadataGetter,
+	)
+
 	if err != nil {
-		p.l.Error("Failed to create parser", zap.Error(err))
-		return fmt.Errorf("failed to create parser: %w", err)
+		p.l.Fatal("Failed to create parser", zap.Error(err))
+		return err
 	}
 
 	p.parser = parser
@@ -79,110 +90,88 @@ func (p *Plugin) Name() string {
 
 // Start the plugin by starting a periodic timer.
 func (p *Plugin) Start(ctx context.Context) error {
+
 	p.l.Info("Start ebpfWindows plugin...")
+	p.enricher = enricher.Instance()
+
+	if p.enricher == nil {
+		return ErrNilEnricher
+	}
+
 	p.pullMetricsAndEvents(ctx)
-	p.l.Info("Complete ebpfWindows plugin...")
 	return nil
 }
 
 // metricsMapIterateCallback is the callback function that is called for each key-value pair in the metrics map.
 func (p *Plugin) metricsMapIterateCallback(key *MetricsKey, value *MetricsValues) {
-	if key == nil {
-		p.l.Error("MetricsMapIterateCallback key is nil")
-		return
-	}
-	if value == nil {
-		p.l.Error("MetricsMapIterateCallback value is nil")
-		return
-	}
+	p.l.Info("MetricsMapIterateCallback")
+	p.l.Info("Key", zap.String("Key", key.String()))
+	p.l.Info("Value", zap.String("Value", value.String()))
+
 	if key.IsDrop() {
-		p.l.Debug("MetricsMapIterateCallback Drop", zap.String("key", key.String()))
 		if key.IsEgress() {
-			metrics.DropBytesGauge.WithLabelValues(key.DropForwardReason(), egressLabel).Set(float64(value.BytesSum()))
-			metrics.DropPacketsGauge.WithLabelValues(key.DropForwardReason(), egressLabel).Set(float64(value.Sum()))
+			metrics.DropPacketsGauge.WithLabelValues(egressLabel).Set(float64(value.Count()))
 		} else if key.IsIngress() {
-			metrics.DropBytesGauge.WithLabelValues(key.DropForwardReason(), ingressLabel).Set(float64(value.BytesSum()))
-			metrics.DropPacketsGauge.WithLabelValues(key.DropForwardReason(), ingressLabel).Set(float64(value.Sum()))
+			metrics.DropPacketsGauge.WithLabelValues(ingressLabel).Set(float64(value.Count()))
 		}
+
 	} else {
-		p.l.Debug("MetricsMapIterateCallback Forward", zap.String("key", key.String()))
+
 		if key.IsEgress() {
-			metrics.ForwardPacketsGauge.WithLabelValues(egressLabel).Set(float64(value.Sum()))
-			metrics.ForwardBytesGauge.WithLabelValues(egressLabel).Set(float64(value.BytesSum()))
+			metrics.ForwardBytesGauge.WithLabelValues(egressLabel).Set(float64(value.Bytes()))
+			p.l.Debug("emitting bytes sent count metric", zap.Uint64(bytesSent, value.Bytes()))
+			metrics.ForwardPacketsGauge.WithLabelValues(egressLabel).Set(float64(value.Count()))
+			p.l.Debug("emitting packets sent count metric", zap.Uint64(packetsSent, value.Count()))
 		} else if key.IsIngress() {
-			metrics.ForwardPacketsGauge.WithLabelValues(ingressLabel).Set(float64(value.Sum()))
-			metrics.ForwardBytesGauge.WithLabelValues(ingressLabel).Set(float64(value.BytesSum()))
+			metrics.ForwardPacketsGauge.WithLabelValues(ingressLabel).Set(float64(value.Count()))
+			p.l.Debug("emitting packets received count metric", zap.Uint64(packetsReceived, value.Count()))
+			metrics.ForwardBytesGauge.WithLabelValues(ingressLabel).Set(float64(value.Bytes()))
+			p.l.Debug("emitting bytes received count metric", zap.Uint64(bytesReceived, value.Bytes()))
 		}
 	}
 }
 
 // eventsMapCallback is the callback function that is called for each value  in the events map.
-func (p *Plugin) eventsMapCallback(data unsafe.Pointer, size uint32) {
+func (p *Plugin) eventsMapCallback(data unsafe.Pointer, size uint64) int {
+	p.l.Info("EventsMapCallback")
+	p.l.Info("Size", zap.Uint64("Size", size))
 	err := p.handleTraceEvent(data, size)
+
 	if err != nil {
 		p.l.Error("Error handling trace event", zap.Error(err))
+		return -1
 	}
+
+	return 0
 }
 
-func (p *Plugin) addEbpfToPath() error {
-	currPath := os.Getenv("PATH")
-	if strings.Contains(currPath, "ebpf-for-windows") {
-		return nil
-	}
-	programFiles := os.Getenv("ProgramFiles")
-	ebpfWindowsPath := programFiles + "\\ebpf-for-windows\\"
-	newPath := currPath + ";" + ebpfWindowsPath
-	if err := os.Setenv("PATH", newPath); err != nil {
-		p.l.Error("Error setting PATH environment variable", zap.Error(err))
-		return fmt.Errorf("failed to set PATH environment variable: %w", err)
-	}
-
-	return nil
-}
-
+// pullMetricsAndEvents is the function that is called periodically by the timer.
 func (p *Plugin) pullMetricsAndEvents(ctx context.Context) {
+
 	eventsMap := NewEventsMap()
 	metricsMap := NewMetricsMap()
 
-	err := p.addEbpfToPath()
+	err := eventsMap.RegisterForCallback(p.eventsMapCallback)
+
 	if err != nil {
+		p.l.Error("Error registering for events map callback", zap.Error(err))
 		return
-	}
-
-	if enricher.IsInitialized() && p.cfg.EnablePodLevel {
-		p.enricher = enricher.Instance()
-	} else {
-		p.l.Warn("retina enricher is not initialized")
-	}
-
-	if p.enricher != nil {
-		err := eventsMap.RegisterForCallback(p.l, p.eventsMapCallback)
-		if err != nil {
-			p.l.Error("Error registering for events map callback", zap.Error(err))
-			return
-		}
-
-		defer func() {
-			p.l.Error("ebpfwindows plugin canceling", zap.Error(ctx.Err()))
-			err := eventsMap.UnregisterForCallback()
-			if err != nil {
-				p.l.Error("Error unregistering events map callback", zap.Error(err))
-			}
-		}()
 	}
 
 	ticker := time.NewTicker(p.cfg.MetricsInterval)
 	defer ticker.Stop()
+
 	for {
 		select {
 		case <-ticker.C:
-			err := metricsMap.IterateWithCallback(p.l, p.metricsMapIterateCallback)
+			err := metricsMap.IterateWithCallback(p.metricsMapIterateCallback)
 			if err != nil {
 				p.l.Error("Error iterating metrics map", zap.Error(err))
 			}
 		case <-ctx.Done():
 			p.l.Error("ebpfwindows plugin canceling", zap.Error(ctx.Err()))
 			err := eventsMap.UnregisterForCallback()
+
 			if err != nil {
 				p.l.Error("Error Unregistering Events Map callback", zap.Error(err))
 			}
@@ -199,6 +188,7 @@ func (p *Plugin) SetupChannel(ch chan *v1.Event) error {
 
 // Stop the plugin by cancelling the periodic timer.
 func (p *Plugin) Stop() error {
+
 	p.l.Info("Stop ebpfWindows plugin...")
 	return nil
 }
@@ -213,65 +203,101 @@ func (p *Plugin) Generate(context.Context) error {
 	return nil
 }
 
-func (p *Plugin) handleTraceEvent(data unsafe.Pointer, size uint32) error {
+func (p *Plugin) handleDropNotify(dropNotify *DropNotify) {
+	p.l.Info("DropNotify", zap.String("DropNotify", dropNotify.String()))
+}
+
+func (p *Plugin) handleTraceNotify(traceNotify *TraceNotify) {
+	p.l.Info("TraceNotify", zap.String("TraceNotify", traceNotify.String()))
+}
+
+func (p *Plugin) handleTraceSockNotify(traceSockNotify *TraceSockNotify) {
+	p.l.Info("TraceSockNotify", zap.String("TraceSockNotify", traceSockNotify.String()))
+}
+
+func (p *Plugin) handleTraceEvent(data unsafe.Pointer, size uint64) error {
+
 	if uintptr(size) < unsafe.Sizeof(uint8(0)) {
-		return fmt.Errorf("%w: %d", errInvalidSize, size)
+		return ErrInvalidEventData
 	}
 
-	if data == nil {
-		return fmt.Errorf("%w", errNilHandleTraceEventData)
-	}
-	perfData := unsafe.Slice((*byte)(data), size)
-	eventType := perfData[0]
+	eventType := *(*uint8)(data)
+
 	switch eventType {
-	case monitorAPI.MessageTypeDrop:
-		if size <= uint32(unsafe.Sizeof(DropNotify{})) {
-			return fmt.Errorf("%w: %d", errInvalidDropNotifySize, size)
+	case NotifyDrop:
+
+		if uintptr(size) < unsafe.Sizeof(DropNotify{}) {
+			p.l.Error("Invalid DropNotify data size", zap.Uint64("size", size))
+			return ErrInvalidEventData
 		}
 
-		e, err := p.parser.Decode(&observer.MonitorEvent{
-			Payload: &observer.PerfEvent{
-				Data: perfData,
-			},
-		})
-		if err != nil {
-			return fmt.Errorf("could not convert dropnotify event to flow: %w", err)
+		dropNotify := (*DropNotify)(data)
+		p.handleDropNotify(dropNotify)
+
+	case NotifyTrace:
+
+		if uintptr(size) < unsafe.Sizeof(TraceNotify{}) {
+			p.l.Error("Invalid TraceNotify data size", zap.Uint64("size", size))
+			return ErrInvalidEventData
 		}
-		meta := &utils.RetinaMetadata{}
-		utils.AddPacketSize(meta, size-uint32(unsafe.Sizeof(DropNotify{})))
-		fl := e.GetFlow()
-		if fl == nil {
-			return fmt.Errorf("%w", errNilDropNotifyFlow)
+
+		traceNotify := (*TraceNotify)(data)
+		p.handleTraceNotify(traceNotify)
+
+	case NotifyTraceSock:
+		if uintptr(size) < unsafe.Sizeof(TraceSockNotify{}) {
+			p.l.Error("Invalid TraceSockNotify data size", zap.Uint64("size", size))
+			return ErrInvalidEventData
 		}
-		if fl.GetEventType() == nil {
-			return fmt.Errorf("%w", errNilDropNotifyEvent)
-		}
-		// Set the drop reason.
-		eventType := fl.GetEventType().GetSubType()
-		meta.DropReason = utils.DropReason(eventType)
-		utils.AddRetinaMetadata(fl, meta)
-		p.enricher.Write(e)
-	case monitorAPI.MessageTypeTrace:
-		e := &v1.Event{}
-		if size <= uint32(unsafe.Sizeof(TraceNotify{})) {
-			return fmt.Errorf("%w: %d", errInvalidTraceNotifySize, size)
-		}
-		e, err := p.parser.Decode(&observer.MonitorEvent{
-			Payload: &observer.PerfEvent{
-				Data: perfData,
-			},
-		})
-		if err != nil {
-			return fmt.Errorf("could not convert tracenotify event to flow: %w", err)
-		}
-		meta := &utils.RetinaMetadata{}
-		utils.AddPacketSize(meta, size-uint32(unsafe.Sizeof(TraceNotify{})))
-		fl := e.GetFlow()
-		if fl == nil {
-			return fmt.Errorf("%w", errNilTraceNotifyFlow)
-		}
-		utils.AddRetinaMetadata(fl, meta)
-		p.enricher.Write(e)
+
+		traceSockNotify := (*TraceSockNotify)(data)
+		p.handleTraceSockNotify(traceSockNotify)
+
+	default:
+		p.l.Error("Unsupported event type", zap.Uint8("eventType", eventType))
 	}
+
+	t1 := time.Now().UnixNano()
+
+	// Hardcoded values for flow object. These values will be replaced by the actual values from the event.
+	fl := utils.ToFlow(
+		p.l,
+		t1,
+		net.ParseIP("192.168.0.1").To4(), // Src IP
+		net.ParseIP("192.168.0.2").To4(), // Dst IP
+		80,                               // Src Port
+		1024,                             // Dst Port
+		6,                                // Protocol
+		2,
+		flow.Verdict_DROPPED,
+	)
+
+	if fl == nil {
+		p.l.Warn("Could not convert event to flow", zap.Any("handleTraceEvent", data))
+		return ErrInvalidEventData
+	}
+
+	ev := &v1.Event{
+		Event:     fl,
+		Timestamp: fl.GetTime(),
+	}
+
+	if p.enricher != nil {
+		p.enricher.Write(ev)
+	} else {
+		p.l.Error("enricher is nil when writing event")
+	}
+
+	// Write the event to the external channel.
+	if p.externalChannel != nil {
+		select {
+		case p.externalChannel <- ev:
+		default:
+			// Channel is full, drop the event.
+			// We shouldn't slow down the reader.
+			metrics.LostEventsCounter.WithLabelValues(utils.ExternalChannel, name).Inc()
+		}
+	}
+
 	return nil
 }

@@ -2,9 +2,7 @@ name: Build Images
 
 on:
   pull_request:
-    branches:
-      - main
-      - "dev/**"
+    branches: [main]
   merge_group:
     types: [checks_requested]
   workflow_dispatch:
@@ -15,7 +13,7 @@ permissions:
 
 jobs:
   retina-images:
-    name: Build Images and Run E2E
+    name: Build Agent Images
     runs-on: ubuntu-latest
 
     strategy:
@@ -352,7 +350,7 @@ jobs:
       azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
       azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
       azure-app-insights-key: ${{ secrets.AZURE_APP_INSIGHTS_KEY }}
-
+  
   perf-test-advanced:
     if: ${{ github.event_name == 'merge_group'}}
     needs: [manifests]
