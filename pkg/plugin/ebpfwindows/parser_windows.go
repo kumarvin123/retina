@@ -61,7 +61,7 @@ type packet struct {
 	layers.SCTP
 }
 
-// New returns a new L3/L4 parser
+// New returns a new L3/L4 parser.
 func NewParser(
 	log *slog.Logger,
 	opts ...options.Option,
