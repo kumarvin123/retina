@@ -111,6 +111,9 @@ func (p *Plugin) metricsMapIterateCallback(key *MetricsKey, value *MetricsValues
 		p.l.Error("MetricsMapIterateCallback value is nil")
 		return
 	}
+
+	p.l.Debug("MetricsMapIterateCallback", zap.String("key", key.String()), zap.Any("value", value))
+
 	if key.IsDrop() {
 		p.l.Debug("MetricsMapIterateCallback Drop", zap.String("key", key.String()))
 		if key.IsEgress() {
