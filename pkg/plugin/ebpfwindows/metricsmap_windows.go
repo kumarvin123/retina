@@ -132,7 +132,8 @@ func MetricDirection(dir uint8) string {
 
 // Direction gets the direction in human readable string format
 func (k *MetricsKey) Direction() string {
-	return MetricDirection(k.Dir)
+	direction := k.Dir & 0x03
+	return MetricDirection(direction)
 }
 
 // String returns the key in human readable string format
@@ -163,12 +164,14 @@ func (k *MetricsKey) IsDrop() bool {
 
 // IsIngress checks if the direction is ingress or not.
 func (k *MetricsKey) IsIngress() bool {
-	return k.Dir == dirIngress
+	direction := k.Dir & 0x03
+	return direction == dirIngress
 }
 
 // IsEgress checks if the direction is egress or not.
 func (k *MetricsKey) IsEgress() bool {
-	return k.Dir == dirEgress
+	direction := k.Dir & 0x03
+	return direction == dirEgress
 }
 
 // Count returns the sum of all the per-CPU count values
