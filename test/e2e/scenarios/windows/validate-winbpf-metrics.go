@@ -434,9 +434,23 @@ func (v *ValidateWinBpfMetric) Run() error {
 
 	slog.Info("Prometheus metrics output", "output", promOutput)
 
+	// Dump retina pod logs for debugging
+	slog.Info("Dumping Retina pod logs for debugging")
+	logDumper := &kubernetes.GetPodLogs{
+		KubeConfigFilePath: v.KubeConfigFilePath,
+		Namespace:          v.RetinaDaemonSetNamespace,
+		LabelSelector:      "k8s-app=retina",
+	}
+	logErr := logDumper.Run()
+	if logErr != nil {
+		slog.Warn("Failed to dump retina pod logs", "error", logErr)
+	}
+
 	err = v.verifyBasicMetrics(promOutput)
 	if err != nil {
 
+		slog.Info("Basic  metrics failed. Waiting for 5 minutes before retrying")
+		time.Sleep(300 * time.Second)
 		return fmt.Errorf("failed to verify basic metrics: %w", err)
 	}
 	slog.Info("Basic metrics verified successfully")
